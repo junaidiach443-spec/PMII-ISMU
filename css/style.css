@@ -252,3 +252,26 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* ======================================================== */
+/* HAK AKSES ROLE: KADER (READ-ONLY)                        */
+/* ======================================================== */
+body.role-kader .admin-only,
+body.role-kader [data-admin-only="true"] {
+  display: none !important;
+}
+
+body.role-kader .kader-only {
+  display: flex !important;
+}
+
+body:not(.role-kader) .kader-only {
+  display: none !important;
+}
+
+/* Full width layout untuk card yang berdampingan dengan admin-only pada Dashboard */
+body.role-kader #tab-dashboard .lg\:col-span-7 {
+  grid-column: span 12 / span 12 !important;
+}
+
+
+

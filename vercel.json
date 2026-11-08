@@ -3,6 +3,8 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/portal-kader", "destination": "/portal-kader.html" },
+    { "source": "/kader", "destination": "/portal-kader.html" },
     { "source": "/form-kader", "destination": "/form-kader.html" }
   ],
   "functions": {

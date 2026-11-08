@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Portal Resmi Kader PK PMII ISMU Tarate Sumenep</title>
+
+  <!-- PWA & Mobile Meta -->
+  <link rel="icon" type="image/webp" href="assets/logo-pmii.webp">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002b66">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kader PMII">
+  <link rel="apple-touch-icon" href="assets/logo-pmii.webp">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Cinzel:wght@700;800&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- QRCode.js & html2canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <!-- Data Awal & Konfigurasi Cloud Database -->
+  <script src="js/data.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            cinzel: ['"Cinzel"', 'serif'],
+            barcode: ['"Libre Barcode 39 Text"', 'cursive'],
+          },
+          colors: {
+            pmii: {
+              navy: '#051937',
+              blue: '#004b99',
+              lightBlue: '#0066cc',
+              yellow: '#f5b000',
+              gold: '#d49a00',
+              lightYellow: '#fef3c7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #0F172A;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .gradient-pmii {
+      background: linear-gradient(135deg, #051937 0%, #002B66 50%, #004B99 100%);
+    }
+    .gradient-gold {
+      background: linear-gradient(135deg, #F5B014 0%, #D99B0B 100%);
+    }
+    .kta-card-ratio {
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 85.6 / 53.98;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-yellow-300 selection:text-slate-900">
+
+  <!-- ======================================================== -->
+  <!-- HEADER UTAMA PORTAL KADER                                 -->
+  <!-- ======================================================== -->
+  <header class="gradient-pmii text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      
+      <!-- Brand & Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-white p-1 shadow-md border border-white/20 flex items-center justify-center shrink-0">
+          <img src="assets/logo-pmii.webp" alt="Logo PMII" class="w-full h-full object-contain">
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-sm font-extrabold tracking-wide text-white leading-tight">PORTAL KADER PMII</h1>
+            <span class="text-[9px] bg-yellow-400 text-slate-900 px-1.5 py-0.5 rounded font-black tracking-wider uppercase">ISMU</span>
+          </div>
+          <p class="text-[11px] text-yellow-300/90 font-medium leading-none mt-0.5">Institut Miftahul Ulum Tarate • PC PMII Sumenep</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons: Install & Login Admin -->
+      <div class="flex items-center gap-2">
+        <!-- Tombol Install PWA -->
+        <button id="btn-install-portal" onclick="triggerPwaInstall()" class="hidden items-center gap-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-900 font-extrabold text-[11px] px-3 py-1.5 rounded-full shadow-sm transition cursor-pointer">
+          <i data-lucide="download" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+          <span class="hidden sm:inline">Install App</span>
+        </button>
+
+        <!-- Status Database Cloud -->
+        <div id="portal-db-badge" class="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full border border-white/15 text-[10px] text-emerald-300 font-bold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Online</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-4xl mx-auto px-4 flex items-center gap-1 border-t border-white/10 overflow-x-auto text-xs font-bold no-scrollbar">
+      <button onclick="switchPortalTab('kta')" id="tab-btn-kta" class="py-2.5 px-3 border-b-2 border-yellow-400 text-yellow-300 flex items-center gap-1.5 transition">
+        <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
+        <span>E-KTA Saya</span>
+      </button>
+      <button onclick="switchPortalTab('direktori')" id="tab-btn-direktori" class="py-2.5 px-3 border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+        <span>Direktori Sahabat</span>
+      </button>
+      <button onclick="switchPortalTab('struktur')" id="tab-btn-struktur" class="py-2.5 px-3 border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+        <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+        <span>Pengurus Komisariat</span>
+      </button>
+      <a href="form-kader.html" class="py-2.5 px-3 border-b-2 border-transparent text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5 ml-auto transition">
+        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+        <span>Form Pendaftaran</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ======================================================== -->
+  <!-- MAIN CONTENT AREA                                        -->
+  <!-- ======================================================== -->
+  <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-5 space-y-6">
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: E-KTA & CEK DATA SAYA                             -->
+    <!-- ======================================================== -->
+    <section id="portal-tab-kta" class="space-y-6">
+      
+      <!-- Hero Box Pencarian Kader -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/60 inline-flex items-center gap-1">
+            <i data-lucide="search" class="w-3 h-3"></i>
+            <span>Verifikasi Keanggotaan</span>
+          </span>
+          <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-2">Cek Data & Unduh Kartu Tanda Anggota (E-KTA)</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Ketikkan <strong>NIM</strong> atau <strong>Nama Lengkap</strong> Anda untuk memunculkan profil dan kartu anggota digital resmi.</p>
+        </div>
+
+        <!-- Input Pencarian -->
+        <div class="flex flex-col sm:flex-row items-center gap-2">
+          <div class="relative w-full">
+            <input 
+              type="text" 
+              id="input-cari-kader" 
+              placeholder="Masukkan NIM Anda (contoh: 202601001) atau Nama..." 
+              class="w-full text-xs sm:text-sm pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold"
+              onkeypress="if(event.key === 'Enter') cariKaderKta()"
+            >
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          </div>
+          <button 
+            type="button" 
+            onclick="cariKaderKta()" 
+            class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            <span>Tampilkan KTA</span>
+          </button>
+        </div>
+
+        <!-- Fast Selector Dropdown jika bingung -->
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span class="text-[11px]">Atau pilih nama dari daftar:</span>
+          <select id="dropdown-pilih-kader" onchange="pilihKaderDariDropdown(this.value)" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 font-semibold text-slate-700 focus:outline-none max-w-[200px] truncate">
+            <option value="">-- Pilih Nama Kader --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Area Tampilan KTA & Biodata (Muncul setelah dicari) -->
+      <div id="area-kta-kader" class="hidden space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Header Info Kader Ditemukan -->
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between text-emerald-800">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+              <i data-lucide="check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="text-xs font-bold leading-tight" id="badge-nama-terverifikasi">Data Kader Terverifikasi</p>
+              <p class="text-[10px] text-emerald-700">Anggota Resmi PK PMII ISMU Tarate Sumenep</p>
+            </div>
+          </div>
+          <span class="text-[10px] font-black uppercase px-2.5 py-1 bg-emerald-600 text-white rounded-lg" id="badge-status-kader">Aktif</span>
+        </div>
+
+        <!-- PRATINJAU KARTU TANDA ANGGOTA (E-KTA DIGITAL RESMI) -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="credit-card" class="w-4 h-4 text-blue-600"></i>
+              <span>Kartu Tanda Anggota (E-KTA) Digital</span>
+            </h3>
+            <span class="text-[10px] font-semibold text-slate-400">Ukuran Standar ID Card (CR-80)</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start justify-items-center">
+            
+            <!-- KTA TAMPAK DEPAN -->
+            <div class="w-full flex flex-col items-center space-y-2">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tampak Depan</span>
+              
+              <div id="card-kta-front" class="kta-card-ratio rounded-2xl p-4 text-white shadow-xl relative overflow-hidden flex flex-col justify-between border-2 border-yellow-400/40 select-none gradient-pmii">
+                <!-- Background Geometric Glows -->
+                <div class="absolute -right-12 -top-12 w-32 h-32 bg-yellow-400/15 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -left-12 -bottom-12 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Top Header: Logo & Title -->
+                <div class="flex items-center justify-between pb-2 border-b border-white/20 relative z-10">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-white p-0.5 flex items-center justify-center shrink-0 shadow-sm">
+                      <img src="assets/logo-pmii.webp" alt="Logo" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                      <h4 class="text-[9px] font-black tracking-widest text-yellow-300 uppercase leading-none">KARTU TANDA ANGGOTA</h4>
+                      <h3 class="text-[11px] font-black tracking-wide text-white leading-tight mt-0.5">PK PMII ISMU TARATE</h3>
+                    </div>
+                  </div>
+                  <span class="text-[8px] bg-yellow-400 text-slate-900 px-1.5 py-0.5 rounded font-black tracking-wider uppercase">SUMENEP</span>
+                </div>
+
+                <!-- Middle Content: Foto & Data Utama -->
+                <div class="flex items-center gap-3.5 my-auto relative z-10">
+                  <!-- Foto dengan Gold Border -->
+                  <div class="w-20 h-24 rounded-xl overflow-hidden border-2 border-yellow-400 shadow-md bg-slate-900 shrink-0">
+                    <img id="kta-display-foto" src="" alt="Foto" class="w-full h-full object-cover">
+                  </div>
+
+                  <!-- Info Diri -->
+                  <div class="space-y-1 text-white min-w-0">
+                    <h2 id="kta-display-nama" class="font-black text-xs sm:text-sm text-yellow-300 leading-tight truncate">Nama Kader</h2>
+                    <div class="text-[10px] text-blue-100 flex items-center gap-1 font-mono">
+                      <span>NIM:</span>
+                      <span id="kta-display-nim" class="font-bold text-white">-</span>
+                    </div>
+                    <div class="text-[10px] text-slate-200 font-semibold leading-tight truncate" id="kta-display-prodi">-</div>
+                    <div class="text-[9px] text-blue-200 leading-none truncate" id="kta-display-fakultas">-</div>
+                    <div class="pt-1">
+                      <span id="kta-display-jenjang" class="text-[8px] bg-emerald-500/90 text-white font-extrabold px-2 py-0.5 rounded-full inline-block">MAPABA 2026</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bottom Footer: QR & No KTA -->
+                <div class="pt-2 border-t border-white/20 flex items-center justify-between text-[9px] text-blue-200 relative z-10">
+                  <div class="flex items-center gap-1.5">
+                    <div id="kta-display-qrcode" class="w-7 h-7 bg-white p-0.5 rounded shrink-0 flex items-center justify-center"></div>
+                    <span class="font-serif italic text-[8px] text-yellow-200">"Dzikir, Fikir, Amal Sholeh"</span>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-[7px] text-slate-300 uppercase tracking-wider">Nomor KTA</p>
+                    <p id="kta-display-nokta" class="font-mono text-yellow-300 font-extrabold text-[10px] leading-tight">13.01.2026.***</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tombol Download Depan -->
+              <button onclick="downloadKta('front')" class="w-full max-w-[420px] py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Unduh KTA Tampak Depan (PNG)</span>
+              </button>
+            </div>
+
+            <!-- KTA TAMPAK BELAKANG -->
+            <div class="w-full flex flex-col items-center space-y-2">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tampak Belakang</span>
+
+              <div id="card-kta-back" class="kta-card-ratio rounded-2xl p-4 text-white shadow-xl relative overflow-hidden flex flex-col justify-between border-2 border-yellow-400/40 select-none bg-gradient-to-br from-[#061738] via-[#0B2A63] to-[#041226]">
+                <!-- Back Watermark -->
+                <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+                  <img src="assets/logo-pmii.webp" alt="Watermark" class="w-32 h-32 object-contain">
+                </div>
+
+                <!-- Header Janji Kader -->
+                <div class="text-center pb-1.5 border-b border-white/15 relative z-10">
+                  <h4 class="text-[9px] font-black tracking-widest text-yellow-300 uppercase">TRI MOTTO PERGERAKAN MAHASISWA ISLAM INDONESIA</h4>
+                  <p class="text-[8px] text-slate-200 font-serif italic mt-0.5">Dzikir, Fikir, dan Amal Sholeh</p>
+                </div>
+
+                <!-- Tri Komitmen -->
+                <div class="my-auto text-[8px] text-slate-200 space-y-1 relative z-10 px-1">
+                  <div class="flex items-start gap-1">
+                    <span class="text-yellow-400 font-bold">•</span>
+                    <p><strong>Kejujuran, Kebenaran, dan Keadilan:</strong> Landasan dasar moral pergerakan.</p>
+                  </div>
+                  <div class="flex items-start gap-1">
+                    <span class="text-yellow-400 font-bold">•</span>
+                    <p><strong>Ahlussunnah wal Jama'ah:</strong> Metodologi pemikiran, sikap, dan amaliah perjuangan.</p>
+                  </div>
+                  <div class="flex items-start gap-1">
+                    <span class="text-yellow-400 font-bold">•</span>
+                    <p><strong>Komitmen Kebangsaan:</strong> Mempertahankan keutuhan Negara Kesatuan Republik Indonesia.</p>
+                  </div>
+                </div>
+
+                <!-- Footer Tanda Tangan & Pengesahan -->
+                <div class="pt-1.5 border-t border-white/15 flex items-end justify-between text-[8px] relative z-10">
+                  <div class="text-center">
+                    <p class="text-[7px] text-slate-300">Sumenep, 2026</p>
+                    <p class="font-extrabold text-white">Ketua Umum Komisariat</p>
+                    <div class="h-6 flex items-center justify-center my-0.5">
+                      <span class="text-yellow-300/80 font-serif italic text-[9px]">[Tertanda Sah]</span>
+                    </div>
+                    <p class="font-bold text-yellow-300 underline" id="kta-display-ketum">Sahabat M. Ilham Fathoni</p>
+                  </div>
+
+                  <div class="text-center">
+                    <p class="text-[7px] text-slate-300">Pengurus Komisariat</p>
+                    <p class="font-extrabold text-white">Sekretaris Umum</p>
+                    <div class="h-6 flex items-center justify-center my-0.5">
+                      <span class="text-yellow-300/80 font-serif italic text-[9px]">[Tertanda Sah]</span>
+                    </div>
+                    <p class="font-bold text-yellow-300 underline" id="kta-display-sekum">Sahabat Ahmad Faruq</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tombol Download Belakang -->
+              <button onclick="downloadKta('back')" class="w-full max-w-[420px] py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Unduh KTA Tampak Belakang (PNG)</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Rincian Biodata Kader (Read-Only) -->
+        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="user-check" class="w-4 h-4 text-blue-600"></i>
+              <span>Biodata Resmi Anggota</span>
+            </h3>
+            <span class="text-[10px] text-slate-400 font-medium">Mode Lihat Saja (Read-Only)</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 text-xs">
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Nama Lengkap</p>
+              <p class="font-extrabold text-slate-800 mt-0.5" id="detail-nama">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Nomor Induk Mahasiswa (NIM)</p>
+              <p class="font-mono font-bold text-blue-700 mt-0.5" id="detail-nim">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Nomor KTA</p>
+              <p class="font-mono font-bold text-amber-600 mt-0.5" id="detail-nokta">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Fakultas</p>
+              <p class="font-bold text-slate-800 mt-0.5" id="detail-fakultas">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Program Studi (Jurusan)</p>
+              <p class="font-bold text-slate-800 mt-0.5" id="detail-jurusan">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Angkatan Kampus</p>
+              <p class="font-bold text-slate-800 mt-0.5" id="detail-angkatan">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Kaderisasi Formal</p>
+              <p class="font-extrabold text-emerald-700 mt-0.5" id="detail-formal">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Kaderisasi KOPRI</p>
+              <p class="font-bold text-slate-800 mt-0.5" id="detail-kopri">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Status Keanggotaan</p>
+              <p class="font-bold text-emerald-600 mt-0.5" id="detail-status">-</p>
+            </div>
+          </div>
+
+          <!-- Bantuan Koreksi Data -->
+          <div class="mt-4 p-3 bg-blue-50/60 rounded-2xl border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="space-y-0.5 text-center sm:text-left">
+              <p class="font-bold text-slate-800">Ada kesalahan penulisan nama atau data diri Anda?</p>
+              <p class="text-[11px] text-slate-500">Kader tidak dapat mengubah data sendiri demi keamanan database. Laporkan koreksi ke sekretariat.</p>
+            </div>
+            <a id="btn-wa-koreksi" href="https://wa.me/6281234567890?text=Halo%20Pengurus%20PK%20PMII%20ISMU,%20saya%20ingin%20mengajukan%20koreksi%20data%20kader..." target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-xs">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+              <span>Hubungi Pengurus via WA</span>
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: DIREKTORI SAHABAT KADER (READ-ONLY)               -->
+    <!-- ======================================================== -->
+    <section id="portal-tab-direktori" class="hidden space-y-5">
+      
+      <!-- Filter & Search Toolbar -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div>
+          <h2 class="text-lg font-extrabold text-slate-900">Direktori Sahabat Kader</h2>
+          <p class="text-xs text-slate-500">Daftar seluruh kader anggota PK PMII ISMU Tarate Sumenep (Hanya Tampil & Pencarian).</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div class="relative sm:col-span-2">
+            <input 
+              type="text" 
+              id="direktori-search" 
+              placeholder="Cari nama sahabat, angkatan, atau jurusan..." 
+              oninput="filterDirektoriKader()"
+              class="w-full text-xs pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:border-blue-500"
+            >
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          </div>
+
+          <div>
+            <select id="direktori-filter-fakultas" onchange="filterDirektoriKader()" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium focus:outline-none focus:border-blue-500">
+              <option value="all">Semua Fakultas</option>
+              <option value="Fakultas Tarbiyah">Fakultas Tarbiyah</option>
+              <option value="Fakultas Syariah">Fakultas Syariah</option>
+              <option value="Fakultas Ekonomi & Bisnis Islam">Fakultas Ekonomi & Bisnis Islam</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Cards Kader -->
+      <div id="direktori-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <!-- Akan diisi secara dinamis oleh JavaScript -->
+      </div>
+
+      <!-- Pagination / Counter -->
+      <div class="text-center text-xs text-slate-400 font-semibold" id="direktori-counter">
+        Memuat data kader...
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: STRUKTUR PENGURUS KOMISARIAT                      -->
+    <!-- ======================================================== -->
+    <section id="portal-tab-struktur" class="hidden space-y-5">
+      
+      <!-- Hero Ketua Umum -->
+      <div class="bg-gradient-to-br from-[#051937] via-[#002B66] to-[#0B2A63] text-white rounded-3xl p-6 shadow-md border border-blue-900/40 relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-yellow-400/20 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-5 relative z-10 text-center sm:text-left">
+          <div class="w-24 h-28 rounded-2xl overflow-hidden border-2 border-yellow-400 shadow-xl bg-slate-900 shrink-0">
+            <img src="assets/logo-pmii.webp" id="ketum-portal-foto" alt="Ketum" class="w-full h-full object-cover">
+          </div>
+          <div class="space-y-1">
+            <span class="text-[10px] font-black uppercase tracking-wider text-yellow-300 bg-yellow-400/20 px-2.5 py-0.5 rounded-full border border-yellow-400/30">Masa Khidmat 2026 - 2027</span>
+            <h2 class="text-xl font-extrabold text-white mt-1" id="ketum-portal-nama">Sahabat M. Ilham Fathoni</h2>
+            <p class="text-xs text-yellow-200 font-semibold">Ketua Umum Pengurus Komisariat PMII ISMU Tarate</p>
+            <p class="text-[11px] text-blue-100 italic pt-1 max-w-lg" id="ketum-portal-semboyan">"Meneguhkan Nilai-nilai Aswaja dan Karakter Intelektual Kader di Era Digital"</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jajaran Struktur BPH -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900">Susunan Badan Pengurus Harian (BPH)</h3>
+            <p class="text-[11px] text-slate-500">Pimpinan harian organisasi tingkat komisariat</p>
+          </div>
+          <span class="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-md border border-blue-200">SK Cabang Aktif</span>
+        </div>
+
+        <div id="portal-struktur-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Dewan Pembina (Mabinkom) -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+        <div class="pb-3 border-b border-slate-100">
+          <h3 class="text-sm font-extrabold text-slate-900">Majelis Pembina Komisariat (Mabinkom)</h3>
+          <p class="text-[11px] text-slate-500">Alumni dan tokoh pembina pergerakan ISMU</p>
+        </div>
+
+        <div id="portal-mabinkom-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- FOOTER PORTAL KADER                                      -->
+  <!-- ======================================================== -->
+  <footer class="bg-white border-t border-slate-100 py-6 mt-8">
+    <div class="max-w-4xl mx-auto px-4 text-center space-y-2">
+      <div class="flex items-center justify-center gap-2">
+        <div class="w-6 h-6 rounded-lg bg-white p-0.5 shadow-sm border border-slate-200 flex items-center justify-center">
+          <img src="assets/logo-pmii.webp" alt="Logo" class="w-full h-full object-contain">
+        </div>
+        <p class="text-xs font-bold text-slate-800">Pengurus Komisariat PMII ISMU Tarate Sumenep</p>
+      </div>
+      <p class="text-[11px] text-slate-400">Portal Resmi Layanan & Data Keanggotaan Kader • Dzikir, Fikir, Amal Sholeh</p>
+      <div class="pt-2 flex items-center justify-center gap-4 text-xs font-semibold text-blue-600">
+        <a href="index.html" class="hover:underline flex items-center gap-1 text-slate-500 hover:text-slate-800">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+          <span>Login Pengurus</span>
+        </a>
+        <span class="text-slate-300">•</span>
+        <a href="form-kader.html" class="hover:underline text-emerald-600">
+          Pendaftaran Kader Baru
+        </a>
+      </div>
+      <p class="text-[10px] text-slate-400 pt-1">@chass-07 2026</p>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT LOGIC PORTAL KADER                            -->
+  <!-- ======================================================== -->
+  <script>
+    let portalKaders = [];
+    let portalPengurus = [];
+    let portalMabinkom = [];
+    let currentKaderSelected = null;
+
+    // Inisialisasi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', async () => {
+      initLucide();
+      await loadPortalData();
+      initPortalPwa();
+    });
+
+    function initLucide() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Switch Tab
+    function switchPortalTab(tab) {
+      const tabs = ['kta', 'direktori', 'struktur'];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`portal-tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (sec) {
+          if (t === tab) {
+            sec.classList.remove('hidden');
+          } else {
+            sec.classList.add('hidden');
+          }
+        }
+        if (btn) {
+          if (t === tab) {
+            btn.className = "py-2.5 px-3 border-b-2 border-yellow-400 text-yellow-300 flex items-center gap-1.5 transition";
+          } else {
+            btn.className = "py-2.5 px-3 border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-1.5 transition";
+          }
+        }
+      });
+      initLucide();
+    }
+
+    // Muat Data dari Neon Cloud / Local
+    async function loadPortalData() {
+      // 1. Ambil dari LocalStorage terlebih dahulu agar instan
+      try {
+        const localKaders = localStorage.getItem('pmii_kaders');
+        if (localKaders) portalKaders = JSON.parse(localKaders);
+        const localPengurus = localStorage.getItem('pmii_pengurus');
+        if (localPengurus) portalPengurus = JSON.parse(localPengurus);
+        const localMabinkom = localStorage.getItem('pmii_mabinkom');
+        if (localMabinkom) portalMabinkom = JSON.parse(localMabinkom);
+      } catch (e) {}
+
+      // 2. Tarik langsung dari Neon Cloud
+      if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
+        try {
+          const sqlKader = "SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC;";
+          const sqlStruktur = "SELECT * FROM tb_struktur_pengurus ORDER BY urutan ASC, id ASC;";
+          const sqlMbn = "SELECT * FROM tb_mabinkom ORDER BY id ASC;";
+
+          const res = await fetch('https://ep-nameless-salad-betekr6e.c-9.us-east-2.aws.neon.tech/sql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Neon-Connection-String': DEFAULT_CLOUD_CONFIG.url
+            },
+            body: JSON.stringify({ query: `${sqlKader} ${sqlStruktur} ${sqlMbn}` })
+          });
+
+          if (res.ok) {
+            const json = await res.json();
+            // Jika multi query atau single query
+            if (json && json.rows) {
+              portalKaders = json.rows.map(r => ({
+                id: r.id,
+                nama: r.nama,
+                namaPanggilan: r.nama_panggilan,
+                noKta: r.no_kta,
+                nim: r.nim,
+                gender: r.gender,
+                fakultas: r.fakultas,
+                jurusan: r.jurusan,
+                angkatan: r.angkatan,
+                statusKuliah: r.status_kuliah,
+                foto: r.foto,
+                formal: r.formal,
+                tahunMapaba: r.tahun_mapaba,
+                penyelenggaraMapaba: r.penyelenggara_mapaba,
+                kopri: r.kopri,
+                statusKader: r.status_kader || 'Aktif'
+              }));
+            }
+          }
+        } catch (e) {
+          console.warn('[PORTAL] Gagal fetch cloud:', e);
+        }
+      }
+
+      // Fallback jika kosong gunakan default
+      if (!portalKaders || portalKaders.length === 0) {
+        portalKaders = typeof defaultKaders !== 'undefined' ? defaultKaders : [];
+      }
+      if (!portalMabinkom || portalMabinkom.length === 0) {
+        portalMabinkom = typeof defaultMabinkom !== 'undefined' ? defaultMabinkom : [];
+      }
+
+      populateDropdownKader();
+      renderDirektori();
+      renderStruktur();
+    }
+
+    function populateDropdownKader() {
+      const select = document.getElementById('dropdown-pilih-kader');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- Pilih Nama Kader --</option>';
+
+      portalKaders.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k.nim || k.id;
+        opt.textContent = `${k.nama} (${k.nim || k.angkatan || '-'})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function pilihKaderDariDropdown(val) {
+      if (!val) return;
+      document.getElementById('input-cari-kader').value = val;
+      cariKaderKta();
+    }
+
+    // Cari Kader untuk Tampilkan E-KTA
+    function cariKaderKta() {
+      const query = (document.getElementById('input-cari-kader').value || '').trim().toLowerCase();
+      if (!query) {
+        alert('Silakan masukkan NIM atau Nama Anda terlebih dahulu.');
+        return;
+      }
+
+      const match = portalKaders.find(k => 
+        (k.nim && k.nim.toLowerCase().includes(query)) || 
+        (k.nama && k.nama.toLowerCase().includes(query)) ||
+        (k.noKta && k.noKta.toLowerCase().includes(query))
+      );
+
+      if (!match) {
+        alert('Kader dengan NIM atau Nama tersebut belum ditemukan di database resmi. Pastikan NIM sudah benar, atau hubungi pengurus komisariat.');
+        return;
+      }
+
+      tampilkanKtaKader(match);
+    }
+
+    function tampilkanKtaKader(k) {
+      currentKaderSelected = k;
+      const area = document.getElementById('area-kta-kader');
+      if (!area) return;
+
+      // Isi Badge Atas
+      document.getElementById('badge-nama-terverifikasi').textContent = `${k.nama} • Terverifikasi`;
+      document.getElementById('badge-status-kader').textContent = k.statusKader || 'Aktif';
+
+      // Isi Card Front
+      document.getElementById('kta-display-nama').textContent = k.nama || '-';
+      document.getElementById('kta-display-nim').textContent = k.nim || '-';
+      document.getElementById('kta-display-prodi').textContent = k.jurusan || '-';
+      document.getElementById('kta-display-fakultas').textContent = k.fakultas || '-';
+      document.getElementById('kta-display-nokta').textContent = k.noKta || `13.01.${k.angkatan || '2026'}.***`;
+      
+      const jenjang = k.formal || (k.kaderisasi && k.kaderisasi.formal) || 'MAPABA';
+      document.getElementById('kta-display-jenjang').textContent = `${jenjang} ${k.angkatan || '2026'}`;
+
+      const fotoEl = document.getElementById('kta-display-foto');
+      const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=faces';
+      const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=faces';
+      fotoEl.src = k.foto || (k.gender === 'Perempuan' ? defaultFemale : defaultMale);
+
+      // Generate QR Code
+      const qrContainer = document.getElementById('kta-display-qrcode');
+      qrContainer.innerHTML = '';
+      if (window.QRCode) {
+        new QRCode(qrContainer, {
+          text: `PMII-ISMU|${k.nim || k.id}|${k.nama}|${k.noKta || '-'}`,
+          width: 32,
+          height: 32,
+          colorDark: "#051937",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.L
+        });
+      }
+
+      // Isi Detail Biodata (Read-Only)
+      document.getElementById('detail-nama').textContent = k.nama || '-';
+      document.getElementById('detail-nim').textContent = k.nim || '-';
+      document.getElementById('detail-nokta').textContent = k.noKta || '-';
+      document.getElementById('detail-fakultas').textContent = k.fakultas || '-';
+      document.getElementById('detail-jurusan').textContent = k.jurusan || '-';
+      document.getElementById('detail-angkatan').textContent = k.angkatan || '-';
+      document.getElementById('detail-formal').textContent = jenjang;
+      document.getElementById('detail-kopri').textContent = k.kopri || '-';
+      document.getElementById('detail-status').textContent = k.statusKuliah || 'Aktif Kuliah';
+
+      // Tombol WA Koreksi
+      const btnWa = document.getElementById('btn-wa-koreksi');
+      if (btnWa) {
+        const pesan = encodeURIComponent(
+          `Assalamu'alaikum Sahabat Pengurus PK PMII ISMU,\n\n` +
+          `Saya atas nama ${k.nama} (NIM: ${k.nim}) ingin mengajukan koreksi data pada E-KTA saya.\n\n` +
+          `Bagian yang perlu dikoreksi:\n` +
+          `- \n\n` +
+          `Terima kasih! Salam Pergerakan!`
+        );
+        btnWa.href = `https://wa.me/6281234567890?text=${pesan}`;
+      }
+
+      area.classList.remove('hidden');
+      initLucide();
+
+      // Scroll halus ke kartu
+      area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Unduh KTA Image via html2canvas
+    async function downloadKta(side) {
+      if (!currentKaderSelected) return;
+      const elId = side === 'front' ? 'card-kta-front' : 'card-kta-back';
+      const el = document.getElementById(elId);
+      if (!el || !window.html2canvas) return;
+
+      try {
+        const canvas = await html2canvas(el, {
+          scale: 3, // Resolusi tinggi HD
+          useCORS: true,
+          backgroundColor: null
+        });
+
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        const cleanName = (currentKaderSelected.nama || 'Kader').replace(/\s+/g, '_');
+        link.download = `E-KTA_${cleanName}_${side.toUpperCase()}.png`;
+        link.href = image;
+        link.click();
+      } catch (err) {
+        console.error('Gagal unduh KTA:', err);
+        alert('Gagal mengunduh kartu. Silakan lakukan screenshot layar jika browser membatasi.');
+      }
+    }
+
+    // Render Direktori Kader
+    function renderDirektori() {
+      const grid = document.getElementById('direktori-grid');
+      const counter = document.getElementById('direktori-counter');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      if (!portalKaders || portalKaders.length === 0) {
+        grid.innerHTML = '<div class="col-span-3 text-center py-8 text-slate-400 text-xs">Belum ada data kader.</div>';
+        return;
+      }
+
+      portalKaders.forEach(k => {
+        const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces';
+        const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=faces';
+        const fotoUrl = k.foto || (k.gender === 'Perempuan' ? defaultFemale : defaultMale);
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl p-4 border border-slate-100 shadow-xs flex items-center gap-3.5 hover:shadow-md transition";
+        card.innerHTML = `
+          <div class="w-12 h-14 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0">
+            <img src="${fotoUrl}" alt="${k.nama}" class="w-full h-full object-cover">
+          </div>
+          <div class="min-w-0 flex-1 space-y-0.5">
+            <h4 class="font-extrabold text-xs text-slate-900 truncate leading-tight">${k.nama}</h4>
+            <p class="text-[11px] font-semibold text-blue-700 font-mono">NIM: ${k.nim || '-'}</p>
+            <p class="text-[10px] text-slate-500 truncate">${k.jurusan || '-'}</p>
+            <div class="flex items-center gap-1.5 pt-1">
+              <span class="text-[9px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded">${k.formal || 'MAPABA'}</span>
+              <span class="text-[9px] text-slate-400 font-medium">Angkatan ${k.angkatan || '-'}</span>
+            </div>
+          </div>
+          <button onclick="pilihKaderDariDropdown('${k.nim}')" title="Lihat KTA" class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition shrink-0 cursor-pointer">
+            <i data-lucide="credit-card" class="w-4 h-4"></i>
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+
+      if (counter) counter.textContent = `Menampilkan ${portalKaders.length} Sahabat Kader PK PMII ISMU`;
+      initLucide();
+    }
+
+    function filterDirektoriKader() {
+      const q = (document.getElementById('direktori-search').value || '').toLowerCase();
+      const fak = document.getElementById('direktori-filter-fakultas').value;
+
+      const filtered = portalKaders.filter(k => {
+        const matchQ = !q || (k.nama && k.nama.toLowerCase().includes(q)) || (k.nim && k.nim.includes(q)) || (k.jurusan && k.jurusan.toLowerCase().includes(q)) || (k.angkatan && k.angkatan.includes(q));
+        const matchFak = (fak === 'all') || (k.fakultas === fak);
+        return matchQ && matchFak;
+      });
+
+      const grid = document.getElementById('direktori-grid');
+      const counter = document.getElementById('direktori-counter');
+      grid.innerHTML = '';
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-span-3 text-center py-8 text-slate-400 text-xs">Tidak ada kader yang sesuai filter.</div>';
+        if (counter) counter.textContent = '0 kader ditemukan';
+        return;
+      }
+
+      filtered.forEach(k => {
+        const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces';
+        const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=faces';
+        const fotoUrl = k.foto || (k.gender === 'Perempuan' ? defaultFemale : defaultMale);
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl p-4 border border-slate-100 shadow-xs flex items-center gap-3.5 hover:shadow-md transition";
+        card.innerHTML = `
+          <div class="w-12 h-14 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0">
+            <img src="${fotoUrl}" alt="${k.nama}" class="w-full h-full object-cover">
+          </div>
+          <div class="min-w-0 flex-1 space-y-0.5">
+            <h4 class="font-extrabold text-xs text-slate-900 truncate leading-tight">${k.nama}</h4>
+            <p class="text-[11px] font-semibold text-blue-700 font-mono">NIM: ${k.nim || '-'}</p>
+            <p class="text-[10px] text-slate-500 truncate">${k.jurusan || '-'}</p>
+            <div class="flex items-center gap-1.5 pt-1">
+              <span class="text-[9px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded">${k.formal || 'MAPABA'}</span>
+              <span class="text-[9px] text-slate-400 font-medium">Angkatan ${k.angkatan || '-'}</span>
+            </div>
+          </div>
+          <button onclick="pilihKaderDariDropdown('${k.nim}')" title="Lihat KTA" class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition shrink-0 cursor-pointer">
+            <i data-lucide="credit-card" class="w-4 h-4"></i>
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+
+      if (counter) counter.textContent = `Menampilkan ${filtered.length} dari ${portalKaders.length} Sahabat Kader`;
+      initLucide();
+    }
+
+    // Render Struktur Pengurus & Mabinkom
+    function renderStruktur() {
+      const bphGrid = document.getElementById('portal-struktur-grid');
+      const mbnGrid = document.getElementById('portal-mabinkom-grid');
+
+      if (bphGrid) {
+        bphGrid.innerHTML = `
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">Ketua Umum</span>
+            <h4 class="font-extrabold text-xs text-slate-900">Sahabat M. Ilham Fathoni</h4>
+            <p class="text-[10px] text-slate-500">Pendidikan Agama Islam (PAI)</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">Sekretaris Umum</span>
+            <h4 class="font-extrabold text-xs text-slate-900">Sahabat Ahmad Faruq Al-Faruqi</h4>
+            <p class="text-[10px] text-slate-500">Hukum Keluarga Islam (HKI)</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <span class="text-[9px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">Bendahara Umum</span>
+            <h4 class="font-extrabold text-xs text-slate-900">Sahabati Nur Lailia Ramadhani</h4>
+            <p class="text-[10px] text-slate-500">Ekonomi Syariah (ES)</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <span class="text-[9px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded">Ketua KOPRI</span>
+            <h4 class="font-extrabold text-xs text-slate-900">Sahabati Siti Munawaroh</h4>
+            <p class="text-[10px] text-slate-500">Pendidikan Guru Madrasah (PGMI)</p>
+          </div>
+        `;
+      }
+
+      if (mbnGrid && portalMabinkom) {
+        mbnGrid.innerHTML = '';
+        portalMabinkom.forEach(m => {
+          const card = document.createElement('div');
+          card.className = "p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3";
+          card.innerHTML = `
+            <div class="w-11 h-11 rounded-xl bg-slate-200 overflow-hidden shrink-0">
+              <img src="${m.foto || 'assets/logo-pmii.webp'}" alt="${m.nama}" class="w-full h-full object-cover">
+            </div>
+            <div class="space-y-0.5 min-w-0">
+              <h5 class="font-bold text-xs text-slate-900 truncate">${m.nama}</h5>
+              <p class="text-[10px] text-blue-700 font-semibold">${m.jabatan || 'Dewan Mabinkom'}</p>
+              <p class="text-[10px] text-slate-400 truncate">${m.profesi || m.instansi || '-'}</p>
+            </div>
+          `;
+          mbnGrid.appendChild(card);
+        });
+      }
+
+      initLucide();
+    }
+
+    // PWA Install di Portal
+    let portalDeferredPrompt = null;
+    function initPortalPwa() {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (isStandalone) return;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        portalDeferredPrompt = e;
+        const btn = document.getElementById('btn-install-portal');
+        if (btn) {
+          btn.classList.remove('hidden');
+          btn.classList.add('inline-flex');
+        }
+      });
+
+      const isMobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+      if (isMobile && !isStandalone) {
+        setTimeout(() => {
+          const btn = document.getElementById('btn-install-portal');
+          if (btn) {
+            btn.classList.remove('hidden');
+            btn.classList.add('inline-flex');
+          }
+        }, 1000);
+      }
+    }
+
+    function triggerPwaInstall() {
+      if (portalDeferredPrompt) {
+        portalDeferredPrompt.prompt();
+        portalDeferredPrompt.userChoice.then(() => {
+          portalDeferredPrompt = null;
+        });
+      } else {
+        alert('Untuk memasang di HP: Buka menu titik tiga (⋮) di Chrome lalu pilih "Instal aplikasi" / "Tambahkan ke Layar Utama".');
+      }
+    }
+  </script>
+
+</body>
+</html>

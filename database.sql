@@ -52,7 +52,8 @@ VALUES
 (1, 'admin', MD5('admin123'), 'Administrator PMII ISMU', 'admin', 'admin@pmii-ismu.org', 'aktif'),
 (2, 'ketua', MD5('ketua123'), 'Ahmad Zainuri (Ketum)', 'ketua', 'ketua@pmii-ismu.org', 'aktif'),
 (3, 'sekretaris', MD5('sekretaris123'), 'M. Fathur Rozak (Sekum)', 'sekretaris', 'sekretaris@pmii-ismu.org', 'aktif'),
-(4, 'bendahara', MD5('bendahara123'), 'Nurul Aini (Bendum)', 'bendahara', 'bendahara@pmii-ismu.org', 'aktif');
+(4, 'bendahara', MD5('bendahara123'), 'Nurul Aini (Bendum)', 'bendahara', 'bendahara@pmii-ismu.org', 'aktif'),
+(5, 'kader', MD5('kader123'), 'Sahabat Kader PMII', 'kader', 'kader@pmii-ismu.org', 'aktif');
 
 -- --------------------------------------------------------------------
 -- 3. Tabel Induk Master Data Kader (Pusat Data)

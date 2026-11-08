@@ -3,10 +3,11 @@
  * Versi 3.1: Resilient Cache & Cross-Device PWA Support
  */
 
-const CACHE_NAME = 'pmii-ismu-v3.1';
+const CACHE_NAME = 'pmii-ismu-v3.2';
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './portal-kader.html',
   './form-kader.html',
   './css/style.css',
   './js/data.js',

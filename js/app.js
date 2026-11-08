@@ -182,10 +182,31 @@ let currentUser = null;
 
 const DEFAULT_AUTH_USERS = [
   { username: 'admin', password: 'admin123', name: 'Administrator PMII', role: 'Administrator', avatar: 'AD' },
+  { username: 'kader', password: 'kader123', name: 'Sahabat Kader PMII', role: 'Kader', avatar: 'KD' },
   { username: 'ketua', password: 'ketua123', name: 'M. Ilham Fathoni', role: 'Ketua Umum', avatar: 'IF' },
   { username: 'sekretaris', password: 'sekretaris123', name: 'Ahmad Faruq Al-Faruqi', role: 'Sekretaris Umum', avatar: 'AF' },
   { username: 'bendahara', password: 'bendahara123', name: 'Nur Lailia Ramadhani', role: 'Bendahara Umum', avatar: 'NL' }
 ];
+
+function isKaderUser() {
+  if (!currentUser) return false;
+  const role = (currentUser.role || '').toLowerCase();
+  const uname = (currentUser.username || '').toLowerCase();
+  return role === 'kader' || uname === 'kader';
+}
+
+function applyUserRolePermissions() {
+  const isKader = isKaderUser();
+  if (isKader) {
+    document.body.classList.add('role-kader');
+    const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum'];
+    if (typeof currentTab !== 'undefined' && !cadreAllowedTabs.includes(currentTab)) {
+      if (typeof switchTab === 'function') switchTab('dashboard');
+    }
+  } else {
+    document.body.classList.remove('role-kader');
+  }
+}
 
 function checkAuthStatus() {
   const savedUser = localStorage.getItem('pmii_current_user') || sessionStorage.getItem('pmii_current_user');
@@ -195,6 +216,7 @@ function checkAuthStatus() {
     try {
       currentUser = JSON.parse(savedUser);
       updateUserProfileHeader();
+      applyUserRolePermissions();
       if (loginScreen) {
         loginScreen.classList.add('hidden');
         loginScreen.classList.remove('flex');
@@ -360,6 +382,7 @@ async function handleLoginSubmit(event) {
           loginCard.classList.remove('scale-95', 'opacity-0');
         }
         updateUserProfileHeader();
+        applyUserRolePermissions();
         showToast(`Selamat datang, ${currentUser.name}!`, 'success');
       }, 250);
 
@@ -414,6 +437,7 @@ function handleLogout() {
       localStorage.removeItem('pmii_current_user');
       sessionStorage.removeItem('pmii_current_user');
       currentUser = null;
+      document.body.classList.remove('role-kader');
 
       if (typeof toggleMobileSidebar === 'function') {
         toggleMobileSidebar(false);
@@ -1592,6 +1616,11 @@ function resetToDefaultData() {
 // 3. TAB NAVIGATION & CORE RENDER
 // ==========================================
 function switchTab(tabName) {
+  const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum'];
+  if (isKaderUser() && !cadreAllowedTabs.includes(tabName)) {
+    tabName = 'dashboard';
+  }
+
   currentTab = tabName;
 
   const tabIds = [
@@ -2268,6 +2297,7 @@ function renderKaderTable() {
   if (!tbody) return;
 
   const filtered = filterKaderData();
+  const isKader = isKaderUser();
 
   const counter = document.getElementById('kader-filtered-count');
   if (counter) {
@@ -2332,6 +2362,7 @@ function renderKaderTable() {
             <button onclick="viewKaderDetail('${k.id}')" title="Lihat Profil Lengkap" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
+            ${!isKader ? `
             <button onclick="openKtaForKader('${k.id}')" title="Cetak E-KTA" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition">
               <i data-lucide="credit-card" class="w-4 h-4"></i>
             </button>
@@ -2342,6 +2373,7 @@ function renderKaderTable() {
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span>Hapus</span>
             </button>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -2656,6 +2688,10 @@ function shareFormToWhatsApp() {
 
 // Modal Kader Handlers
 function openAddKaderModal() {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   currentModalMode = 'kader';
   const form = document.getElementById('form-kader');
   if (form) form.reset();
@@ -2678,6 +2714,10 @@ function openAddKaderModal() {
 }
 
 function openEditKaderModal(id) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   currentModalMode = 'kader';
   const kader = kaders.find(k => k.id === id);
   if (!kader) return;
@@ -2753,6 +2793,11 @@ function handleFotoUpload(event) {
 function saveKaderForm(event) {
   event.preventDefault();
 
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const id = document.getElementById('kader-id').value;
   const isEdit = !!id;
 
@@ -2815,6 +2860,11 @@ function saveKaderForm(event) {
 }
 
 function confirmDeleteAllKader() {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   if (!kaders || kaders.length === 0) {
     showToast('Tidak ada data kader yang bisa dihapus.', 'info');
     return;
@@ -2842,6 +2892,11 @@ function confirmDeleteAllKader() {
 }
 
 function deleteKader(id) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const kader = kaders.find(k => k.id === id);
   if (!kader) return;
 
@@ -2973,6 +3028,11 @@ function downloadKaderTemplate() {
 }
 
 function handleImportKaderFile(event) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const file = event.target.files[0];
   if (!file) return;
 
@@ -3166,6 +3226,7 @@ function renderMapabaTable() {
   const counter = document.getElementById('mapaba-filtered-count');
   if (!tbody) return;
 
+  const isKader = isKaderUser();
   const allMapaba = kaders.filter(k => (k.kaderisasi?.formal || 'MAPABA') === 'MAPABA');
   const filtered = filterMapabaData();
 
@@ -3239,6 +3300,7 @@ function renderMapabaTable() {
             <button onclick="viewKaderDetail('${k.id}')" title="Lihat Profil Lengkap" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
+            ${!isKader ? `
             <button onclick="openEditKaderModal('${k.id}')" title="Edit Data" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition">
               <i data-lucide="edit" class="w-4 h-4"></i>
             </button>
@@ -3249,6 +3311,7 @@ function renderMapabaTable() {
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span>Hapus</span>
             </button>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -3259,6 +3322,10 @@ function renderMapabaTable() {
 }
 
 function openAddMapabaModal() {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   openAddKaderModal();
   currentModalMode = 'mapaba';
   const title = document.getElementById('modal-kader-title');
@@ -3484,6 +3551,7 @@ function renderPkdTable() {
   const counter = document.getElementById('pkd-filtered-count');
   if (!tbody) return;
 
+  const isKader = isKaderUser();
   const allPkd = kaders.filter(k => k.kaderisasi?.formal === 'PKD');
   const filtered = filterPkdData();
 
@@ -3562,6 +3630,7 @@ function renderPkdTable() {
             <button onclick="viewKaderDetail('${k.id}')" title="Lihat Profil Lengkap" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
+            ${!isKader ? `
             <button onclick="openEditKaderModal('${k.id}')" title="Edit Data" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition">
               <i data-lucide="edit" class="w-4 h-4"></i>
             </button>
@@ -3572,6 +3641,7 @@ function renderPkdTable() {
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span>Hapus</span>
             </button>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -3582,6 +3652,10 @@ function renderPkdTable() {
 }
 
 function openAddPkdModal() {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   openAddKaderModal();
   currentModalMode = 'pkd';
   const title = document.getElementById('modal-kader-title');
@@ -3747,6 +3821,7 @@ function renderMabinkomList() {
   const counter = document.getElementById('mabinkom-filtered-count');
   if (!tbody) return;
 
+  const isKader = isKaderUser();
   const filtered = filterMabinkomData();
   if (counter) counter.textContent = `Menampilkan ${filtered.length} dari ${mabinkom.length} dewan pembina`;
 
@@ -3819,12 +3894,14 @@ function renderMabinkomList() {
             <button onclick="viewMabinkomDetail('${m.id}')" title="Lihat Profil" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
+            ${!isKader ? `
             <button onclick="openEditMabinkomModal('${m.id}')" title="Edit Data" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
               <i data-lucide="edit-3" class="w-4 h-4"></i>
             </button>
             <button onclick="deleteMabinkom('${m.id}')" title="Hapus Data" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -3841,6 +3918,10 @@ function handleSearchMabinkom(val) {
 
 // Modal Mabinkom Handlers
 function openAddMabinkomModal() {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   const form = document.getElementById('form-mabinkom');
   if (form) form.reset();
 
@@ -3854,6 +3935,10 @@ function openAddMabinkomModal() {
 }
 
 function openEditMabinkomModal(id) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   const mbk = mabinkom.find(m => m.id === id);
   if (!mbk) return;
 
@@ -3896,6 +3981,11 @@ function handleMabinkomFotoUpload(event) {
 function saveMabinkomForm(event) {
   event.preventDefault();
 
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const id = document.getElementById('mabinkom-id').value;
   const isEdit = !!id;
 
@@ -3927,6 +4017,11 @@ function saveMabinkomForm(event) {
 }
 
 function deleteMabinkom(id) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const mbk = mabinkom.find(m => m.id === id);
   if (!mbk) return;
 
@@ -4010,6 +4105,11 @@ function downloadMabinkomTemplate() {
 }
 
 function handleImportMabinkomFile(event) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const file = event.target.files[0];
   if (!file) return;
 
@@ -4300,6 +4400,7 @@ function renderPengurusCards() {
 }
 
 function createPengurusCardHTML(item, periode) {
+  const isKader = isKaderUser();
   return `
     <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:shadow-md transition flex flex-col justify-between group">
       <div>
@@ -4324,6 +4425,7 @@ function createPengurusCardHTML(item, periode) {
             <span>WhatsApp</span>
           </a>
         ` : '<span></span>'}
+        ${!isKader ? `
         <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
           <button onclick="openEditPengurusModal('${item.id}', '${periode}')" title="Edit Personalia" class="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100">
             <i data-lucide="edit" class="w-3.5 h-3.5"></i>
@@ -4332,6 +4434,7 @@ function createPengurusCardHTML(item, periode) {
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
           </button>
         </div>
+        ` : ''}
       </div>
     </div>
   `;
@@ -4445,6 +4548,10 @@ function resetAutofillPengurus() {
 }
 
 function openAddPengurusModal(id = null, periode = null) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   const modal = document.getElementById('modal-pengurus');
   if (!modal) return;
 
@@ -4484,6 +4591,10 @@ function openAddPengurusModal(id = null, periode = null) {
 }
 
 function openEditPengurusModal(id, periode) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   openAddPengurusModal(null, periode);
   const title = document.getElementById('modal-pengurus-title');
   if (title) title.textContent = 'Edit Personalia Pengurus';
@@ -4523,6 +4634,11 @@ function closePengurusModal() {
 
 function savePengurusForm(e) {
   e.preventDefault();
+
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
 
   const id = document.getElementById('pengurus-id').value;
   const periode = document.getElementById('pengurus-periode').value;
@@ -4579,6 +4695,11 @@ function savePengurusForm(e) {
 }
 
 function deletePengurus(id, periode) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const periodObj = pengurus.find(p => p.periode === periode || isKhidmatMatch(p, periode)) || getActivePengurusData();
   if (!periodObj) return;
 
@@ -4614,6 +4735,7 @@ function renderKetumSection() {
   const container = document.getElementById('ketum-grid');
   if (!container) return;
 
+  const isKader = isKaderUser();
   if (!ketumKom || ketumKom.length === 0) {
     ketumKom = typeof defaultKetumKom !== 'undefined' ? JSON.parse(JSON.stringify(defaultKetumKom)) : [];
   }
@@ -4681,6 +4803,7 @@ function renderKetumSection() {
             ` : ''}
           </div>
 
+          ${!isKader ? `
           <div class="flex items-center gap-1">
             <button onclick="openEditKetumModal('${k.id}')" title="Edit Riwayat Ketum" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition">
               <i data-lucide="edit" class="w-3.5 h-3.5"></i>
@@ -4689,6 +4812,7 @@ function renderKetumSection() {
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
+          ` : ''}
         </div>
 
       </div>
@@ -4804,6 +4928,10 @@ function resetAutofillKetum() {
 }
 
 function openAddKetumModal(id = null) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   const modal = document.getElementById('modal-ketum');
   if (!modal) return;
 
@@ -4823,6 +4951,10 @@ function openAddKetumModal(id = null) {
 }
 
 function openEditKetumModal(id) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
   openAddKetumModal();
   const title = document.getElementById('modal-ketum-title');
   if (title) title.textContent = 'Edit Riwayat KETUM KOM';
@@ -4862,6 +4994,11 @@ function closeKetumModal() {
 
 function saveKetumForm(e) {
   e.preventDefault();
+
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
 
   const id = document.getElementById('ketum-id').value;
   const tahun = document.getElementById('ketum-tahun').value;
@@ -4906,6 +5043,11 @@ function saveKetumForm(e) {
 }
 
 function deleteKetum(id) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
+    return;
+  }
+
   const item = ketumKom.find(k => k.id === id);
   const nameStr = item ? ` <strong>"${escapeHtml(item.nama)}"</strong> (${escapeHtml(item.periode || '')})` : '';
 
