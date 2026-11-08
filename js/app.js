@@ -3047,15 +3047,27 @@ function deleteKader(id) {
 
   showConfirmModal({
     title: 'Hapus Data Kader',
-    message: `Apakah Anda yakin ingin menghapus data kader: <strong>"${escapeHtml(kader.nama)}"</strong> (NIM: ${escapeHtml(kader.nim || '-')})?<br><span class="text-slate-400 text-xs mt-1 block">Data yang dihapus akan otomatis tersinkron ke Cloud.</span>`,
+    message: `Apakah Anda yakin ingin menghapus data kader: <strong>"${escapeHtml(kader.nama)}"</strong> (NIM: ${escapeHtml(kader.nim || '-')})?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus data kader ini dari sistem dan Neon Cloud.</span>`,
     confirmText: 'Ya, Hapus Data',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
+    onConfirm: async () => {
+      // 1. Hapus seketika dari database Cloud Neon
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_kader WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('Gagal delete langsung dari Neon:', e);
+        }
+      }
+
+      // 2. Hapus dari array kaders lokal
       kaders = kaders.filter(k => k.id !== id);
       saveData();
+
       showToast(`Data kader "${kader.nama}" berhasil dihapus.`, 'info');
+      closeKaderDetailModal();
       renderKaderSection();
       renderMapabaSection();
       renderPkdSection();
@@ -3063,6 +3075,12 @@ function deleteKader(id) {
       updateSidebarBadges();
     }
   });
+}
+
+function deleteKaderFromDetail() {
+  if (!currentKaderDetail) return;
+  const targetId = currentKaderDetail.id;
+  deleteKader(targetId);
 }
 
 function viewKaderDetail(id) {
