@@ -27,31 +27,60 @@ if (preg_match('/@([^:\/?]+)/', $connStr, $m)) {
 
 $neonEndpoint = "https://" . $host . "/sql";
 
-// Cek apakah batch queries atau single query
+// 1. Eksekusi Batch Queries secara Paralel (curl_multi) agar super cepat (<2 detik)
 if (isset($payload['queries']) && is_array($payload['queries'])) {
-    $results = [];
+    $validQueries = [];
     foreach ($payload['queries'] as $q) {
-        if (!is_string($q) || trim($q) === '') continue;
+        if (is_string($q) && trim($q) !== '') {
+            $validQueries[] = trim($q);
+        }
+    }
+
+    if (empty($validQueries)) {
+        header("Content-Type: application/json");
+        echo json_encode(['success' => true, 'results' => [], 'rowCount' => 0]);
+        exit;
+    }
+
+    $mh = curl_multi_init();
+    $handles = [];
+
+    foreach ($validQueries as $i => $q) {
         $ch = curl_init($neonEndpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['query' => trim($q)]));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['query' => $q]));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
             'Neon-Connection-String: ' . $connStr
         ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $res = curl_exec($ch);
-        curl_close($ch);
-        $results[] = json_decode($res, true) ?: $res;
+        curl_multi_add_handle($mh, $ch);
+        $handles[$i] = $ch;
     }
+
+    $running = null;
+    do {
+        curl_multi_exec($mh, $running);
+        curl_multi_select($mh);
+    } while ($running > 0);
+
+    $results = [];
+    foreach ($handles as $i => $ch) {
+        $content = curl_multi_getcontent($ch);
+        $results[$i] = json_decode($content, true) ?: $content;
+        curl_multi_remove_handle($mh, $ch);
+        curl_close($ch);
+    }
+    curl_multi_close($mh);
+
     header("Content-Type: application/json");
     echo json_encode(['success' => true, 'results' => $results, 'rowCount' => count($results)]);
     exit;
 }
 
-// Single query
+// 2. Single query
 $ch = curl_init($neonEndpoint);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
@@ -60,7 +89,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
     'Neon-Connection-String: ' . $connStr
 ]);
-curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
 $response = curl_exec($ch);

@@ -10273,21 +10273,32 @@ async function handleJoinKaderFormSubmit(event) {
     const generatedId = `KD-${angkatan}-${Math.floor(1000 + Math.random() * 9000)}`;
     const generatedKta = `13.01.${angkatan}.${Math.floor(100 + Math.random() * 900)}`;
 
+    const existingIdx = kaders.findIndex(k => k.nim === nim);
+    let finalId = generatedId;
+    let finalKta = generatedKta;
+    if (existingIdx !== -1) {
+      finalId = kaders[existingIdx].id || generatedId;
+      finalKta = kaders[existingIdx].noKta || generatedKta;
+    }
+
     const newKader = {
-      id: generatedId,
-      noKta: generatedKta,
+      id: finalId,
+      noKta: finalKta,
       nik: nik,
       nim: nim,
       nama: nama,
-      panggilan: panggilan,
+      panggilan: panggilan || nama,
+      namaPanggilan: panggilan || nama,
       gender: gender,
       tempatLahir: tempatLahir,
       tanggalLahir: tanggalLahir,
       ttl: tempatLahir ? `${tempatLahir}, ${tanggalLahir || ''}` : (tanggalLahir || '-'),
       fakultas: fakultas,
       jurusan: jurusan,
-      angkatan: angkatan,
+      angkatan: String(angkatan),
       statusKuliah: 'Aktif',
+      statusKader: 'Aktif',
+      statusKeaktifan: 'Aktif',
       whatsapp: whatsapp,
       email: email,
       alamat: alamat,
@@ -10303,29 +10314,32 @@ async function handleJoinKaderFormSubmit(event) {
       }
     };
 
-    // 1. Simpan ke database Neon Cloud jika online
+    // 1. Simpan langsung ke database Neon Cloud jika online
     if (typeof executeNeonSql === 'function') {
       try {
-        const cleanName = nama.replace(/'/g, "''");
-        const cleanPanggilan = panggilan.replace(/'/g, "''");
-        const cleanAlamat = alamat.replace(/'/g, "''");
-        const cleanTempatLahir = tempatLahir.replace(/'/g, "''");
-
         const sql = `
           INSERT INTO tb_kader (
-            id, nama, nama_panggilan, no_kta, nim, gender, tempat_lahir, tanggal_lahir,
+            id, no_kta, nik, nim, nama, nama_panggilan, gender, tempat_lahir, tanggal_lahir,
             fakultas, jurusan, angkatan, status_kuliah, alamat, whatsapp, email, foto,
             status_kader, formal, tahun_mapaba, penyelenggara_mapaba, kopri
           ) VALUES (
-            '${newKader.id}', '${cleanName}', ${cleanPanggilan ? `'${cleanPanggilan}'` : 'NULL'},
-            '${newKader.noKta}', '${newKader.nim}', '${newKader.gender}', ${cleanTempatLahir ? `'${cleanTempatLahir}'` : 'NULL'},
-            ${newKader.tanggalLahir ? `'${newKader.tanggalLahir}'` : 'NULL'}, '${newKader.fakultas}', '${newKader.jurusan}',
-            '${newKader.angkatan}', 'Aktif', ${cleanAlamat ? `'${cleanAlamat}'` : 'NULL'},
-            ${newKader.whatsapp ? `'${newKader.whatsapp}'` : 'NULL'}, ${newKader.email ? `'${newKader.email}'` : 'NULL'},
-            ${newKader.foto ? `'${newKader.foto}'` : 'NULL'}, 'Aktif', '${newKader.kaderisasi.formal}', '${newKader.kaderisasi.tahunMapaba}',
-            '${newKader.kaderisasi.penyelenggaraMapaba}', '${newKader.kaderisasi.kopri}'
-          ) ON CONFLICT (nim) DO UPDATE SET
+            ${sqlEscape(newKader.id)}, ${sqlEscape(newKader.noKta)}, ${sqlEscape(newKader.nik)}, ${sqlEscape(newKader.nim)},
+            ${sqlEscape(newKader.nama)}, ${sqlEscape(newKader.namaPanggilan)}, ${sqlEscape(newKader.gender)},
+            ${sqlEscape(newKader.tempatLahir)}, ${newKader.tanggalLahir ? sqlEscape(newKader.tanggalLahir) : 'NULL'},
+            ${sqlEscape(newKader.fakultas)}, ${sqlEscape(newKader.jurusan)}, ${sqlEscape(String(newKader.angkatan))},
+            'Aktif', ${sqlEscape(newKader.alamat)}, ${sqlEscape(newKader.whatsapp)}, ${sqlEscape(newKader.email)},
+            ${sqlEscape(newKader.foto)}, 'Aktif', ${sqlEscape(newKader.kaderisasi.formal)},
+            ${sqlEscape(newKader.kaderisasi.tahunMapaba)}, ${sqlEscape(newKader.kaderisasi.penyelenggaraMapaba)},
+            ${sqlEscape(newKader.kaderisasi.kopri)}
+          ) ON CONFLICT (id) DO UPDATE SET
             nama = EXCLUDED.nama,
+            nama_panggilan = EXCLUDED.nama_panggilan,
+            no_kta = EXCLUDED.no_kta,
+            nim = EXCLUDED.nim,
+            fakultas = EXCLUDED.fakultas,
+            jurusan = EXCLUDED.jurusan,
+            angkatan = EXCLUDED.angkatan,
+            whatsapp = EXCLUDED.whatsapp,
             foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
             updated_at = CURRENT_TIMESTAMP;
         `;
@@ -10336,9 +10350,7 @@ async function handleJoinKaderFormSubmit(event) {
     }
 
     // 2. Simpan ke array lokal kaders
-    const existingIdx = kaders.findIndex(k => k.nim === nim);
     if (existingIdx !== -1) {
-      newKader.id = kaders[existingIdx].id;
       kaders[existingIdx] = Object.assign(kaders[existingIdx], newKader);
     } else {
       kaders.unshift(newKader);
