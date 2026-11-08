@@ -209,7 +209,11 @@ function applyUserRolePermissions() {
 }
 
 function checkAuthStatus() {
-  const savedUser = localStorage.getItem('pmii_current_user') || sessionStorage.getItem('pmii_current_user');
+  // Opsi B: Wajib login setiap kali aplikasi baru dibuka.
+  // Hapus jejak sesi lama dari localStorage agar tidak auto-login lintas sesi
+  localStorage.removeItem('pmii_current_user');
+
+  const savedUser = sessionStorage.getItem('pmii_current_user');
   const loginScreen = document.getElementById('login-screen');
   
   if (savedUser) {
@@ -229,6 +233,7 @@ function checkAuthStatus() {
   }
 
   // Belum login -> Tampilkan Layar Login di Tengah
+  currentUser = null;
   if (loginScreen) {
     loginScreen.classList.remove('hidden');
     loginScreen.classList.add('flex');
@@ -358,12 +363,9 @@ async function handleLoginSubmit(event) {
 
     if (match) {
       currentUser = match;
-      const remember = rememberInput ? rememberInput.checked : true;
-      if (remember) {
-        localStorage.setItem('pmii_current_user', JSON.stringify(currentUser));
-      } else {
-        sessionStorage.setItem('pmii_current_user', JSON.stringify(currentUser));
-      }
+      // Opsi B: Hanya simpan di sessionStorage agar wajib login setiap kali aplikasi dibuka kembali
+      sessionStorage.setItem('pmii_current_user', JSON.stringify(currentUser));
+      localStorage.removeItem('pmii_current_user');
 
       if (errorAlert) errorAlert.classList.add('hidden');
       
