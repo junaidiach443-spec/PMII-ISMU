@@ -1,9 +1,9 @@
 /**
  * Service Worker - Sistem Informasi & Pendataan Kader PK PMII ISMU
- * Versi 3.1: Resilient Cache & Cross-Device PWA Support
+ * Versi 3.4: Fix ERR_FAILED & Bulletproof Offline Fallback
  */
 
-const CACHE_NAME = 'pmii-ismu-v3.2';
+const CACHE_NAME = 'pmii-ismu-v3.4';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -16,14 +16,14 @@ const STATIC_ASSETS = [
   './manifest.json'
 ];
 
-// Install: Cache aset satu per satu agar tidak gagal total jika satu berkas redirect
+// Install: Cache aset penting satu per satu secara aman
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
       for (const asset of STATIC_ASSETS) {
         try {
-          const res = await fetch(asset, { redirect: 'follow' });
+          const res = await fetch(asset);
           if (res && res.status === 200) {
             await cache.put(asset, res);
           }
@@ -35,7 +35,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: Bersihkan cache versi lama
+// Activate: Hapus cache versi lama secara tuntas & ambil alih klien aktif
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -56,32 +56,36 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 2. Navigasi Dokumen HTML (PWA Start URL & Halaman): Network-First
+  // 2. Navigasi Halaman HTML (PWA Start URL & Navigasi Antar Tab/Halaman)
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req, { redirect: 'follow' })
-        .then(response => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(c => c.put(req, copy));
+      (async () => {
+        try {
+          // Jangan berikan opsi kedua ke fetch(req) pada mode navigate karena memicu TypeError ERR_FAILED di Chromium
+          const networkRes = await fetch(req);
+          if (networkRes && networkRes.status === 200) {
+            const copy = networkRes.clone();
+            caches.open(CACHE_NAME).then(c => c.put(req, copy)).catch(() => {});
           }
-          return response;
-        })
-        .catch(async () => {
-          // Offline Fallback
+          return networkRes;
+        } catch (fetchErr) {
+          console.warn('[SW] Navigasi offline, mencoba mengambil dari cache...', fetchErr);
+          // Coba cari cache yang cocok
           const cached = await caches.match(req);
           if (cached) return cached;
 
-          const rootCached = await caches.match('./') || 
-                             await caches.match('./index.html') || 
-                             await caches.match('/');
+          const rootCached = (await caches.match('./')) || 
+                             (await caches.match('./index.html')) || 
+                             (await caches.match('/index.html')) || 
+                             (await caches.match('/'));
           if (rootCached) return rootCached;
 
           return new Response(
-            '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PMII ISMU - Offline</title></head><body style="font-family:sans-serif;text-align:center;padding:50px 20px;"><h2>Aplikasi Sedang Offline</h2><p>Silakan hubungkan perangkat Anda ke internet dan muat ulang halaman ini.</p><button onclick="location.reload()" style="padding:10px 20px;border-radius:10px;background:#002b66;color:#fff;border:none;cursor:pointer;">Muat Ulang</button></body></html>',
+            '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PMII ISMU - Mode Offline</title><style>body{font-family:sans-serif;text-align:center;padding:50px 20px;background:#f8fafc;color:#1e293b;}h2{color:#002b66;}button{padding:12px 24px;border-radius:12px;background:#002b66;color:#fff;border:none;cursor:pointer;font-weight:bold;margin-top:16px;}</style></head><body><h2>Aplikasi Sedang Offline</h2><p>Silakan hubungkan perangkat Anda ke internet untuk memuat data terbaru.</p><button onclick="location.reload()">Muat Ulang Halaman</button></body></html>',
             { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
           );
-        })
+        }
+      })()
     );
     return;
   }
@@ -93,7 +97,7 @@ self.addEventListener('fetch', event => {
         .then(networkRes => {
           if (networkRes && networkRes.status === 200) {
             const copy = networkRes.clone();
-            caches.open(CACHE_NAME).then(c => c.put(req, copy));
+            caches.open(CACHE_NAME).then(c => c.put(req, copy)).catch(() => {});
           }
           return networkRes;
         })

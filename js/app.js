@@ -902,12 +902,40 @@ async function executeNeonSql(query, params = []) {
     throw new Error('Konfigurasi database Neon belum lengkap atau tidak valid.');
   }
 
+  // Strategi 1: Gunakan Vercel Serverless Function Proxy (/api/neon) jika di web
+  // Menghilangkan kendala CORS, adblocker, dan DNS timeout pada browser/HP
+  if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const proxyRes = await fetch('api/neon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Neon-Connection-String': cfg.connectionString || ''
+        },
+        body: JSON.stringify({ query, params }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (proxyRes.ok) {
+        const json = await proxyRes.json();
+        return json.rows || json.results || [];
+      } else {
+        const errJson = await proxyRes.json().catch(() => ({}));
+        console.warn('[executeNeonSql] api/neon status:', proxyRes.status, errJson);
+      }
+    } catch (proxyErr) {
+      console.warn('[executeNeonSql] Serverless proxy lewati / fallback:', proxyErr.message);
+    }
+  }
+
+  // Strategi 2: Direct client fetch ke endpoint Neon HTTP
   const headers = {
     'Content-Type': 'application/json'
   };
 
-  // PENTING: Untuk Neon HTTP /sql, kirimkan Neon-Connection-String saja.
-  // Jangan kirim Authorization Bearer bersamaan karena akan ditolak oleh proxy Neon.
   if (cfg.connectionString) {
     headers['Neon-Connection-String'] = cfg.connectionString;
   } else if (cfg.password) {
@@ -916,19 +944,27 @@ async function executeNeonSql(query, params = []) {
 
   let res;
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
     res = await fetch(cfg.sqlEndpoint, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ query, params })
+      body: JSON.stringify({ query, params }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
   } catch (err) {
     // Jika endpoint tanpa -pooler gagal, coba endpoint dengan hostname asli
     if (cfg.host && cfg.host !== cfg.cleanHost) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
       res = await fetch(`https://${cfg.host}/sql`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ query, params })
+        body: JSON.stringify({ query, params }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
     } else {
       throw err;
     }
@@ -946,6 +982,49 @@ async function executeNeonSql(query, params = []) {
 
   const json = await res.json();
   return json.rows || [];
+}
+
+async function executeNeonBatch(queries = []) {
+  if (!queries || queries.length === 0) return [];
+  const cfg = getCloudConfig();
+  if (!cfg || cfg.type !== 'neon') {
+    throw new Error('Konfigurasi database Neon belum lengkap atau tidak valid.');
+  }
+
+  // Strategi 1: Kirim seluruh query sekaligus ke Vercel Serverless Function Proxy (/api/neon)
+  if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      const proxyRes = await fetch('api/neon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Neon-Connection-String': cfg.connectionString || ''
+        },
+        body: JSON.stringify({ queries }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (proxyRes.ok) {
+        const json = await proxyRes.json();
+        return json.results || [];
+      }
+    } catch (proxyErr) {
+      console.warn('[executeNeonBatch] Proxy batch gagal, beralih ke sequential:', proxyErr.message);
+    }
+  }
+
+  // Strategi 2: Eksekusi berurutan satu per satu jika proxy tidak tersedia
+  const results = [];
+  for (const q of queries) {
+    if (typeof q === 'string' && q.trim()) {
+      const r = await executeNeonSql(q.trim());
+      results.push(r);
+    }
+  }
+  return results;
 }
 
 async function testCloudConnection(silent = false) {
@@ -995,31 +1074,68 @@ async function fetchDataFromCloud(silent = false) {
 
   try {
     if (cfg.type === 'neon') {
-      const results = await Promise.allSettled([
-        executeNeonSql('SELECT * FROM tb_komisariat LIMIT 1'),
-        executeNeonSql('SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC'),
-        executeNeonSql('SELECT * FROM tb_mabinkom ORDER BY id ASC'),
-        executeNeonSql('SELECT * FROM tb_pemasukan ORDER BY tanggal DESC, id DESC'),
-        executeNeonSql('SELECT * FROM tb_pengeluaran ORDER BY tanggal DESC, id DESC'),
-        executeNeonSql('SELECT * FROM tb_anggaran_rab ORDER BY pos ASC, id ASC'),
-        executeNeonSql('SELECT * FROM tb_periode_pengurus ORDER BY periode DESC'),
-        executeNeonSql('SELECT * FROM tb_struktur_pengurus ORDER BY urutan ASC, id ASC'),
-        executeNeonSql('SELECT * FROM tb_ketum_kom ORDER BY tahun_mulai DESC'),
-        executeNeonSql('SELECT * FROM tb_rapat ORDER BY tanggal DESC, id DESC'),
-        executeNeonSql('SELECT * FROM tb_presensi_rapat ORDER BY id ASC')
-      ]);
+      let komRows = [], kdrRows = [], mbnRows = [], pmsRows = [], pngRows = [];
+      let agrRows = [], prdRows = [], strRows = [], ktmRows = [], rptRows = [], prsRows = [];
 
-      const komRows = results[0].status === 'fulfilled' ? results[0].value : [];
-      const kdrRows = results[1].status === 'fulfilled' ? results[1].value : [];
-      const mbnRows = results[2].status === 'fulfilled' ? results[2].value : [];
-      const pmsRows = results[3].status === 'fulfilled' ? results[3].value : [];
-      const pngRows = results[4].status === 'fulfilled' ? results[4].value : [];
-      const agrRows = results[5].status === 'fulfilled' ? results[5].value : [];
-      const prdRows = results[6].status === 'fulfilled' ? results[6].value : [];
-      const strRows = results[7].status === 'fulfilled' ? results[7].value : [];
-      const ktmRows = results[8].status === 'fulfilled' ? results[8].value : [];
-      const rptRows = results[9].status === 'fulfilled' ? results[9].value : [];
-      const prsRows = results[10].status === 'fulfilled' ? results[10].value : [];
+      try {
+        // High-speed single round-trip fetch
+        const singleQuery = `
+          SELECT 
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_komisariat LIMIT 1) t) as komisariat,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC) t) as kader,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_mabinkom ORDER BY id ASC) t) as mabinkom,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_pemasukan ORDER BY tanggal DESC, id DESC) t) as pemasukan,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_pengeluaran ORDER BY tanggal DESC, id DESC) t) as pengeluaran,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_anggaran_rab ORDER BY pos ASC, id ASC) t) as anggaran,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_periode_pengurus ORDER BY periode DESC) t) as periode,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_struktur_pengurus ORDER BY urutan ASC, id ASC) t) as struktur,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_ketum_kom ORDER BY tahun_mulai DESC) t) as ketum,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_rapat ORDER BY tanggal DESC, id DESC) t) as rapat,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_presensi_rapat ORDER BY id ASC) t) as presensi;
+        `;
+        const res = await executeNeonSql(singleQuery);
+        if (res && res[0]) {
+          const b = res[0];
+          komRows = b.komisariat || [];
+          kdrRows = b.kader || [];
+          mbnRows = b.mabinkom || [];
+          pmsRows = b.pemasukan || [];
+          pngRows = b.pengeluaran || [];
+          agrRows = b.anggaran || [];
+          prdRows = b.periode || [];
+          strRows = b.struktur || [];
+          ktmRows = b.ketum || [];
+          rptRows = b.rapat || [];
+          prsRows = b.presensi || [];
+        }
+      } catch (batchErr) {
+        console.warn('Single round-trip fetch lewati / coba per tabel:', batchErr.message);
+        const results = await Promise.allSettled([
+          executeNeonSql('SELECT * FROM tb_komisariat LIMIT 1'),
+          executeNeonSql('SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC'),
+          executeNeonSql('SELECT * FROM tb_mabinkom ORDER BY id ASC'),
+          executeNeonSql('SELECT * FROM tb_pemasukan ORDER BY tanggal DESC, id DESC'),
+          executeNeonSql('SELECT * FROM tb_pengeluaran ORDER BY tanggal DESC, id DESC'),
+          executeNeonSql('SELECT * FROM tb_anggaran_rab ORDER BY pos ASC, id ASC'),
+          executeNeonSql('SELECT * FROM tb_periode_pengurus ORDER BY periode DESC'),
+          executeNeonSql('SELECT * FROM tb_struktur_pengurus ORDER BY urutan ASC, id ASC'),
+          executeNeonSql('SELECT * FROM tb_ketum_kom ORDER BY tahun_mulai DESC'),
+          executeNeonSql('SELECT * FROM tb_rapat ORDER BY tanggal DESC, id DESC'),
+          executeNeonSql('SELECT * FROM tb_presensi_rapat ORDER BY id ASC')
+        ]);
+
+        komRows = results[0].status === 'fulfilled' ? results[0].value : [];
+        kdrRows = results[1].status === 'fulfilled' ? results[1].value : [];
+        mbnRows = results[2].status === 'fulfilled' ? results[2].value : [];
+        pmsRows = results[3].status === 'fulfilled' ? results[3].value : [];
+        pngRows = results[4].status === 'fulfilled' ? results[4].value : [];
+        agrRows = results[5].status === 'fulfilled' ? results[5].value : [];
+        prdRows = results[6].status === 'fulfilled' ? results[6].value : [];
+        strRows = results[7].status === 'fulfilled' ? results[7].value : [];
+        ktmRows = results[8].status === 'fulfilled' ? results[8].value : [];
+        rptRows = results[9].status === 'fulfilled' ? results[9].value : [];
+        prsRows = results[10].status === 'fulfilled' ? results[10].value : [];
+      }
 
       // 1. Profil Komisariat
       if (komRows && komRows.length > 0) {
@@ -1274,6 +1390,8 @@ async function syncToCloudServer(silent = true) {
 
   try {
     if (cfg.type === 'neon') {
+      const neonQueries = [];
+
       // 1. Komisariat
       const qKom = `
         INSERT INTO tb_komisariat (id, nama, nama_lengkap, kampus, cabang, pkc, masa_khidmat, ketua_komisariat, sekretaris_komisariat, bendahara_komisariat, nomor_sk, alamat, email, telepon)
@@ -1285,7 +1403,7 @@ async function syncToCloudServer(silent = true) {
           bendahara_komisariat = EXCLUDED.bendahara_komisariat, nomor_sk = EXCLUDED.nomor_sk,
           alamat = EXCLUDED.alamat, email = EXCLUDED.email, telepon = EXCLUDED.telepon, updated_at = CURRENT_TIMESTAMP;
       `;
-      await executeNeonSql(qKom);
+      neonQueries.push(qKom);
 
       // 2. Kader
       if (kaders && kaders.length > 0) {
@@ -1308,10 +1426,10 @@ async function syncToCloudServer(silent = true) {
             tahun_pkd = EXCLUDED.tahun_pkd, penyelenggara_pkd = EXCLUDED.penyelenggara_pkd, tahun_pkl = EXCLUDED.tahun_pkl,
             kopri = EXCLUDED.kopri, tahun_sig = EXCLUDED.tahun_sig, tahun_skk = EXCLUDED.tahun_skk, updated_at = CURRENT_TIMESTAMP;
         `;
-        await executeNeonSql(qKader);
-        await executeNeonSql(`DELETE FROM tb_kader WHERE id NOT IN (${validIds});`);
+        neonQueries.push(qKader);
+        neonQueries.push(`DELETE FROM tb_kader WHERE id NOT IN (${validIds});`);
       } else {
-        await executeNeonSql('DELETE FROM tb_kader;');
+        neonQueries.push('DELETE FROM tb_kader;');
       }
 
       // 3. Mabinkom
@@ -1328,10 +1446,10 @@ async function syncToCloudServer(silent = true) {
             nama = EXCLUDED.nama, gelar = EXCLUDED.gelar, jabatan = EXCLUDED.jabatan, periode = EXCLUDED.periode,
             kiprah = EXCLUDED.kiprah, profesi = EXCLUDED.profesi, kontak = EXCLUDED.kontak, foto = EXCLUDED.foto, status = EXCLUDED.status;
         `;
-        await executeNeonSql(qMabinkom);
-        await executeNeonSql(`DELETE FROM tb_mabinkom WHERE id NOT IN (${validIds});`);
+        neonQueries.push(qMabinkom);
+        neonQueries.push(`DELETE FROM tb_mabinkom WHERE id NOT IN (${validIds});`);
       } else {
-        await executeNeonSql('DELETE FROM tb_mabinkom;');
+        neonQueries.push('DELETE FROM tb_mabinkom;');
       }
 
       // 4. Pemasukan
@@ -1348,10 +1466,10 @@ async function syncToCloudServer(silent = true) {
             bukti = EXCLUDED.bukti, tanggal = EXCLUDED.tanggal, kategori = EXCLUDED.kategori,
             keterangan = EXCLUDED.keterangan, diterima_dari = EXCLUDED.diterima_dari, pic = EXCLUDED.pic, jumlah = EXCLUDED.jumlah;
         `;
-        await executeNeonSql(qPemasukan);
-        await executeNeonSql(`DELETE FROM tb_pemasukan WHERE id NOT IN (${validIds});`);
+        neonQueries.push(qPemasukan);
+        neonQueries.push(`DELETE FROM tb_pemasukan WHERE id NOT IN (${validIds});`);
       } else {
-        await executeNeonSql('DELETE FROM tb_pemasukan;');
+        neonQueries.push('DELETE FROM tb_pemasukan;');
       }
 
       // 5. Pengeluaran
@@ -1370,10 +1488,10 @@ async function syncToCloudServer(silent = true) {
             pos = EXCLUDED.pos, bukti = EXCLUDED.bukti, tanggal = EXCLUDED.tanggal, kategori = EXCLUDED.kategori,
             kegiatan = EXCLUDED.kegiatan, keterangan = EXCLUDED.keterangan, pic = EXCLUDED.pic, jumlah = EXCLUDED.jumlah;
         `;
-        await executeNeonSql(qPengeluaran);
-        await executeNeonSql(`DELETE FROM tb_pengeluaran WHERE id NOT IN (${validIds});`);
+        neonQueries.push(qPengeluaran);
+        neonQueries.push(`DELETE FROM tb_pengeluaran WHERE id NOT IN (${validIds});`);
       } else {
-        await executeNeonSql('DELETE FROM tb_pengeluaran;');
+        neonQueries.push('DELETE FROM tb_pengeluaran;');
       }
 
       // 6. Anggaran RAB
@@ -1390,10 +1508,10 @@ async function syncToCloudServer(silent = true) {
             pos = EXCLUDED.pos, kegiatan = EXCLUDED.kegiatan, nama = EXCLUDED.nama, jumlah = EXCLUDED.jumlah,
             tanggal_target = EXCLUDED.tanggal_target, status = EXCLUDED.status, keterangan = EXCLUDED.keterangan;
         `;
-        await executeNeonSql(qAnggaran);
-        await executeNeonSql(`DELETE FROM tb_anggaran_rab WHERE id NOT IN (${validIds});`);
+        neonQueries.push(qAnggaran);
+        neonQueries.push(`DELETE FROM tb_anggaran_rab WHERE id NOT IN (${validIds});`);
       } else {
-        await executeNeonSql('DELETE FROM tb_anggaran_rab;');
+        neonQueries.push('DELETE FROM tb_anggaran_rab;');
       }
 
       // 7. Pengurus & Struktur
@@ -1411,7 +1529,7 @@ async function syncToCloudServer(silent = true) {
           }
         });
 
-        await executeNeonSql(`
+        neonQueries.push(`
           INSERT INTO tb_periode_pengurus (periode, tema, is_aktif, sk_pengesahan)
           VALUES ${perValues}
           ON CONFLICT (periode) DO UPDATE SET
@@ -1424,16 +1542,16 @@ async function syncToCloudServer(silent = true) {
           }).join(', ');
           const validStrIds = allStruktur.map(s => sqlEscape(s.id)).join(', ');
 
-          await executeNeonSql(`
+          neonQueries.push(`
             INSERT INTO tb_struktur_pengurus (id, periode, kategori, jabatan, nama, fakultas, kontak, foto, status, urutan)
             VALUES ${strValues}
             ON CONFLICT (id) DO UPDATE SET
               periode = EXCLUDED.periode, kategori = EXCLUDED.kategori, jabatan = EXCLUDED.jabatan, nama = EXCLUDED.nama,
               fakultas = EXCLUDED.fakultas, kontak = EXCLUDED.kontak, foto = EXCLUDED.foto, status = EXCLUDED.status, urutan = EXCLUDED.urutan;
           `);
-          await executeNeonSql(`DELETE FROM tb_struktur_pengurus WHERE id NOT IN (${validStrIds});`);
+          neonQueries.push(`DELETE FROM tb_struktur_pengurus WHERE id NOT IN (${validStrIds});`);
         } else {
-          await executeNeonSql('DELETE FROM tb_struktur_pengurus;');
+          neonQueries.push('DELETE FROM tb_struktur_pengurus;');
         }
       }
 
@@ -1452,10 +1570,10 @@ async function syncToCloudServer(silent = true) {
             tahun_selesai = EXCLUDED.tahun_selesai, foto = EXCLUDED.foto, profesi_sekarang = EXCLUDED.profesi_sekarang,
             kontak = EXCLUDED.kontak, fakultas = EXCLUDED.fakultas, status = EXCLUDED.status, visi = EXCLUDED.visi, prestasi = EXCLUDED.prestasi;
         `;
-        await executeNeonSql(qKetum);
-        await executeNeonSql(`DELETE FROM tb_ketum_kom WHERE id NOT IN (${validIds});`);
+        neonQueries.push(qKetum);
+        neonQueries.push(`DELETE FROM tb_ketum_kom WHERE id NOT IN (${validIds});`);
       } else {
-        await executeNeonSql('DELETE FROM tb_ketum_kom;');
+        neonQueries.push('DELETE FROM tb_ketum_kom;');
       }
 
       // 9. Rapat & Presensi
@@ -1481,23 +1599,25 @@ async function syncToCloudServer(silent = true) {
             agenda = EXCLUDED.agenda, tanggal = EXCLUDED.tanggal, waktu = EXCLUDED.waktu,
             tempat = EXCLUDED.tempat, pimpinan = EXCLUDED.pimpinan, notulis = EXCLUDED.notulis, notulensi = EXCLUDED.notulensi;
         `;
-        await executeNeonSql(qRapat);
-        await executeNeonSql(`DELETE FROM tb_presensi_rapat WHERE rapat_id IN (${validIds});`);
+        neonQueries.push(qRapat);
+        neonQueries.push(`DELETE FROM tb_presensi_rapat WHERE rapat_id IN (${validIds});`);
 
         if (allPresensi.length > 0) {
           const prsValues = allPresensi.map(p => {
             return `(${sqlEscape(p.rapat_id)}, ${sqlEscape(p.id)}, ${sqlEscape(p.nama)}, ${sqlEscape(p.jabatan)}, ${sqlEscape(p.status || 'Hadir')}, ${sqlEscape(p.keterangan)})`;
           }).join(', ');
-          await executeNeonSql(`
+          neonQueries.push(`
             INSERT INTO tb_presensi_rapat (rapat_id, pengurus_id, nama, jabatan, status, keterangan)
             VALUES ${prsValues};
           `);
         }
-        await executeNeonSql(`DELETE FROM tb_rapat WHERE id NOT IN (${validIds});`);
+        neonQueries.push(`DELETE FROM tb_rapat WHERE id NOT IN (${validIds});`);
       } else {
-        await executeNeonSql('DELETE FROM tb_presensi_rapat;');
-        await executeNeonSql('DELETE FROM tb_rapat;');
+        neonQueries.push('DELETE FROM tb_presensi_rapat;');
+        neonQueries.push('DELETE FROM tb_rapat;');
       }
+
+      await executeNeonBatch(neonQueries);
 
       databaseMode = 'neon';
       updateDbStatusIndicator(true, { count: kaders.length, type: 'neon' });
