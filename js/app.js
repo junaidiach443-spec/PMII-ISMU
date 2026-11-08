@@ -199,7 +199,7 @@ function applyUserRolePermissions() {
   const isKader = isKaderUser();
   if (isKader) {
     document.body.classList.add('role-kader');
-    const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum'];
+    const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'kta', 'joinkader'];
     if (typeof currentTab !== 'undefined' && !cadreAllowedTabs.includes(currentTab)) {
       if (typeof switchTab === 'function') switchTab('dashboard');
     }
@@ -1616,7 +1616,7 @@ function resetToDefaultData() {
 // 3. TAB NAVIGATION & CORE RENDER
 // ==========================================
 function switchTab(tabName) {
-  const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum'];
+  const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'kta', 'joinkader'];
   if (isKaderUser() && !cadreAllowedTabs.includes(tabName)) {
     tabName = 'dashboard';
   }
@@ -1624,7 +1624,7 @@ function switchTab(tabName) {
   currentTab = tabName;
 
   const tabIds = [
-    'dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'rapat', 'broadcast', 'kta',
+    'dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'kta', 'joinkader', 'rapat', 'broadcast',
     'pemasukan', 'pengeluaran', 'anggaran', 'laporan', 'pengaturan'
   ];
 
@@ -1659,9 +1659,10 @@ function switchTab(tabName) {
   if (tabName === 'mabinkom') renderMabinkomSection();
   if (tabName === 'pengurus') renderPengurusSection();
   if (tabName === 'ketum') renderKetumSection();
+  if (tabName === 'kta') renderKtaSection();
+  if (tabName === 'joinkader') initJoinKaderTab();
   if (tabName === 'rapat') renderRapatSection();
   if (tabName === 'broadcast') renderBroadcastSection();
-  if (tabName === 'kta') renderKtaSection();
   if (tabName === 'pemasukan') renderPemasukanSection();
   if (tabName === 'pengeluaran') renderPengeluaranSection();
   if (tabName === 'anggaran') renderAnggaranSection();
@@ -9989,3 +9990,265 @@ function closePwaGuideModal() {
 if (typeof window !== 'undefined') {
   initPwaInstallHandlers();
 }
+
+// ==========================================
+// MODUL: JOIN KADER (PENDAFTARAN MANDIRI KADER)
+// ==========================================
+let newlyJoinedKaderId = null;
+
+const JOIN_PRODI_BY_FAKULTAS = {
+  "Fakultas Tarbiyah": [
+    "Pendidikan Agama Islam (PAI)",
+    "Manajemen Pendidikan Islam (MPI)",
+    "Pendidikan Guru Madrasah Ibtidaiyah (PGMI)"
+  ],
+  "Fakultas Syariah": [
+    "Hukum Keluarga Islam (HKI / Ahwal Syakhshiyyah)",
+    "Hukum Ekonomi Syariah (HES / Muamalah)"
+  ],
+  "Fakultas Ekonomi & Bisnis Islam": [
+    "Ekonomi Syariah",
+    "Perbankan Syariah"
+  ],
+  "Program Pascasarjana": [
+    "Magister Pendidikan Agama Islam (S2 PAI)"
+  ]
+};
+
+function initJoinKaderTab() {
+  const selFakultas = document.getElementById('join-fakultas');
+  if (selFakultas) {
+    handleJoinKaderFakultasChange(selFakultas.value || 'Fakultas Tarbiyah');
+  }
+  const selGender = document.getElementById('join-gender');
+  if (selGender) {
+    handleJoinKaderGenderChange(selGender.value || 'Laki-laki');
+  }
+  initLucide();
+}
+
+function handleJoinKaderFakultasChange(fakultas) {
+  const selJurusan = document.getElementById('join-jurusan');
+  if (!selJurusan) return;
+
+  const prodiList = JOIN_PRODI_BY_FAKULTAS[fakultas] || JOIN_PRODI_BY_FAKULTAS["Fakultas Tarbiyah"];
+  selJurusan.innerHTML = prodiList.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+function handleJoinKaderGenderChange(gender) {
+  const kopriSec = document.getElementById('join-section-kopri');
+  if (!kopriSec) return;
+  if (gender === 'Perempuan') {
+    kopriSec.classList.remove('hidden');
+  } else {
+    kopriSec.classList.add('hidden');
+  }
+}
+
+function handleJoinKaderFotoUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const maxDim = 500;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxDim) {
+          height *= maxDim / width;
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width *= maxDim / height;
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      const previewImg = document.getElementById('join-foto-preview');
+      const hiddenInput = document.getElementById('join-foto-base64');
+
+      if (previewImg) previewImg.src = compressedBase64;
+      if (hiddenInput) hiddenInput.value = compressedBase64;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleJoinKaderFormSubmit(event) {
+  if (event) event.preventDefault();
+
+  const btnSubmit = document.getElementById('btn-submit-joinkader');
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span><span>Menyimpan Pendaftaran...</span>';
+  }
+
+  try {
+    const nama = (document.getElementById('join-nama')?.value || '').trim();
+    const panggilan = (document.getElementById('join-panggilan')?.value || '').trim();
+    const gender = document.getElementById('join-gender')?.value || 'Laki-laki';
+    const nik = (document.getElementById('join-nik')?.value || '').trim();
+    const tempatLahir = (document.getElementById('join-tempat-lahir')?.value || '').trim();
+    const tanggalLahir = document.getElementById('join-tanggal-lahir')?.value || '';
+    const alamat = (document.getElementById('join-alamat')?.value || '').trim();
+
+    const nim = (document.getElementById('join-nim')?.value || '').trim();
+    const angkatan = parseInt(document.getElementById('join-angkatan')?.value) || new Date().getFullYear();
+    const fakultas = document.getElementById('join-fakultas')?.value || 'Fakultas Tarbiyah';
+    const jurusan = document.getElementById('join-jurusan')?.value || 'Pendidikan Agama Islam (PAI)';
+
+    const rawWa = (document.getElementById('join-whatsapp')?.value || '').trim();
+    let whatsapp = rawWa.replace(/[^0-9]/g, '');
+    if (whatsapp.startsWith('0')) whatsapp = '62' + whatsapp.slice(1);
+    const email = (document.getElementById('join-email')?.value || '').trim();
+
+    const formal = document.getElementById('join-formal')?.value || 'MAPABA';
+    const jabatan = (document.getElementById('join-jabatan')?.value || '').trim() || 'Anggota Kader';
+    const tahunMapaba = (document.getElementById('join-tahun-mapaba')?.value || '').trim() || String(angkatan);
+    const penyMapaba = (document.getElementById('join-penyelenggara-mapaba')?.value || '').trim() || (komisariat.nama || 'PK PMII ISMU');
+    const kopri = (gender === 'Perempuan') ? (document.getElementById('join-kopri')?.value || '-') : '-';
+
+    // Foto default jika belum upload
+    const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=faces';
+    const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=faces';
+    const foto = document.getElementById('join-foto-base64')?.value || (gender === 'Perempuan' ? defaultFemale : defaultMale);
+
+    const generatedId = `KD-${angkatan}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const generatedKta = `13.01.${angkatan}.${Math.floor(100 + Math.random() * 900)}`;
+
+    const newKader = {
+      id: generatedId,
+      noKta: generatedKta,
+      nik: nik,
+      nim: nim,
+      nama: nama,
+      panggilan: panggilan,
+      gender: gender,
+      tempatLahir: tempatLahir,
+      tanggalLahir: tanggalLahir,
+      ttl: tempatLahir ? `${tempatLahir}, ${tanggalLahir || ''}` : (tanggalLahir || '-'),
+      fakultas: fakultas,
+      jurusan: jurusan,
+      angkatan: angkatan,
+      statusKuliah: 'Aktif',
+      whatsapp: whatsapp,
+      email: email,
+      alamat: alamat,
+      jabatan: jabatan,
+      foto: foto,
+      kaderisasi: {
+        formal: formal,
+        tahunMapaba: tahunMapaba,
+        penyelenggaraMapaba: penyMapaba,
+        tahunPkd: formal === 'PKD' ? String(angkatan) : '',
+        penyelenggaraPkd: formal === 'PKD' ? 'PC PMII Kab. Sumenep' : '',
+        kopri: kopri
+      }
+    };
+
+    // 1. Simpan ke database Neon Cloud jika online
+    if (typeof executeNeonSql === 'function') {
+      try {
+        const cleanName = nama.replace(/'/g, "''");
+        const cleanPanggilan = panggilan.replace(/'/g, "''");
+        const cleanAlamat = alamat.replace(/'/g, "''");
+        const cleanTempatLahir = tempatLahir.replace(/'/g, "''");
+
+        const sql = `
+          INSERT INTO tb_kader (
+            id, nama, nama_panggilan, no_kta, nim, gender, tempat_lahir, tanggal_lahir,
+            fakultas, jurusan, angkatan, status_kuliah, alamat, whatsapp, email, foto,
+            status_kader, formal, tahun_mapaba, penyelenggara_mapaba, kopri
+          ) VALUES (
+            '${newKader.id}', '${cleanName}', ${cleanPanggilan ? `'${cleanPanggilan}'` : 'NULL'},
+            '${newKader.noKta}', '${newKader.nim}', '${newKader.gender}', ${cleanTempatLahir ? `'${cleanTempatLahir}'` : 'NULL'},
+            ${newKader.tanggalLahir ? `'${newKader.tanggalLahir}'` : 'NULL'}, '${newKader.fakultas}', '${newKader.jurusan}',
+            '${newKader.angkatan}', 'Aktif', ${cleanAlamat ? `'${cleanAlamat}'` : 'NULL'},
+            ${newKader.whatsapp ? `'${newKader.whatsapp}'` : 'NULL'}, ${newKader.email ? `'${newKader.email}'` : 'NULL'},
+            ${newKader.foto ? `'${newKader.foto}'` : 'NULL'}, 'Aktif', '${newKader.kaderisasi.formal}', '${newKader.kaderisasi.tahunMapaba}',
+            '${newKader.kaderisasi.penyelenggaraMapaba}', '${newKader.kaderisasi.kopri}'
+          ) ON CONFLICT (nim) DO UPDATE SET
+            nama = EXCLUDED.nama,
+            foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        await executeNeonSql(sql);
+      } catch (neonErr) {
+        console.warn('Gagal simpan langsung ke Neon Cloud:', neonErr);
+      }
+    }
+
+    // 2. Simpan ke array lokal kaders
+    const existingIdx = kaders.findIndex(k => k.nim === nim);
+    if (existingIdx !== -1) {
+      newKader.id = kaders[existingIdx].id;
+      kaders[existingIdx] = Object.assign(kaders[existingIdx], newKader);
+    } else {
+      kaders.unshift(newKader);
+    }
+    saveData();
+
+    newlyJoinedKaderId = newKader.id;
+
+    // 3. Update tabel data & UI
+    if (typeof renderKaderTable === 'function') renderKaderTable();
+    if (typeof renderMapabaTable === 'function') renderMapabaTable();
+    if (typeof renderPkdTable === 'function') renderPkdTable();
+    if (typeof renderDashboard === 'function') renderDashboard();
+
+    // 4. Tampilkan box sukses
+    const successBox = document.getElementById('join-kader-success-box');
+    const successKta = document.getElementById('join-kader-success-kta');
+    const successNama = document.getElementById('join-kader-success-nama');
+    if (successKta) successKta.textContent = newKader.noKta;
+    if (successNama) successNama.textContent = `${newKader.nama} (NIM: ${newKader.nim})`;
+    if (successBox) {
+      successBox.classList.remove('hidden');
+      successBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    showToast(`Pendaftaran kader "${newKader.nama}" berhasil tersimpan!`, 'success');
+
+    // Reset input form
+    const formEl = document.getElementById('form-join-kader');
+    if (formEl) formEl.reset();
+
+    // Reset preview foto
+    const previewImg = document.getElementById('join-foto-preview');
+    if (previewImg) previewImg.src = 'assets/logo-pmii.webp';
+    const hiddenFoto = document.getElementById('join-foto-base64');
+    if (hiddenFoto) hiddenFoto.value = '';
+
+  } finally {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = '<i data-lucide="send" class="w-4 h-4 text-yellow-300"></i><span>Kirim Formulir Pendaftaran Kader</span>';
+      initLucide();
+    }
+  }
+}
+
+function viewKtaAfterJoin() {
+  if (newlyJoinedKaderId) {
+    switchTab('kta');
+    if (typeof openKtaForKader === 'function') {
+      openKtaForKader(newlyJoinedKaderId);
+    }
+  } else {
+    switchTab('kta');
+  }
+}
+

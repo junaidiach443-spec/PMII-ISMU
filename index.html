@@ -287,6 +287,16 @@
           <span>KETUM KOM</span>
         </button>
 
+        <button id="btn-nav-kta" onclick="switchTab('kta')" class="nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
+          <i data-lucide="credit-card" class="w-4 h-4 text-amber-500"></i>
+          <span>E-KTA PMII</span>
+        </button>
+
+        <button id="btn-nav-joinkader" onclick="switchTab('joinkader')" class="nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
+          <i data-lucide="user-plus" class="w-4 h-4 text-emerald-600"></i>
+          <span>Join Kader</span>
+        </button>
+
         <button id="btn-nav-rapat" onclick="switchTab('rapat')" class="admin-only nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
           <i data-lucide="calendar-check" class="w-4 h-4 text-indigo-600"></i>
           <span>Presensi & Rapat</span>
@@ -387,11 +397,6 @@
             <span id="subnav-badge-lain" class="text-[9px] font-bold text-slate-400"></span>
           </button>
         </div>
-
-        <button id="btn-nav-kta" onclick="switchTab('kta')" class="admin-only nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
-          <i data-lucide="credit-card" class="w-4 h-4 text-slate-600"></i>
-          <span>Cetak E-KTA</span>
-        </button>
 
         <button id="btn-nav-laporan" onclick="switchTab('laporan')" class="admin-only nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
           <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-600"></i>
@@ -1099,7 +1104,7 @@
                 </button>
 
                 <!-- Bagikan Link Form Mandiri Kader -->
-                <button onclick="openShareFormModal()" title="Bagikan link formulir registrasi mandiri ke kader via WhatsApp / QR Code" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 rounded-xl border border-emerald-300 shadow-xs transition">
+                <button onclick="openShareFormModal()" title="Bagikan link formulir registrasi mandiri ke kader via WhatsApp / QR Code" class="admin-only inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 rounded-xl border border-emerald-300 shadow-xs transition">
                   <i data-lucide="share-2" class="w-3.5 h-3.5 text-emerald-600"></i>
                   <span>Bagikan Link Form</span>
                 </button>
@@ -2477,6 +2482,371 @@
             </div>
 
           </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB: JOIN KADER (FORM PENDAFTARAN MANDIRI) -->
+        <!-- ========================================== -->
+        <section id="tab-joinkader" class="tab-content hidden space-y-6">
+
+          <!-- Header Banner Join Kader -->
+          <div class="bg-gradient-to-r from-[#002B66] via-[#004B99] to-[#003366] rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-5 border border-blue-800">
+            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-yellow-400/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-4 relative z-10">
+              <div class="w-14 h-14 rounded-2xl bg-white p-2 shadow-lg flex items-center justify-center shrink-0">
+                <img src="assets/logo-pmii.webp" alt="Logo PMII" class="w-full h-full object-contain">
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2.5 py-0.5 rounded-full bg-yellow-400 text-blue-950 font-black text-[10px] uppercase tracking-wider">
+                    Registrasi Kader
+                  </span>
+                  <span class="text-xs text-blue-200">• Masa Khidmat 2026 - 2027</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-black text-white tracking-tight leading-tight">
+                  Formulir Pendaftaran Kader Baru (Join Kader)
+                </h2>
+                <p class="text-xs text-blue-100 mt-1 max-w-xl leading-relaxed">
+                  Pusat registrasi & pendataan anggota PK PMII Institut Miftahul Ulum (ISMU) Tarate Sumenep. Data otomatis tersimpan ke Cloud Database dan diterbitkan nomor E-KTA digital.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 relative z-10 w-full md:w-auto justify-end">
+              <button type="button" onclick="window.open('form-kader.html', '_blank')" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold border border-white/20 transition flex items-center gap-2 shadow-sm cursor-pointer">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <span>Buka di Tab Baru</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Alert Sukses Pendaftaran (Otomatis Muncul Saat Submit) -->
+          <div id="join-kader-success-box" class="hidden p-5 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl text-white shadow-lg space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-white text-emerald-600 flex items-center justify-center font-black text-xl shadow shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <h3 class="font-black text-base">Alhamdulillah, Pendaftaran Kader Berhasil!</h3>
+                  <p id="join-kader-success-msg" class="text-xs text-emerald-100">Data kader Anda telah tersimpan secara resmi di database.</p>
+                </div>
+              </div>
+              <button type="button" onclick="document.getElementById('join-kader-success-box').classList.add('hidden')" class="text-emerald-200 hover:text-white p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+              </button>
+            </div>
+            <div class="p-3 bg-white/10 backdrop-blur rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div>
+                <span class="text-emerald-200 block text-[11px]">Nomor E-KTA Diterbitkan:</span>
+                <span id="join-kader-success-kta" class="font-mono font-black text-yellow-300 text-sm"></span>
+              </div>
+              <div>
+                <span class="text-emerald-200 block text-[11px]">Nama Terdaftar:</span>
+                <span id="join-kader-success-nama" class="font-bold text-white"></span>
+              </div>
+              <button type="button" onclick="viewKtaAfterJoin()" class="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-black rounded-xl text-xs shadow-md transition flex items-center gap-1.5 ml-auto cursor-pointer">
+                <i data-lucide="credit-card" class="w-4 h-4 text-blue-950"></i>
+                <span>Lihat E-KTA Saya</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Form Kontainer -->
+          <form id="form-join-kader" onsubmit="handleJoinKaderFormSubmit(event)" class="space-y-6">
+
+            <!-- STEP 1: Identitas Diri (Personal) -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-extrabold text-sm">
+                  1
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-800">Identitas Diri (Personal)</h3>
+                  <p class="text-xs text-slate-400">Nama lengkap sesuai identitas resmi dan data diri kader</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Nama Lengkap -->
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Nama Lengkap <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="join-nama" required placeholder="Contoh: Sahabat M. Ilham Fathoni" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+
+                <!-- Nama Panggilan -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Nama Panggilan
+                  </label>
+                  <input type="text" id="join-panggilan" placeholder="Contoh: Ilham" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+
+                <!-- Gender / Panggilan Kader -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Panggilan Kader <span class="text-rose-500">*</span>
+                  </label>
+                  <select id="join-gender" required onchange="handleJoinKaderGenderChange(this.value)"
+                          class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+                    <option value="Laki-laki">Sahabat (Putra / Laki-laki)</option>
+                    <option value="Perempuan">Sahabati (Putri / KOPRI)</option>
+                  </select>
+                </div>
+
+                <!-- NIK -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    NIK (Nomor Induk Kependudukan / KTP)
+                  </label>
+                  <input type="text" id="join-nik" maxlength="16" placeholder="Contoh: 3529012304050001" 
+                         class="w-full text-xs font-mono border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+
+                <!-- Tempat Lahir -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Tempat Lahir
+                  </label>
+                  <input type="text" id="join-tempat-lahir" placeholder="Contoh: Sumenep" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+
+                <!-- Tanggal Lahir -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Tanggal Lahir
+                  </label>
+                  <input type="date" id="join-tanggal-lahir" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+
+                <!-- Foto Profil 3x4 -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Foto Profil Kader (3x4)
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                      <img id="join-foto-preview" src="assets/logo-pmii.webp" alt="Preview Foto" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                      <input type="file" id="join-foto-file" accept="image/*" onchange="handleJoinKaderFotoUpload(event)" 
+                             class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                      <input type="hidden" id="join-foto-base64">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Alamat Domisili -->
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Alamat Domisili Asal
+                  </label>
+                  <textarea id="join-alamat" rows="2" placeholder="Contoh: Desa Tarate, Kec. Kota, Kab. Sumenep" 
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2: Data Akademik Kampus ISMU -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-extrabold text-sm">
+                  2
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-800">Data Akademik Kampus</h3>
+                  <p class="text-xs text-slate-400">Institut Miftahul Ulum (ISMU) Tarate Sumenep</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- NIM -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    NIM / NPM <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="join-nim" required placeholder="Contoh: 220101110023" 
+                         class="w-full text-xs font-mono font-bold tracking-wider border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                  <p class="text-[10px] text-slate-400 mt-1">Nomor Induk Mahasiswa aktif di ISMU</p>
+                </div>
+
+                <!-- Angkatan Masuk -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Angkatan Masuk Kuliah <span class="text-rose-500">*</span>
+                  </label>
+                  <select id="join-angkatan" required
+                          class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+                    <option value="2026" selected>Angkatan 2026</option>
+                    <option value="2025">Angkatan 2025</option>
+                    <option value="2024">Angkatan 2024</option>
+                    <option value="2023">Angkatan 2023</option>
+                    <option value="2022">Angkatan 2022</option>
+                    <option value="2021">Angkatan 2021</option>
+                    <option value="2020">Angkatan 2020</option>
+                  </select>
+                </div>
+
+                <!-- Fakultas -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Fakultas di ISMU <span class="text-rose-500">*</span>
+                  </label>
+                  <select id="join-fakultas" required onchange="handleJoinKaderFakultasChange(this.value)"
+                          class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+                    <option value="Fakultas Tarbiyah">Fakultas Tarbiyah</option>
+                    <option value="Fakultas Syariah">Fakultas Syariah</option>
+                    <option value="Fakultas Ekonomi & Bisnis Islam">Fakultas Ekonomi & Bisnis Islam (FEBI)</option>
+                    <option value="Program Pascasarjana">Program Pascasarjana</option>
+                  </select>
+                </div>
+
+                <!-- Program Studi / Jurusan -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Program Studi / Jurusan <span class="text-rose-500">*</span>
+                  </label>
+                  <select id="join-jurusan" required
+                          class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-medium">
+                    <!-- Populated by JS -->
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 3: Kontak & Komunikasi -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-extrabold text-sm">
+                  3
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-800">Kontak & Komunikasi</h3>
+                  <p class="text-xs text-slate-400">Untuk koordinasi organisasi & konfirmasi keanggotaan</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- No WhatsApp -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Nomor WhatsApp Aktif <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="tel" id="join-whatsapp" required placeholder="Contoh: 081234567890" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                  <p class="text-[10px] text-slate-400 mt-1">Pastikan nomor aktif dan terhubung ke WhatsApp</p>
+                </div>
+
+                <!-- Email -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Alamat Email Aktif
+                  </label>
+                  <input type="email" id="join-email" placeholder="Contoh: kader@student.ismu.ac.id" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 4: Riwayat Kaderisasi PMII -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-extrabold text-sm">
+                  4
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-800">Riwayat Kaderisasi PMII</h3>
+                  <p class="text-xs text-slate-400">Jenjang kaderisasi formal yang pernah atau sedang diikuti</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Jenjang Formal Tertinggi -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Jenjang Kaderisasi Formal Tertinggi <span class="text-rose-500">*</span>
+                  </label>
+                  <select id="join-formal" required
+                          class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-bold text-blue-900">
+                    <option value="MAPABA" selected>MAPABA (Masa Penerimaan Anggota Baru)</option>
+                    <option value="PKD">PKD (Pelatihan Kader Dasar)</option>
+                    <option value="PKL">PKL (Pelatihan Kader Lanjut)</option>
+                    <option value="PKN">PKN (Pelatihan Kader Nasional)</option>
+                  </select>
+                </div>
+
+                <!-- Jabatan di Komisariat -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Posisi / Jabatan
+                  </label>
+                  <input type="text" id="join-jabatan" value="Anggota Kader" placeholder="Contoh: Anggota Kader / Biro" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+                </div>
+
+                <!-- Tahun MAPABA -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Tahun Mengikuti MAPABA
+                  </label>
+                  <input type="number" id="join-tahun-mapaba" value="2026" min="2010" max="2030" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+
+                <!-- Penyelenggara MAPABA -->
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Penyelenggara MAPABA
+                  </label>
+                  <input type="text" id="join-penyelenggara-mapaba" value="PK PMII ISMU" placeholder="Contoh: PK PMII ISMU" 
+                         class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+                </div>
+
+                <!-- Kaderisasi KOPRI (Hanya jika Perempuan) -->
+                <div id="join-section-kopri" class="hidden md:col-span-2 p-4 bg-rose-50/80 rounded-2xl border border-rose-200/70 space-y-2">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-rose-600"></i>
+                    <h4 class="text-xs font-bold text-rose-900">Kaderisasi KOPRI (Korps PMII Putri)</h4>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold text-rose-800 mb-1">Jenjang Kaderisasi Formal KOPRI</label>
+                    <select id="join-kopri" class="w-full text-xs border border-rose-200 rounded-xl p-2.5 bg-white focus:outline-none focus:border-rose-500 font-semibold text-rose-900">
+                      <option value="-">Belum Mengikuti</option>
+                      <option value="SIG">SIG (Sekolah Islam & Gender)</option>
+                      <option value="SKK">SKK (Sekolah Kader Kopri)</option>
+                      <option value="SKN">SKN (Sekolah Kader Nasional)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button Bar -->
+            <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="text-xs text-slate-500">
+                <span>Dengan menekan tombol kirim, Anda menyetujui pendataan keanggotaan resmi PMII ISMU Tarate.</span>
+              </div>
+
+              <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button type="reset" class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer">
+                  Reset Form
+                </button>
+                <button type="submit" id="btn-submit-joinkader" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <i data-lucide="send" class="w-4 h-4 text-yellow-300"></i>
+                  <span>Kirim Formulir Pendaftaran Kader</span>
+                </button>
+              </div>
+            </div>
+
+          </form>
 
         </section>
 
