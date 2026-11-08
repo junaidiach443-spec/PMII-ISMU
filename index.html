@@ -5959,8 +5959,24 @@
           .then(reg => {
             console.log('[PWA] Service Worker terdaftar dengan scope:', reg.scope);
             if (reg.update) reg.update();
+
+            // Cek update baru setiap kali aplikasi dibuka atau kembali ke layar
+            document.addEventListener('visibilitychange', () => {
+              if (!document.hidden && reg.update) {
+                reg.update();
+              }
+            });
           })
           .catch(err => console.warn('[PWA] Gagal mendaftarkan Service Worker:', err));
+
+        // Jika ada versi update baru terpasang, muat otomatis tampilan terbaru
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
       });
     }
   </script>
