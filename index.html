@@ -5414,16 +5414,23 @@
 
       </div>
 
-      <div class="p-4 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50">
-        <button onclick="closePemasukanDetailModal()"
-          class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100">
-          Tutup
+      <div class="p-4 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50">
+        <button type="button" onclick="deletePemasukanFromDetail()"
+          class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-rose-200">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Hapus Kas Ini</span>
         </button>
-        <button onclick="printKwitansiPemasukan()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
-          <i data-lucide="printer" class="w-4 h-4"></i>
-          <span>Cetak Kwitansi Ini</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closePemasukanDetailModal()"
+            class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100">
+            Tutup
+          </button>
+          <button onclick="printKwitansiPemasukan()"
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Cetak Kwitansi Ini</span>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -5674,16 +5681,23 @@
 
       </div>
 
-      <div class="p-4 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50">
-        <button onclick="closePengeluaranDetailModal()"
-          class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100">
-          Tutup
+      <div class="p-4 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50">
+        <button type="button" onclick="deletePengeluaranFromDetail()"
+          class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-rose-200">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Hapus Pengeluaran Ini</span>
         </button>
-        <button onclick="printKwitansiPengeluaran()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
-          <i data-lucide="printer" class="w-4 h-4"></i>
-          <span>Cetak Bukti Pengeluaran Ini</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closePengeluaranDetailModal()"
+            class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100">
+            Tutup
+          </button>
+          <button onclick="printKwitansiPengeluaran()"
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Cetak Bukti Pengeluaran Ini</span>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -6085,7 +6099,12 @@
             class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 mt-1 leading-relaxed">-</p>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 flex justify-end">
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <button type="button" onclick="deleteAnggaranFromDetail()"
+            class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-rose-200">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Hapus Anggaran</span>
+          </button>
           <button onclick="closeDetailAnggaranModal()"
             class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
             Tutup

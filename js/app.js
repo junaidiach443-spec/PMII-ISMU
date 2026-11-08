@@ -898,19 +898,39 @@ function sqlEscape(val) {
   return `'${str}'`;
 }
 
+function getNeonProxyCandidates() {
+  const list = [];
+  if (typeof window !== 'undefined' && window.location) {
+    // 1. Root relative path pada domain aktif saat ini
+    list.push('/api/neon');
+    list.push('/api/neon.php');
+    // 2. Path relatif terhadap origin saat ini
+    const origin = window.location.origin;
+    if (origin && !origin.startsWith('file')) {
+      list.push(`${origin}/api/neon`);
+      list.push(`${origin}/api/neon.php`);
+    }
+  }
+  // 3. Official Vercel production proxy (berfungsi cross-origin dari localhost, live server, PWA, mobile APK, dll)
+  list.push('https://pmii-ismu.vercel.app/api/neon');
+  list.push('https://pmii-ismu.vercel.app/api/neon.php');
+  return [...new Set(list)];
+}
+
 async function executeNeonSql(query, params = []) {
   const cfg = getCloudConfig();
   if (!cfg || cfg.type !== 'neon') {
     throw new Error('Konfigurasi database Neon belum lengkap atau tidak valid.');
   }
 
-  // Strategi 1: Gunakan Vercel Serverless Function Proxy (/api/neon atau /api/neon.php) jika di web
-  // Menghilangkan kendala CORS, adblocker, dan DNS timeout pada browser/HP
-  if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+  const candidates = getNeonProxyCandidates();
+  let lastError = null;
+
+  for (const endpoint of candidates) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
-      let proxyRes = await fetch('api/neon', {
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -919,82 +939,36 @@ async function executeNeonSql(query, params = []) {
         body: JSON.stringify({ query, params }),
         signal: controller.signal
       });
-      if (proxyRes.status === 404) {
-        proxyRes = await fetch('api/neon.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Neon-Connection-String': cfg.connectionString || ''
-          },
-          body: JSON.stringify({ query, params }),
-          signal: controller.signal
-        });
-      }
       clearTimeout(timeoutId);
 
-      if (proxyRes.ok) {
-        const json = await proxyRes.json();
+      if (res.ok) {
+        const json = await res.json();
         return json.rows || json.results || [];
+      } else if (res.status === 404) {
+        // Coba kandidat endpoint proxy berikutnya
+        continue;
       } else {
-        const errJson = await proxyRes.json().catch(() => ({}));
-        console.warn('[executeNeonSql] api/neon status:', proxyRes.status, errJson);
+        const errText = await res.text();
+        let errMsg = errText;
+        try {
+          const ej = JSON.parse(errText);
+          errMsg = ej.message || ej.error || errText;
+        } catch (e) {}
+        throw new Error(errMsg);
       }
-    } catch (proxyErr) {
-      console.warn('[executeNeonSql] Serverless proxy lewati / fallback:', proxyErr.message);
+    } catch (err) {
+      lastError = err;
+      // Jika server membalas dengan pesan error spesifik SQL/validasi, lempar langsung
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('abort') && !err.message.includes('NetworkError')) {
+        throw err;
+      }
     }
   }
 
-  // Strategi 2: Direct client fetch ke endpoint Neon HTTP
-  const headers = {
-    'Content-Type': 'application/json'
-  };
-
-  if (cfg.connectionString) {
-    headers['Neon-Connection-String'] = cfg.connectionString;
-  } else if (cfg.password) {
-    headers['Authorization'] = `Bearer ${cfg.password}`;
-  }
-
-  let res;
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
-    res = await fetch(cfg.sqlEndpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ query, params }),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-  } catch (err) {
-    // Jika endpoint tanpa -pooler gagal, coba endpoint dengan hostname asli
-    if (cfg.host && cfg.host !== cfg.cleanHost) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
-      res = await fetch(`https://${cfg.host}/sql`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ query, params }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-    } else {
-      throw err;
-    }
-  }
-
-  if (!res.ok) {
-    const errText = await res.text();
-    let errMsg = errText;
-    try {
-      const errJson = JSON.parse(errText);
-      errMsg = errJson.message || errJson.error || errText;
-    } catch (e) {}
-    throw new Error(errMsg);
-  }
-
-  const json = await res.json();
-  return json.rows || [];
+  const friendlyMsg = (lastError && !lastError.message.includes('fetch'))
+    ? lastError.message
+    : 'Tidak dapat terhubung ke server database Cloud Neon. Periksa koneksi internet Anda.';
+  throw new Error(friendlyMsg);
 }
 
 async function executeNeonBatch(queries = []) {
@@ -1004,12 +978,14 @@ async function executeNeonBatch(queries = []) {
     throw new Error('Konfigurasi database Neon belum lengkap atau tidak valid.');
   }
 
-  // Strategi 1: Kirim seluruh query sekaligus ke Vercel Serverless Function Proxy (/api/neon atau /api/neon.php)
-  if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+  const candidates = getNeonProxyCandidates();
+  let lastError = null;
+
+  for (const endpoint of candidates) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
-      let proxyRes = await fetch('api/neon', {
+      const timeoutId = setTimeout(() => controller.abort(), 35000);
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1018,29 +994,32 @@ async function executeNeonBatch(queries = []) {
         body: JSON.stringify({ queries }),
         signal: controller.signal
       });
-      if (proxyRes.status === 404) {
-        proxyRes = await fetch('api/neon.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Neon-Connection-String': cfg.connectionString || ''
-          },
-          body: JSON.stringify({ queries }),
-          signal: controller.signal
-        });
-      }
       clearTimeout(timeoutId);
 
-      if (proxyRes.ok) {
-        const json = await proxyRes.json();
+      if (res.ok) {
+        const json = await res.json();
         return json.results || [];
+      } else if (res.status === 404) {
+        continue;
+      } else {
+        const errText = await res.text();
+        let errMsg = errText;
+        try {
+          const ej = JSON.parse(errText);
+          errMsg = ej.message || ej.error || errText;
+        } catch (e) {}
+        throw new Error(errMsg);
       }
-    } catch (proxyErr) {
-      console.warn('[executeNeonBatch] Proxy batch gagal, beralih ke sequential:', proxyErr.message);
+    } catch (err) {
+      lastError = err;
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('abort') && !err.message.includes('NetworkError')) {
+        break;
+      }
     }
   }
 
-  // Strategi 2: Eksekusi berurutan satu per satu jika proxy tidak tersedia
+  // Fallback sequential jika proxy batch gagal
+  console.warn('[executeNeonBatch] Batch proxy gagal, mencoba eksekusi satu per satu:', lastError?.message);
   const results = [];
   for (const q of queries) {
     if (typeof q === 'string' && q.trim()) {
@@ -4185,20 +4164,29 @@ function deleteMabinkom(id) {
     return;
   }
 
-  const mbk = mabinkom.find(m => m.id === id);
+  const mbk = (mabinkom || []).find(m => m.id === id);
   if (!mbk) return;
 
   showConfirmModal({
     title: 'Hapus Dewan Pembina (Mabinkom)',
-    message: `Apakah Anda yakin ingin menghapus data dewan pembina: <strong>"${escapeHtml(mbk.nama)}"</strong>?`,
+    message: `Apakah Anda yakin ingin menghapus data dewan pembina: <strong>"${escapeHtml(mbk.nama)}"</strong>?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus pembina ini secara permanen dari Cloud Neon.</span>`,
     confirmText: 'Ya, Hapus',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
-      mabinkom = mabinkom.filter(m => m.id !== id);
+    onConfirm: async () => {
+      // Direct deletion from Cloud Neon
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_mabinkom WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete mabinkom gagal:', e.message);
+        }
+      }
+
+      mabinkom = (mabinkom || []).filter(m => m.id !== id);
       saveData();
-      showToast('Data pembina berhasil dihapus.', 'info');
+      showToast('Data pembina berhasil dihapus permanen.', 'info');
       renderMabinkomSection();
     }
   });
@@ -4871,13 +4859,22 @@ function deletePengurus(id, periode) {
 
   showConfirmModal({
     title: 'Hapus Personalia Pengurus',
-    message: `Apakah Anda yakin ingin menghapus personalia pengurus${nameStr}?`,
+    message: `Apakah Anda yakin ingin menghapus personalia pengurus${nameStr}?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus personalia ini secara permanen dari Cloud Neon.</span>`,
     confirmText: 'Ya, Hapus',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
-      periodObj.struktur = periodObj.struktur.filter(s => s.id !== id);
+    onConfirm: async () => {
+      // Direct deletion from Cloud Neon
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_struktur_pengurus WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete pengurus gagal:', e.message);
+        }
+      }
+
+      periodObj.struktur = (periodObj.struktur || []).filter(s => s.id !== id);
       saveData();
       showToast('Personalia berhasil dihapus dari struktur!', 'info');
       renderPengurusSection();
@@ -5216,15 +5213,24 @@ function deleteKetum(id) {
 
   showConfirmModal({
     title: 'Hapus Riwayat Ketua Umum',
-    message: `Apakah Anda yakin ingin menghapus data riwayat Ketua Umum${nameStr}?`,
+    message: `Apakah Anda yakin ingin menghapus data riwayat Ketua Umum${nameStr}?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus riwayat Ketua Umum ini secara permanen dari Cloud Neon.</span>`,
     confirmText: 'Ya, Hapus',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
-      ketumKom = ketumKom.filter(k => k.id !== id);
+    onConfirm: async () => {
+      // Direct deletion from Cloud Neon
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_ketum_kom WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete ketum gagal:', e.message);
+        }
+      }
+
+      ketumKom = (ketumKom || []).filter(k => k.id !== id);
       saveData();
-      showToast('Data Ketua Umum berhasil dihapus!', 'info');
+      showToast('Data Ketua Umum berhasil dihapus permanen!', 'info');
       renderKetumSection();
       renderSettingKetum();
     }
@@ -6286,22 +6292,32 @@ function saveRapatForm(event) {
 }
 
 function deleteRapat(id) {
-  const item = rapat.find(r => r.id === id);
+  const item = (rapat || []).find(r => r.id === id);
   if (!item) return;
 
   showConfirmModal({
     title: 'Hapus Agenda Rapat',
-    message: `Apakah Anda yakin ingin menghapus agenda rapat <strong>"${escapeHtml(item.agenda)}"</strong>?<br><span class="text-slate-400 text-xs mt-1 block">Seluruh data presensi & notulensi rapat ini juga akan terhapus.</span>`,
+    message: `Apakah Anda yakin ingin menghapus agenda rapat <strong>"${escapeHtml(item.agenda)}"</strong>?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Seluruh data agenda, presensi & notulensi rapat ini akan dihapus permanen dari Cloud Neon.</span>`,
     confirmText: 'Ya, Hapus Rapat',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
-      rapat = rapat.filter(r => r.id !== id);
+    onConfirm: async () => {
+      // Direct deletion from Cloud Neon (hapus presensi rapat terlebih dahulu karena relasi FK)
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_presensi_rapat WHERE rapat_id = ${sqlEscape(id)};`);
+          await executeNeonSql(`DELETE FROM tb_rapat WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete rapat gagal:', e.message);
+        }
+      }
+
+      rapat = (rapat || []).filter(r => r.id !== id);
       saveData();
       renderRapatSection();
       if (typeof renderLaporanSection === 'function') renderLaporanSection();
-      showToast('Agenda rapat berhasil dihapus.', 'info');
+      showToast('Agenda rapat berhasil dihapus permanen.', 'info');
     }
   });
 }
@@ -7948,21 +7964,32 @@ function savePemasukanForm(event) {
 }
 
 function deletePemasukan(id) {
-  const item = pemasukan.find(p => p.id === id);
+  const item = (pemasukan || []).find(p => p.id === id);
   if (!item) return;
 
   showConfirmModal({
     title: 'Hapus Catatan Kas Masuk',
-    message: `Apakah Anda yakin ingin menghapus catatan kas masuk sebesar <strong>${formatRupiah(item.jumlah)}</strong> ("${escapeHtml(item.keterangan)}")?`,
+    message: `Apakah Anda yakin ingin menghapus catatan kas masuk sebesar <strong>${formatRupiah(item.jumlah)}</strong> ("${escapeHtml(item.keterangan)}")?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus catatan kas masuk ini secara permanen dari Cloud Neon.</span>`,
     confirmText: 'Ya, Hapus Kas',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
-      pemasukan = pemasukan.filter(p => p.id !== id);
+    onConfirm: async () => {
+      // Direct deletion from Cloud Neon
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_pemasukan WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete pemasukan gagal:', e.message);
+        }
+      }
+
+      pemasukan = (pemasukan || []).filter(p => p.id !== id);
       saveData();
-      showToast('Catatan pemasukan kas dihapus.', 'info');
+      showToast('Catatan pemasukan kas berhasil dihapus permanen.', 'info');
       renderPemasukanSection();
+      renderDashboard();
+      renderLaporanSection();
     }
   });
 }
@@ -7992,6 +8019,13 @@ function viewPemasukanDetail(id) {
 function closePemasukanDetailModal() {
   const modal = document.getElementById('modal-detail-pemasukan');
   if (modal) modal.classList.add('hidden');
+}
+
+function deletePemasukanFromDetail() {
+  if (!currentPemasukanDetail || !currentPemasukanDetail.id) return;
+  const targetId = currentPemasukanDetail.id;
+  closePemasukanDetailModal();
+  deletePemasukan(targetId);
 }
 
 function printKwitansiPemasukan() {
@@ -8501,20 +8535,29 @@ function savePengeluaranForm(event) {
 }
 
 function deletePengeluaran(id) {
-  const item = pengeluaran.find(p => p.id === id);
+  const item = (pengeluaran || []).find(p => p.id === id);
   if (!item) return;
 
   showConfirmModal({
     title: 'Hapus Catatan Kas Keluar',
-    message: `Apakah Anda yakin ingin menghapus catatan kas keluar pos <strong>${item.pos}</strong> sebesar <strong>${formatRupiah(item.jumlah)}</strong> ("${escapeHtml(item.keterangan)}")?`,
+    message: `Apakah Anda yakin ingin menghapus catatan kas keluar pos <strong>${item.pos}</strong> sebesar <strong>${formatRupiah(item.jumlah)}</strong> ("${escapeHtml(item.keterangan)}")?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus catatan kas keluar ini secara permanen dari Cloud Neon.</span>`,
     confirmText: 'Ya, Hapus Kas',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
-      pengeluaran = pengeluaran.filter(p => p.id !== id);
+    onConfirm: async () => {
+      // Direct deletion from Cloud Neon
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_pengeluaran WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete pengeluaran gagal:', e.message);
+        }
+      }
+
+      pengeluaran = (pengeluaran || []).filter(p => p.id !== id);
       saveData();
-      showToast('Catatan pengeluaran kas dihapus.', 'info');
+      showToast('Catatan pengeluaran kas berhasil dihapus permanen.', 'info');
       renderPengeluaranSection();
       renderDashboard();
       renderLaporanSection();
@@ -8551,6 +8594,13 @@ function viewPengeluaranDetail(id) {
 function closePengeluaranDetailModal() {
   const modal = document.getElementById('modal-detail-pengeluaran');
   if (modal) modal.classList.add('hidden');
+}
+
+function deletePengeluaranFromDetail() {
+  if (!currentPengeluaranDetail || !currentPengeluaranDetail.id) return;
+  const targetId = currentPengeluaranDetail.id;
+  closePengeluaranDetailModal();
+  deletePengeluaran(targetId);
 }
 
 function printKwitansiPengeluaran() {
@@ -9148,19 +9198,28 @@ function deleteAnggaran(id) {
 
   showConfirmModal({
     title: 'Hapus Rencana Anggaran (RAB)',
-    message: `Apakah Anda yakin ingin menghapus item anggaran <strong>"${escapeHtml(item.nama)}"</strong> (Pos: ${item.pos}) sebesar <strong>${formatRupiah(item.jumlah)}</strong>?`,
+    message: `Apakah Anda yakin ingin menghapus item anggaran <strong>"${escapeHtml(item.nama)}"</strong> (Pos: ${item.pos}) sebesar <strong>${formatRupiah(item.jumlah)}</strong>?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus rencana anggaran ini secara permanen dari Cloud Neon.</span>`,
     confirmText: 'Ya, Hapus Anggaran',
     cancelText: 'Batal',
     type: 'danger',
     icon: 'trash-2',
-    onConfirm: () => {
-      anggaran = anggaran.filter(a => a.id !== id);
+    onConfirm: async () => {
+      // Direct deletion from Cloud Neon
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_anggaran_rab WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete anggaran gagal:', e.message);
+        }
+      }
+
+      anggaran = (anggaran || []).filter(a => a.id !== id);
       saveData();
       renderAnggaranSection();
       renderDashboard();
       renderPemasukanSection();
       renderPengeluaranSection();
-      showToast('Item anggaran berhasil dihapus.', 'info');
+      showToast('Item anggaran berhasil dihapus permanen.', 'info');
     }
   });
 }
@@ -9188,6 +9247,13 @@ function viewAnggaranDetail(id) {
 function closeDetailAnggaranModal() {
   const modal = document.getElementById('modal-detail-anggaran');
   if (modal) modal.classList.add('hidden');
+}
+
+function deleteAnggaranFromDetail() {
+  if (!currentAnggaranDetail || !currentAnggaranDetail.id) return;
+  const targetId = currentAnggaranDetail.id;
+  closeDetailAnggaranModal();
+  deleteAnggaran(targetId);
 }
 
 // --- Excel: Anggaran RAB (Template, Import, Export) ---

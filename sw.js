@@ -1,9 +1,9 @@
 /**
  * Service Worker - Sistem Informasi & Pendataan Kader PK PMII ISMU
- * Versi 3.4: Fix ERR_FAILED & Bulletproof Offline Fallback
+ * Versi 3.5: Direct Neon Cloud Sync & Permanent Deletion
  */
 
-const CACHE_NAME = 'pmii-ismu-v3.4';
+const CACHE_NAME = 'pmii-ismu-v3.5';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -52,7 +52,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
 
   // 1. Lewati request non-GET dan endpoint API backend
-  if (req.method !== 'GET' || url.pathname.includes('/api/')) {
+  if (req.method !== 'GET' || url.pathname.includes('/api/') || url.pathname.includes('api/neon')) {
     return;
   }
 

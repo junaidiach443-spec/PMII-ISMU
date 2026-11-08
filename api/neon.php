@@ -25,7 +25,8 @@ if (preg_match('/@([^:\/?]+)/', $connStr, $m)) {
     $host = $m[1];
 }
 
-$neonEndpoint = "https://" . $host . "/sql";
+$cleanHost = str_replace('-pooler', '', $host);
+$neonEndpoint = "https://" . $cleanHost . "/sql";
 
 // 1. Eksekusi Batch Queries secara Paralel (curl_multi) agar super cepat (<2 detik)
 if (isset($payload['queries']) && is_array($payload['queries'])) {
@@ -81,6 +82,13 @@ if (isset($payload['queries']) && is_array($payload['queries'])) {
 }
 
 // 2. Single query
+if (empty($rawInput)) {
+    header("Content-Type: application/json");
+    http_response_code(400);
+    echo json_encode(['error' => 'Permintaan kosong. Silakan sertakan query SQL.']);
+    exit;
+}
+
 $ch = curl_init($neonEndpoint);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
@@ -94,8 +102,15 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlErr = curl_error($ch);
 curl_close($ch);
 
 header("Content-Type: application/json");
+if ($response === false) {
+    http_response_code(502);
+    echo json_encode(['error' => 'Gagal menghubungi Neon: ' . $curlErr]);
+    exit;
+}
+
 http_response_code($httpCode ?: 200);
-echo $response ?: json_encode(['error' => 'No response from Neon']);
+echo $response;
