@@ -30,6 +30,38 @@ const defaultKomisariat = {
   telepon: "0812-3456-7890"
 };
 
+// Data Master Fakultas & Program Studi (Prodi) di Kampus ISMU Tarate Sumenep
+const defaultFakultasProdi = [
+  {
+    fakultas: "Fakultas Tarbiyah",
+    prodi: [
+      "Pendidikan Agama Islam (PAI)",
+      "Manajemen Pendidikan Islam (MPI)",
+      "Pendidikan Guru Madrasah Ibtidaiyah (PGMI)"
+    ]
+  },
+  {
+    fakultas: "Fakultas Syariah",
+    prodi: [
+      "Hukum Keluarga Islam (HKI / Ahwal Syakhshiyyah)",
+      "Hukum Ekonomi Syariah (HES / Muamalah)"
+    ]
+  },
+  {
+    fakultas: "Fakultas Ekonomi & Bisnis Islam",
+    prodi: [
+      "Ekonomi Syariah",
+      "Perbankan Syariah"
+    ]
+  },
+  {
+    fakultas: "Program Pascasarjana",
+    prodi: [
+      "Magister Pendidikan Agama Islam (S2 PAI)"
+    ]
+  }
+];
+
 // Data Master Daftar Tahun Khidmat & Arsip Historis
 const defaultTahunKhidmatList = [
   {

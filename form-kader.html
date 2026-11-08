@@ -554,8 +554,8 @@
 
   <!-- JAVASCRIPT LOGIC FORMULIR -->
   <script>
-    // Data Program Studi per Fakultas ISMU Tarate
-    const prodiByFakultas = {
+    // Data Program Studi Default per Fakultas ISMU Tarate
+    const defaultProdiByFakultas = {
       "Fakultas Tarbiyah": [
         "Pendidikan Agama Islam (PAI)",
         "Manajemen Pendidikan Islam (MPI)",
@@ -574,20 +574,84 @@
       ]
     };
 
+    function getDynamicFakultasProdiMap() {
+      try {
+        const saved = localStorage.getItem('pmii_fakultas_prodi');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const map = {};
+            parsed.forEach(item => {
+              if (item.fakultas) {
+                map[item.fakultas] = Array.isArray(item.prodi) ? item.prodi : [];
+              }
+            });
+            return map;
+          }
+        }
+      } catch (e) {}
+      return defaultProdiByFakultas;
+    }
+
+    function initFakultasSelect() {
+      const selFak = document.getElementById('kader-fakultas');
+      if (!selFak) return;
+
+      const map = getDynamicFakultasProdiMap();
+      const keys = Object.keys(map);
+      if (keys.length === 0) return;
+
+      const currentVal = selFak.value;
+      selFak.innerHTML = keys.map(k => `<option value="${k}" ${k === currentVal ? 'selected' : ''}>${k}</option>`).join('');
+
+      const activeFak = keys.includes(currentVal) ? currentVal : keys[0];
+      selFak.value = activeFak;
+      handleFakultasChange(activeFak);
+    }
+
     // Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
-      handleFakultasChange('Fakultas Tarbiyah');
+      initFakultasSelect();
       if (window.lucide) {
         lucide.createIcons();
       }
+
+      // Tarik master data fakultas & prodi terbaru dari server jika terhubung internet
+      fetchLatestFakultasProdiFromServer();
     });
+
+    async function fetchLatestFakultasProdiFromServer() {
+      const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: 'SELECT fakultas_prodi FROM tb_komisariat LIMIT 1;' })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const raw = data.rows && data.rows[0] ? data.rows[0].fakultas_prodi : null;
+            if (raw) {
+              const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(parsed));
+                initFakultasSelect();
+              }
+            }
+            break;
+          }
+        } catch (e) {}
+      }
+    }
 
     // Handle Perubahan Fakultas
     function handleFakultasChange(fakultas) {
       const selJurusan = document.getElementById('kader-jurusan');
       if (!selJurusan) return;
 
-      const prodiList = prodiByFakultas[fakultas] || prodiByFakultas["Fakultas Tarbiyah"];
+      const map = getDynamicFakultasProdiMap();
+      const prodiList = map[fakultas] || Object.values(map)[0] || [];
       selJurusan.innerHTML = prodiList.map(p => `<option value="${p}">${p}</option>`).join('');
     }
 

@@ -15,6 +15,7 @@ let pengurus = [];
 let ketumKom = [];
 let anggaran = [];
 let rapat = [];
+let fakultasProdiList = [];
 
 let currentTab = 'dashboard';
 let currentPengurusPeriod = '2026';
@@ -750,6 +751,13 @@ function loadFromLocalStorage() {
       komisariat.masaKhidmat = currentTahunKhidmat;
     }
 
+    // Load Master Data Fakultas & Program Studi (Prodi)
+    const savedFakultasProdi = localStorage.getItem('pmii_fakultas_prodi');
+    fakultasProdiList = savedFakultasProdi ? JSON.parse(savedFakultasProdi) : (typeof defaultFakultasProdi !== 'undefined' ? JSON.parse(JSON.stringify(defaultFakultasProdi)) : []);
+    if (!Array.isArray(fakultasProdiList) || fakultasProdiList.length === 0) {
+      fakultasProdiList = typeof defaultFakultasProdi !== 'undefined' ? JSON.parse(JSON.stringify(defaultFakultasProdi)) : [];
+    }
+
     // Auto-tag legacy items pengeluaran agar terikat pada Tahun Khidmat masing-masing
     (pengeluaran || []).forEach(p => {
       if (!p.tahunKhidmat) {
@@ -798,6 +806,7 @@ function saveToLocalStorageOnly() {
   localStorage.setItem('pmii_rapat', JSON.stringify(rapat));
   localStorage.setItem('pmii_tahun_khidmat_list', JSON.stringify(tahunKhidmatList));
   localStorage.setItem('pmii_current_tahun_khidmat', currentTahunKhidmat);
+  localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(getFakultasProdiList()));
   updateSidebarBadges();
 }
 
@@ -1158,6 +1167,16 @@ async function fetchDataFromCloud(silent = false) {
           email: r.email || defaultKomisariat.email,
           telepon: r.telepon || defaultKomisariat.telepon
         };
+
+        if (r.fakultas_prodi) {
+          try {
+            const fp = typeof r.fakultas_prodi === 'string' ? JSON.parse(r.fakultas_prodi) : r.fakultas_prodi;
+            if (Array.isArray(fp) && fp.length > 0) {
+              fakultasProdiList = fp;
+              localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(fp));
+            }
+          } catch (e) {}
+        }
       }
 
       // 2. Data Kader (Hanya kader yang saat ini ada di Neon)
@@ -1397,14 +1416,15 @@ async function syncToCloudServer(silent = true) {
 
       // 1. Komisariat
       const qKom = `
-        INSERT INTO tb_komisariat (id, nama, nama_lengkap, kampus, cabang, pkc, masa_khidmat, ketua_komisariat, sekretaris_komisariat, bendahara_komisariat, nomor_sk, alamat, email, telepon)
-        VALUES (1, ${sqlEscape(komisariat.nama)}, ${sqlEscape(komisariat.namaLengkap)}, ${sqlEscape(komisariat.kampus)}, ${sqlEscape(komisariat.cabang)}, ${sqlEscape(komisariat.pkc)}, ${sqlEscape(komisariat.masaKhidmat)}, ${sqlEscape(komisariat.ketuaKomisariat)}, ${sqlEscape(komisariat.sekretarisKomisariat)}, ${sqlEscape(komisariat.bendaharaKomisariat)}, ${sqlEscape(komisariat.nomorSK)}, ${sqlEscape(komisariat.alamat)}, ${sqlEscape(komisariat.email)}, ${sqlEscape(komisariat.telepon)})
+        INSERT INTO tb_komisariat (id, nama, nama_lengkap, kampus, cabang, pkc, masa_khidmat, ketua_komisariat, sekretaris_komisariat, bendahara_komisariat, nomor_sk, alamat, email, telepon, fakultas_prodi)
+        VALUES (1, ${sqlEscape(komisariat.nama)}, ${sqlEscape(komisariat.namaLengkap)}, ${sqlEscape(komisariat.kampus)}, ${sqlEscape(komisariat.cabang)}, ${sqlEscape(komisariat.pkc)}, ${sqlEscape(komisariat.masaKhidmat)}, ${sqlEscape(komisariat.ketuaKomisariat)}, ${sqlEscape(komisariat.sekretarisKomisariat)}, ${sqlEscape(komisariat.bendaharaKomisariat)}, ${sqlEscape(komisariat.nomorSK)}, ${sqlEscape(komisariat.alamat)}, ${sqlEscape(komisariat.email)}, ${sqlEscape(komisariat.telepon)}, ${sqlEscape(JSON.stringify(getFakultasProdiList()))})
         ON CONFLICT (id) DO UPDATE SET
           nama = EXCLUDED.nama, nama_lengkap = EXCLUDED.nama_lengkap, kampus = EXCLUDED.kampus,
           cabang = EXCLUDED.cabang, pkc = EXCLUDED.pkc, masa_khidmat = EXCLUDED.masa_khidmat,
           ketua_komisariat = EXCLUDED.ketua_komisariat, sekretaris_komisariat = EXCLUDED.sekretaris_komisariat,
           bendahara_komisariat = EXCLUDED.bendahara_komisariat, nomor_sk = EXCLUDED.nomor_sk,
-          alamat = EXCLUDED.alamat, email = EXCLUDED.email, telepon = EXCLUDED.telepon, updated_at = CURRENT_TIMESTAMP;
+          alamat = EXCLUDED.alamat, email = EXCLUDED.email, telepon = EXCLUDED.telepon,
+          fakultas_prodi = EXCLUDED.fakultas_prodi, updated_at = CURRENT_TIMESTAMP;
       `;
       neonQueries.push(qKom);
 
@@ -2512,11 +2532,13 @@ function populateFakultasFilterOptions() {
   if (!select) return;
 
   const current = filterKaderFakultas;
-  const fakultasList = [...new Set(kaders.map(k => k.fakultas).filter(Boolean))].sort();
+  const masterFaks = (typeof getFakultasProdiList === 'function' ? getFakultasProdiList() : []).map(item => item.fakultas);
+  const kaderFaks = (kaders || []).map(k => k.fakultas).filter(Boolean);
+  const fakultasList = [...new Set([...masterFaks, ...kaderFaks])].sort();
 
   let options = `<option value="all">Semua Fakultas</option>`;
   fakultasList.forEach(f => {
-    options += `<option value="${f}" ${f === current ? 'selected' : ''}>${f}</option>`;
+    options += `<option value="${escapeHtml(f)}" ${f === current ? 'selected' : ''}>${escapeHtml(f)}</option>`;
   });
 
   select.innerHTML = options;
@@ -2641,8 +2663,7 @@ function selectKaderForModal(id) {
   document.getElementById('kader-panggilan').value = kader.panggilan || '';
   document.getElementById('kader-nim').value = kader.nim || '';
   document.getElementById('kader-gender').value = kader.gender || 'Laki-laki';
-  document.getElementById('kader-fakultas').value = kader.fakultas || '';
-  document.getElementById('kader-jurusan').value = kader.jurusan || '';
+  populateAdminKaderFakultasSelect(kader.fakultas || '', kader.jurusan || '');
   document.getElementById('kader-angkatan').value = kader.angkatan || '';
   document.getElementById('kader-ttl').value = kader.ttl || '';
   document.getElementById('kader-whatsapp').value = kader.whatsapp || '';
@@ -2833,6 +2854,8 @@ function openAddKaderModal() {
   const notice = document.getElementById('kader-autofilled-notice');
   if (notice) notice.classList.add('hidden');
 
+  populateAdminKaderFakultasSelect();
+
   const modal = document.getElementById('modal-kader');
   if (modal) modal.classList.remove('hidden');
 }
@@ -2872,8 +2895,7 @@ function openEditKaderModal(id) {
   document.getElementById('kader-panggilan').value = kader.panggilan || '';
   document.getElementById('kader-nim').value = kader.nim || '';
   document.getElementById('kader-gender').value = kader.gender || 'Laki-laki';
-  document.getElementById('kader-fakultas').value = kader.fakultas || '';
-  document.getElementById('kader-jurusan').value = kader.jurusan || '';
+  populateAdminKaderFakultasSelect(kader.fakultas || '', kader.jurusan || '');
   document.getElementById('kader-angkatan').value = kader.angkatan || '';
   document.getElementById('kader-ttl').value = kader.ttl || '';
   document.getElementById('kader-whatsapp').value = kader.whatsapp || '';
@@ -5926,6 +5948,442 @@ function renderSettingKetum() {
       </td>
     </tr>
   `).join('');
+}
+
+// ==========================================
+// 6B-2. MANAJEMEN FAKULTAS & PROGRAM STUDI (PRODI)
+// ==========================================
+
+function getFakultasProdiList() {
+  if (Array.isArray(fakultasProdiList) && fakultasProdiList.length > 0) {
+    return fakultasProdiList;
+  }
+  const saved = localStorage.getItem('pmii_fakultas_prodi');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        fakultasProdiList = parsed;
+        return fakultasProdiList;
+      }
+    } catch (e) {}
+  }
+  fakultasProdiList = (typeof defaultFakultasProdi !== 'undefined')
+    ? JSON.parse(JSON.stringify(defaultFakultasProdi))
+    : [];
+  return fakultasProdiList;
+}
+
+async function saveFakultasProdiList(silent = false) {
+  localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(fakultasProdiList));
+
+  // Sync seketika ke Cloud Neon di tabel tb_komisariat
+  const cfg = getCloudConfig();
+  if (cfg && cfg.type === 'neon' && typeof executeNeonSql === 'function') {
+    try {
+      await executeNeonSql(`UPDATE tb_komisariat SET fakultas_prodi = ${sqlEscape(JSON.stringify(fakultasProdiList))} WHERE id = 1;`);
+      console.log('[NEON] Master fakultas & prodi berhasil disinkronkan ke Cloud.');
+    } catch (e) {
+      console.warn('[NEON] Gagal sync fakultas_prodi ke cloud:', e.message);
+    }
+  }
+
+  renderSettingFakultasProdi();
+  populateFakultasFilterOptions();
+  populateAdminKaderFakultasSelect();
+  if (typeof renderFakultasBarChart === 'function') renderFakultasBarChart();
+
+  if (!silent) {
+    showToast('Data fakultas & program studi berhasil disimpan & disinkronkan!', 'success');
+  }
+}
+
+function renderSettingFakultasProdi() {
+  const container = document.getElementById('setting-fakultas-prodi-container');
+  if (!container) return;
+
+  const list = getFakultasProdiList();
+  if (!list || list.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        <i data-lucide="graduation-cap" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+        <p class="text-xs font-bold text-slate-600">Belum ada fakultas terdaftar</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Silakan klik "+ Tambah Fakultas Baru" atau "Reset Default".</p>
+        <button type="button" onclick="openModalTambahFakultas()"
+          class="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition">
+          + Tambah Fakultas Pertama
+        </button>
+      </div>
+    `;
+    initLucide();
+    return;
+  }
+
+  container.innerHTML = list.map((item, fakIdx) => {
+    const prodiArr = Array.isArray(item.prodi) ? item.prodi : [];
+    const totalKaderFakultas = (kaders || []).filter(k => k.fakultas === item.fakultas).length;
+
+    const prodiItemsHtml = prodiArr.length > 0
+      ? prodiArr.map((p, pIdx) => {
+          const kaderInProdi = (kaders || []).filter(k => k.fakultas === item.fakultas && k.jurusan === p).length;
+          return `
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 hover:bg-slate-100/90 border border-slate-200/70 transition group">
+              <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-[10px] shrink-0">
+                  ${pIdx + 1}
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(p)}</p>
+                  <span class="text-[10px] text-slate-400 font-medium">${kaderInProdi} Kader terdaftar</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="openModalEditProdi('${escapeHtml(item.fakultas)}', '${escapeHtml(p)}')"
+                  class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer" title="Edit nama prodi">
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                </button>
+                <button type="button" onclick="deleteProdi('${escapeHtml(item.fakultas)}', '${escapeHtml(p)}')"
+                  class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" title="Hapus prodi ini">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')
+      : `
+        <div class="col-span-full text-center py-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+          Belum ada program studi di fakultas ini. Klik <strong class="text-emerald-700">+ Tambah Prodi</strong> di atas.
+        </div>
+      `;
+
+    return `
+      <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-slate-300 transition space-y-3.5">
+        <!-- Header Fakultas -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-900 to-indigo-900 text-yellow-400 flex items-center justify-center shadow-xs shrink-0">
+              <i data-lucide="building-2" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm font-black text-slate-800">${escapeHtml(item.fakultas)}</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200/70">
+                  ${prodiArr.length} Prodi
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5">Total Mahasiswa / Kader: <strong class="text-slate-700">${totalKaderFakultas} orang</strong></p>
+            </div>
+          </div>
+
+          <!-- Action Buttons Fakultas -->
+          <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end flex-wrap">
+            <button type="button" onclick="openModalTambahProdi('${escapeHtml(item.fakultas)}')"
+              class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl transition flex items-center gap-1 border border-emerald-200 cursor-pointer">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>+ Tambah Prodi</span>
+            </button>
+            <button type="button" onclick="openModalEditFakultas('${escapeHtml(item.fakultas)}')"
+              class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1 border border-slate-200 cursor-pointer"
+              title="Ganti nama fakultas">
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+              <span>Edit</span>
+            </button>
+            <button type="button" onclick="deleteFakultas('${escapeHtml(item.fakultas)}')"
+              class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-xl transition flex items-center gap-1 border border-rose-200 cursor-pointer"
+              title="Hapus fakultas beserta prodinya">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Hapus</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- List of Prodi -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daftar Program Studi (Jurusan):</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            ${prodiItemsHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  initLucide();
+}
+
+// Modal Fakultas
+function openModalTambahFakultas() {
+  document.getElementById('modal-fakultas-title').textContent = 'Tambah Fakultas Baru';
+  document.getElementById('fakultas-old-name').value = '';
+  document.getElementById('fakultas-nama-input').value = '';
+  const modal = document.getElementById('modal-fakultas');
+  if (modal) modal.classList.remove('hidden');
+  initLucide();
+}
+
+function openModalEditFakultas(nama) {
+  document.getElementById('modal-fakultas-title').textContent = 'Edit Nama Fakultas';
+  document.getElementById('fakultas-old-name').value = nama;
+  document.getElementById('fakultas-nama-input').value = nama;
+  const modal = document.getElementById('modal-fakultas');
+  if (modal) modal.classList.remove('hidden');
+  initLucide();
+}
+
+function closeModalFakultas() {
+  const modal = document.getElementById('modal-fakultas');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleFakultasFormSubmit(event) {
+  event.preventDefault();
+  const oldName = document.getElementById('fakultas-old-name').value.trim();
+  const newName = document.getElementById('fakultas-nama-input').value.trim();
+
+  if (!newName) {
+    showToast('Nama fakultas tidak boleh kosong!', 'warning');
+    return;
+  }
+
+  const list = getFakultasProdiList();
+
+  if (oldName) {
+    // Edit Mode
+    const found = list.find(item => item.fakultas === oldName);
+    if (found) {
+      found.fakultas = newName;
+
+      // Update data kader yang terdaftar pada fakultas ini
+      let updatedKaders = 0;
+      (kaders || []).forEach(k => {
+        if (k.fakultas === oldName) {
+          k.fakultas = newName;
+          updatedKaders++;
+        }
+      });
+
+      // Update data pengurus jika ada
+      (pengurus || []).forEach(p => {
+        if (Array.isArray(p.struktur)) {
+          p.struktur.forEach(s => {
+            if (s.fakultas === oldName) s.fakultas = newName;
+          });
+        }
+      });
+
+      if (updatedKaders > 0) {
+        saveData();
+      }
+    }
+    showToast(`Fakultas "${newName}" berhasil diperbarui!`, 'success');
+  } else {
+    // Tambah Mode
+    if (list.some(item => item.fakultas.toLowerCase() === newName.toLowerCase())) {
+      showToast('Fakultas dengan nama tersebut sudah ada!', 'warning');
+      return;
+    }
+    list.push({
+      fakultas: newName,
+      prodi: []
+    });
+    showToast(`Fakultas "${newName}" berhasil ditambahkan!`, 'success');
+  }
+
+  closeModalFakultas();
+  await saveFakultasProdiList(true);
+}
+
+function deleteFakultas(nama) {
+  const list = getFakultasProdiList();
+  const found = list.find(item => item.fakultas === nama);
+  if (!found) return;
+
+  const countKader = (kaders || []).filter(k => k.fakultas === nama).length;
+  const countProdi = (found.prodi || []).length;
+
+  showConfirmModal({
+    title: 'Hapus Fakultas',
+    message: `Apakah Anda yakin ingin menghapus <strong>"${escapeHtml(nama)}"</strong>?<br><span class="text-slate-600 text-xs mt-1 block">Fakultas ini memiliki ${countProdi} program studi. ${countKader > 0 ? `<strong>${countKader} kader</strong> saat ini tercatat di fakultas ini.` : 'Belum ada kader terdaftar.'}</span>`,
+    confirmText: 'Ya, Hapus Fakultas',
+    cancelText: 'Batal',
+    type: 'danger',
+    icon: 'trash-2',
+    onConfirm: async () => {
+      fakultasProdiList = list.filter(item => item.fakultas !== nama);
+      await saveFakultasProdiList(true);
+      showToast(`Fakultas "${nama}" berhasil dihapus.`, 'info');
+    }
+  });
+}
+
+// Modal Program Studi (Prodi)
+function openModalTambahProdi(fakultasNama) {
+  document.getElementById('modal-prodi-title').textContent = 'Tambah Program Studi';
+  document.getElementById('prodi-fakultas-target').value = fakultasNama;
+  document.getElementById('prodi-fakultas-display').value = fakultasNama;
+  document.getElementById('prodi-old-name').value = '';
+  document.getElementById('prodi-nama-input').value = '';
+  const modal = document.getElementById('modal-prodi');
+  if (modal) modal.classList.remove('hidden');
+  initLucide();
+}
+
+function openModalEditProdi(fakultasNama, prodiNama) {
+  document.getElementById('modal-prodi-title').textContent = 'Edit Program Studi';
+  document.getElementById('prodi-fakultas-target').value = fakultasNama;
+  document.getElementById('prodi-fakultas-display').value = fakultasNama;
+  document.getElementById('prodi-old-name').value = prodiNama;
+  document.getElementById('prodi-nama-input').value = prodiNama;
+  const modal = document.getElementById('modal-prodi');
+  if (modal) modal.classList.remove('hidden');
+  initLucide();
+}
+
+function closeModalProdi() {
+  const modal = document.getElementById('modal-prodi');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleProdiFormSubmit(event) {
+  event.preventDefault();
+  const fakultasNama = document.getElementById('prodi-fakultas-target').value.trim();
+  const oldName = document.getElementById('prodi-old-name').value.trim();
+  const newName = document.getElementById('prodi-nama-input').value.trim();
+
+  if (!newName) {
+    showToast('Nama program studi tidak boleh kosong!', 'warning');
+    return;
+  }
+
+  const list = getFakultasProdiList();
+  const foundFak = list.find(item => item.fakultas === fakultasNama);
+  if (!foundFak) {
+    showToast('Fakultas induk tidak ditemukan!', 'error');
+    return;
+  }
+
+  if (!Array.isArray(foundFak.prodi)) {
+    foundFak.prodi = [];
+  }
+
+  if (oldName) {
+    // Edit Mode
+    const pIdx = foundFak.prodi.indexOf(oldName);
+    if (pIdx !== -1) {
+      foundFak.prodi[pIdx] = newName;
+
+      // Update data kader yang memiliki jurusan ini
+      let updatedKaders = 0;
+      (kaders || []).forEach(k => {
+        if (k.fakultas === fakultasNama && k.jurusan === oldName) {
+          k.jurusan = newName;
+          updatedKaders++;
+        }
+      });
+      if (updatedKaders > 0) {
+        saveData();
+      }
+    }
+    showToast(`Program studi "${newName}" berhasil diperbarui!`, 'success');
+  } else {
+    // Tambah Mode
+    if (foundFak.prodi.some(p => p.toLowerCase() === newName.toLowerCase())) {
+      showToast('Program studi dengan nama tersebut sudah ada di fakultas ini!', 'warning');
+      return;
+    }
+    foundFak.prodi.push(newName);
+    showToast(`Program studi "${newName}" berhasil ditambahkan ke ${fakultasNama}!`, 'success');
+  }
+
+  closeModalProdi();
+  await saveFakultasProdiList(true);
+}
+
+function deleteProdi(fakultasNama, prodiNama) {
+  const list = getFakultasProdiList();
+  const foundFak = list.find(item => item.fakultas === fakultasNama);
+  if (!foundFak || !Array.isArray(foundFak.prodi)) return;
+
+  const countKader = (kaders || []).filter(k => k.fakultas === fakultasNama && k.jurusan === prodiNama).length;
+
+  showConfirmModal({
+    title: 'Hapus Program Studi',
+    message: `Apakah Anda yakin ingin menghapus prodi <strong>"${escapeHtml(prodiNama)}"</strong> dari ${escapeHtml(fakultasNama)}?<br><span class="text-slate-600 text-xs mt-1 block">${countKader > 0 ? `<strong>${countKader} kader</strong> saat ini tercatat pada program studi ini.` : 'Belum ada kader terdaftar di prodi ini.'}</span>`,
+    confirmText: 'Ya, Hapus Prodi',
+    cancelText: 'Batal',
+    type: 'danger',
+    icon: 'trash-2',
+    onConfirm: async () => {
+      foundFak.prodi = foundFak.prodi.filter(p => p !== prodiNama);
+      await saveFakultasProdiList(true);
+      showToast(`Program studi "${prodiNama}" berhasil dihapus.`, 'info');
+    }
+  });
+}
+
+function resetFakultasProdiDefault() {
+  showConfirmModal({
+    title: 'Reset Fakultas & Prodi Default',
+    message: 'Apakah Anda yakin ingin mengembalikan daftar fakultas dan jurusan ke pengaturan awal kampus ISMU Tarate?',
+    confirmText: 'Ya, Kembalikan Default',
+    cancelText: 'Batal',
+    type: 'warning',
+    icon: 'rotate-ccw',
+    onConfirm: async () => {
+      fakultasProdiList = (typeof defaultFakultasProdi !== 'undefined')
+        ? JSON.parse(JSON.stringify(defaultFakultasProdi))
+        : [];
+      await saveFakultasProdiList(true);
+      showToast('Susunan fakultas & prodi berhasil direset ke default ISMU!', 'success');
+    }
+  });
+}
+
+// Helper untuk Dropdown Form Kader di Modal Admin
+function populateAdminKaderFakultasSelect(selectedFakultas = '', selectedJurusan = '') {
+  const selFak = document.getElementById('kader-fakultas');
+  if (!selFak) return;
+
+  const list = getFakultasProdiList();
+  let options = '';
+  list.forEach(item => {
+    const isSel = item.fakultas === selectedFakultas ? 'selected' : '';
+    options += `<option value="${escapeHtml(item.fakultas)}" ${isSel}>${escapeHtml(item.fakultas)}</option>`;
+  });
+
+  // Jika kader memiliki fakultas kustom yang tidak ada di master list, pertahankan
+  if (selectedFakultas && !list.some(item => item.fakultas === selectedFakultas)) {
+    options += `<option value="${escapeHtml(selectedFakultas)}" selected>${escapeHtml(selectedFakultas)} (Lainnya)</option>`;
+  }
+
+  selFak.innerHTML = options;
+
+  const activeFak = selectedFakultas || (list[0] ? list[0].fakultas : '');
+  handleAdminKaderFakultasChange(activeFak, selectedJurusan);
+}
+
+function handleAdminKaderFakultasChange(fakultas, selectedJurusan = '') {
+  const selJur = document.getElementById('kader-jurusan');
+  if (!selJur) return;
+
+  const list = getFakultasProdiList();
+  const found = list.find(item => item.fakultas === fakultas);
+  const prodiArr = found ? (found.prodi || []) : [];
+
+  let options = '';
+  prodiArr.forEach(p => {
+    const isSel = p === selectedJurusan ? 'selected' : '';
+    options += `<option value="${escapeHtml(p)}" ${isSel}>${escapeHtml(p)}</option>`;
+  });
+
+  // Jika kader memiliki jurusan kustom lama, pertahankan
+  if (selectedJurusan && !prodiArr.includes(selectedJurusan)) {
+    options += `<option value="${escapeHtml(selectedJurusan)}" selected>${escapeHtml(selectedJurusan)} (Lainnya)</option>`;
+  }
+
+  selJur.innerHTML = options;
 }
 
 // ==========================================
@@ -9888,6 +10346,7 @@ function loadPengaturanForm() {
   if (elCloudKey) elCloudKey.value = finalKey;
 
   renderSettingTahunKhidmat();
+  renderSettingFakultasProdi();
   renderSettingPengurus();
   renderSettingKetum();
 }
@@ -9964,7 +10423,8 @@ function backupDatabase() {
     pengurus,
     ketumKom,
     rapat,
-    anggaran
+    anggaran,
+    fakultasProdi: getFakultasProdiList()
   };
 
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackup, null, 2));
@@ -9994,6 +10454,10 @@ function restoreDatabase(event) {
       if (Array.isArray(data.ketumKom)) ketumKom = data.ketumKom;
       if (Array.isArray(data.rapat)) rapat = data.rapat;
       if (Array.isArray(data.anggaran)) anggaran = data.anggaran;
+      if (Array.isArray(data.fakultasProdi)) {
+        fakultasProdiList = data.fakultasProdi;
+        localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(fakultasProdiList));
+      }
 
       saveData();
       renderApp();

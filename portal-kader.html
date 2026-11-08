@@ -31,7 +31,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Data Awal & Konfigurasi Cloud Database -->
-  <script src="js/data.js"></script>
+  <script src="js/data.js?v=20261109_v3"></script>
 
   <script>
     tailwind.config = {
@@ -654,8 +654,47 @@
       }
 
       populateDropdownKader();
+      populateFilterFakultas();
       renderDirektori();
       renderStruktur();
+    }
+
+    function populateFilterFakultas() {
+      const select = document.getElementById('direktori-filter-fakultas');
+      if (!select) return;
+      const currentVal = select.value || 'all';
+
+      let faculties = [];
+      try {
+        const saved = localStorage.getItem('pmii_fakultas_prodi');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) faculties = parsed.map(f => f.nama);
+        }
+      } catch (e) {}
+
+      if (faculties.length === 0 && typeof defaultFakultasProdi !== 'undefined') {
+        faculties = defaultFakultasProdi.map(f => f.nama);
+      }
+      if (faculties.length === 0) {
+        faculties = ['Fakultas Tarbiyah', 'Fakultas Syariah', 'Fakultas Ekonomi & Bisnis Islam'];
+      }
+
+      // Gabungkan jika ada kader dengan fakultas lain
+      if (Array.isArray(portalKaders)) {
+        portalKaders.forEach(k => {
+          if (k.fakultas && !faculties.includes(k.fakultas)) {
+            faculties.push(k.fakultas);
+          }
+        });
+      }
+
+      select.innerHTML = '<option value="all">Semua Fakultas</option>' + 
+        faculties.map(f => `<option value="${f}">${f}</option>`).join('');
+
+      if (faculties.includes(currentVal) || currentVal === 'all') {
+        select.value = currentVal;
+      }
     }
 
     function populateDropdownKader() {
