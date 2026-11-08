@@ -2,7 +2,7 @@
   "name": "Sistem Informasi & Pendataan Kader PK PMII ISMU",
   "short_name": "PMII ISMU",
   "description": "Aplikasi Sistem Informasi, Pendataan Kader, Keuangan, dan Tata Kelola Organisasi PMII Tingkat Komisariat",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#051937",

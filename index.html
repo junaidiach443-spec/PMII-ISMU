@@ -5601,7 +5601,10 @@
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('[PWA] Service Worker terdaftar dengan scope:', reg.scope))
+          .then(reg => {
+            console.log('[PWA] Service Worker terdaftar dengan scope:', reg.scope);
+            if (reg.update) reg.update();
+          })
           .catch(err => console.warn('[PWA] Gagal mendaftarkan Service Worker:', err));
       });
     }

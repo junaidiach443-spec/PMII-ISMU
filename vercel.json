@@ -1,7 +1,10 @@
 {
   "version": 2,
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false,
+  "rewrites": [
+    { "source": "/form-kader", "destination": "/form-kader.html" }
+  ],
   "functions": {
     "api/*.php": {
       "runtime": "vercel-php@0.7.3"
