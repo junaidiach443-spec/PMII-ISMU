@@ -9,9 +9,9 @@
  * Jika pengurus ingin mengatur koneksi direct browser secara mandiri, gunakan menu Pengaturan Sistem di dalam aplikasi.
  */
 const DEFAULT_CLOUD_CONFIG = {
-  url: "",
-  key: "",
-  autoSyncIntervalMs: 15000 // Interval sinkronisasi background jika cloud aktif
+  url: "postgresql://neondb_owner:npg_nTzvpcJeB07A@ep-nameless-salad-betekr6e-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+  key: "npg_nTzvpcJeB07A",
+  autoSyncIntervalMs: 10000 // Interval sinkronisasi background jika cloud aktif (10 detik)
 };
 
 const defaultKomisariat = {

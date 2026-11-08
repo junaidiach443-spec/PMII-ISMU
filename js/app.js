@@ -879,7 +879,7 @@ async function executeNeonSql(query, params = []) {
   }
 
   const headers = {
-    'Content-Type': 'text/plain'
+    'Content-Type': 'application/json'
   };
 
   // PENTING: Untuk Neon HTTP /sql, kirimkan Neon-Connection-String saja.

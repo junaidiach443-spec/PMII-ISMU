@@ -26,6 +26,9 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Data Awal & Konfigurasi Cloud -->
+  <script src="js/data.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -759,7 +762,45 @@
             }
           }
         } catch (err) {
-          console.warn('[OFFLINE FALLBACK] Server API tidak terhubung, menyimpan ke LocalStorage:', err);
+          console.warn('[OFFLINE FALLBACK] Server API tidak terhubung, mencoba direct Cloud Neon:', err);
+        }
+      }
+
+      // 1.b Jika API PHP offline / di Vercel, simpan langsung ke Neon Cloud Database
+      if (!isSavedOnline && typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
+        try {
+          const sql = `
+            INSERT INTO tb_kader (
+              id, nama, nama_panggilan, no_kta, nim, gender, tempat_lahir, tanggal_lahir,
+              fakultas, jurusan, angkatan, status_kuliah, alamat, whatsapp, email, foto,
+              status_kader, formal, tahun_mapaba, penyelenggara_mapaba, kopri
+            ) VALUES (
+              '${payload.id}', '${payload.nama.replace(/'/g, "''")}', ${payload.namaPanggilan ? `'${payload.namaPanggilan.replace(/'/g, "''")}'` : 'NULL'},
+              '${payload.noKta}', '${payload.nim}', '${payload.gender}', ${payload.tempatLahir ? `'${payload.tempatLahir.replace(/'/g, "''")}'` : 'NULL'},
+              ${payload.tanggalLahir ? `'${payload.tanggalLahir}'` : 'NULL'}, '${payload.fakultas}', '${payload.jurusan}',
+              '${payload.angkatan}', '${payload.statusKuliah}', ${payload.alamat ? `'${payload.alamat.replace(/'/g, "''")}'` : 'NULL'},
+              ${payload.whatsapp ? `'${payload.whatsapp}'` : 'NULL'}, ${payload.email ? `'${payload.email}'` : 'NULL'},
+              ${payload.foto ? `'${payload.foto}'` : 'NULL'}, 'Aktif', '${payload.formal}', '${payload.tahunMapaba}',
+              '${payload.penyelenggaraMapaba}', '${payload.kopri}'
+            ) ON CONFLICT (nim) DO UPDATE SET
+              nama = EXCLUDED.nama,
+              foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
+              updated_at = CURRENT_TIMESTAMP;
+          `;
+          const neonRes = await fetch('https://ep-nameless-salad-betekr6e.c-9.us-east-2.aws.neon.tech/sql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Neon-Connection-String': DEFAULT_CLOUD_CONFIG.url
+            },
+            body: JSON.stringify({ query: sql })
+          });
+          if (neonRes.ok) {
+            isSavedOnline = true;
+            console.log('[NEON DIRECT] Berhasil simpan data kader langsung ke Neon Cloud!');
+          }
+        } catch (e) {
+          console.warn('[NEON DIRECT] Gagal simpan ke Neon:', e);
         }
       }
 
