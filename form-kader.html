@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Formulir Pendataan Mandiri Kader PMII ISMU Sumenep</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            cinzel: ['"Cinzel"', 'serif'],
+          },
+          colors: {
+            pmii: {
+              blue: '#0B2A63',
+              navy: '#061738',
+              yellow: '#F5B014',
+              gold: '#D99B0B',
+              lightBlue: '#1E40AF',
+              accent: '#3B82F6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #1E293B;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    .gradient-pmii {
+      background: linear-gradient(135deg, #061738 0%, #0B2A63 55%, #1E40AF 100%);
+    }
+    .gradient-gold {
+      background: linear-gradient(135deg, #F5B014 0%, #D99B0B 100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-pmii-yellow selection:text-pmii-navy">
+
+  <!-- Header Banner Publik -->
+  <header class="gradient-pmii text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white p-1 shadow-md flex items-center justify-center shrink-0">
+          <img src="assets/logo-pmii.webp" 
+               alt="Logo PMII" 
+               class="w-full h-full object-contain">
+        </div>
+        <div>
+          <h1 class="text-sm font-extrabold tracking-wide text-white leading-tight">PK PMII ISMU TARATE</h1>
+          <p class="text-[11px] text-yellow-300 font-medium">Institut Miftahul Ulum • PC PMII Sumenep</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full border border-white/15 text-[10px] text-white">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Form Mandiri</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section & Petunjuk -->
+  <main class="flex-grow max-w-xl w-full mx-auto px-4 py-5 space-y-5">
+    
+    <!-- Hero Box -->
+    <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-xl pointer-events-none"></div>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-bold uppercase tracking-wider border border-blue-100">
+          Database Kader Digital
+        </span>
+        <span class="text-xs text-slate-400">• Masa Khidmat 2026 - 2027</span>
+      </div>
+      <h2 class="text-lg font-extrabold text-slate-900 leading-snug">
+        Formulir Pendataan & Registrasi Mandiri Kader
+      </h2>
+      <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+        Selamat datang Sahabat/i! Silakan lengkapi biodata diri Anda secara valid untuk pendataan keanggotaan resmi 
+        <strong class="text-pmii-blue">PK PMII Institut Miftahul Ulum Tarate Sumenep</strong> dan penerbitan E-KTA digital.
+      </p>
+
+      <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+        <span class="flex items-center gap-1">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Data Dijamin Aman & Rahasia</span>
+        </span>
+        <span class="text-slate-400">Estimasi: 2 Menit</span>
+      </div>
+    </div>
+
+    <!-- Form Kontainer -->
+    <form id="form-registrasi-kader" onsubmit="handleFormSubmit(event)" class="space-y-5">
+      
+      <!-- STEP 1: Biodata Personal -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+          <div class="w-7 h-7 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs">
+            1
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Identitas Diri (Personal)</h3>
+            <p class="text-[11px] text-slate-400">Nama lengkap dan data kependudukan</p>
+          </div>
+        </div>
+
+        <div class="space-y-3.5">
+          <!-- Nama Lengkap -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Nama Lengkap <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="kader-nama" required placeholder="Contoh: Sahabat M. Ilham Fathoni" 
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+          </div>
+
+          <!-- Nama Panggilan & Gender -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Nama Panggilan
+              </label>
+              <input type="text" id="kader-panggilan" placeholder="Contoh: Ilham" 
+                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Panggilan Kader <span class="text-rose-500">*</span>
+              </label>
+              <select id="kader-gender" required onchange="handleGenderChange(this.value)"
+                      class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+                <option value="Laki-laki">Sahabat (Putra / Laki-laki)</option>
+                <option value="Perempuan">Sahabati (Putri / KOPRI)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tempat & Tanggal Lahir -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Tempat Lahir
+              </label>
+              <input type="text" id="kader-tempat-lahir" placeholder="Contoh: Sumenep" 
+                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Tanggal Lahir
+              </label>
+              <input type="date" id="kader-tanggal-lahir" 
+                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+            </div>
+          </div>
+
+          <!-- Alamat Asal -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Alamat Domisili Asal
+            </label>
+            <textarea id="kader-alamat" rows="2" placeholder="Contoh: Desa Tarate, Kec. Kota, Kab. Sumenep" 
+                      class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Data Akademik Kampus ISMU -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+          <div class="w-7 h-7 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs">
+            2
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Data Akademik Kampus</h3>
+            <p class="text-[11px] text-slate-400">Institut Miftahul Ulum (ISMU) Tarate Sumenep</p>
+          </div>
+        </div>
+
+        <div class="space-y-3.5">
+          <!-- NIM / NPM -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              NIM / NPM (Nomor Induk Mahasiswa) <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="kader-nim" required placeholder="Contoh: 220101110023" 
+                   class="w-full text-xs font-mono font-bold tracking-wider border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+            <p class="text-[10px] text-slate-400 mt-1">Digunakan sebagai identitas utama pencatatan di database</p>
+          </div>
+
+          <!-- Fakultas -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Fakultas di ISMU <span class="text-rose-500">*</span>
+            </label>
+            <select id="kader-fakultas" required onchange="handleFakultasChange(this.value)"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+              <option value="Fakultas Tarbiyah">Fakultas Tarbiyah</option>
+              <option value="Fakultas Syariah">Fakultas Syariah</option>
+              <option value="Fakultas Ekonomi & Bisnis Islam">Fakultas Ekonomi & Bisnis Islam (FEBI)</option>
+              <option value="Program Pascasarjana">Program Pascasarjana</option>
+            </select>
+          </div>
+
+          <!-- Program Studi / Jurusan -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Program Studi / Jurusan <span class="text-rose-500">*</span>
+            </label>
+            <select id="kader-jurusan" required
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-medium">
+              <!-- Populated by JS -->
+            </select>
+          </div>
+
+          <!-- Angkatan Kuliah -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Angkatan Kuliah (Tahun Masuk) <span class="text-rose-500">*</span>
+            </label>
+            <select id="kader-angkatan" required
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+              <option value="2026" selected>Angkatan 2026</option>
+              <option value="2025">Angkatan 2025</option>
+              <option value="2024">Angkatan 2024</option>
+              <option value="2023">Angkatan 2023</option>
+              <option value="2022">Angkatan 2022</option>
+              <option value="2021">Angkatan 2021</option>
+              <option value="2020">Angkatan 2020</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Kontak WhatsApp & Komunikasi -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+          <div class="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
+            3
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Kontak & Komunikasi</h3>
+            <p class="text-[11px] text-slate-400">Untuk broadcast undangan resmi & koordinasi</p>
+          </div>
+        </div>
+
+        <div class="space-y-3.5">
+          <!-- WhatsApp -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Nomor WhatsApp Aktif <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs font-bold">
+                +62
+              </div>
+              <input type="tel" id="kader-whatsapp" required placeholder="81234567890" 
+                     class="w-full text-xs font-bold border border-slate-200 rounded-xl pl-12 pr-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 transition">
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">Pastikan nomor aktif di WhatsApp agar terhubung ke sistem undangan otomatis Ketum</p>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Alamat Email (Opsional)
+            </label>
+            <input type="email" id="kader-email" placeholder="nama@student.ismu.ac.id" 
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Riwayat Kaderisasi PMII -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+          <div class="w-7 h-7 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-xs">
+            4
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Riwayat Kaderisasi PMII</h3>
+            <p class="text-[11px] text-slate-400">Jenjang kaderisasi formal yang telah diikuti</p>
+          </div>
+        </div>
+
+        <div class="space-y-3.5">
+          <!-- Jenjang Formal -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Kaderisasi Formal Terakhir <span class="text-rose-500">*</span>
+            </label>
+            <select id="kader-formal" required
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
+              <option value="MAPABA" selected>MAPABA (Masa Penerimaan Anggota Baru)</option>
+              <option value="PKD">PKD (Pelatihan Kader Dasar)</option>
+              <option value="PKL">PKL (Pelatihan Kader Lanjutan)</option>
+              <option value="PKN">PKN (Pelatihan Kader Nasional)</option>
+              <option value="Calon Anggota">Calon Anggota (Belum Mapaba)</option>
+            </select>
+          </div>
+
+          <!-- Tahun & Penyelenggara Mapaba -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Tahun MAPABA
+              </label>
+              <input type="number" id="kader-tahun-mapaba" value="2026" min="2010" max="2030" 
+                     class="w-full text-xs font-bold border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Penyelenggara
+              </label>
+              <input type="text" id="kader-penyelenggara-mapaba" value="PK PMII ISMU" 
+                     class="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+            </div>
+          </div>
+
+          <!-- Jenjang KOPRI (Khusus Perempuan) -->
+          <div id="section-kopri" class="hidden pt-2 border-t border-slate-100">
+            <label class="block text-xs font-bold text-pink-700 mb-1">
+              Kaderisasi KOPRI (Khusus Sahabati)
+            </label>
+            <select id="kader-kopri"
+                    class="w-full text-xs border border-pink-200 rounded-xl px-3.5 py-2.5 bg-pink-50/30 focus:bg-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-100 transition font-semibold text-pink-800">
+              <option value="SIG" selected>SIG (Sekolah Islam & Gender)</option>
+              <option value="SKK">SKK (Sekolah Kader KOPRI)</option>
+              <option value="SKKN">SKKN (Sekolah Kader KOPRI Nasional)</option>
+              <option value="-">Belum Mengikuti KOPRI</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: Pas Foto Formal -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+          <div class="w-7 h-7 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs">
+            5
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Pas Foto Profil Formal</h3>
+            <p class="text-[11px] text-slate-400">Foto mengenakan jas PMII atau pakaian rapi berkerah</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+          <!-- Foto Preview -->
+          <div class="relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border-2 border-dashed border-blue-300 flex items-center justify-center shrink-0 shadow-inner group">
+            <img id="foto-preview-img" src="" alt="Pratinjau Foto" class="w-full h-full object-cover hidden">
+            <div id="foto-placeholder-icon" class="text-center p-2">
+              <i data-lucide="camera" class="w-7 h-7 text-blue-500 mx-auto"></i>
+              <span class="text-[9px] text-slate-400 block mt-1 font-semibold">Pilih Foto</span>
+            </div>
+          </div>
+
+          <!-- Input File -->
+          <div class="w-full space-y-2">
+            <label for="input-foto-file" class="w-full py-2.5 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition active:scale-98">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span>Pilih Foto dari Galeri / Kamera</span>
+            </label>
+            <input type="file" id="input-foto-file" accept="image/*" onchange="handleFotoFileSelect(event)" class="hidden">
+            <input type="hidden" id="kader-foto-base64">
+            
+            <p class="text-[10px] text-slate-400 leading-tight">
+              Format: JPG / PNG. Foto otomatis dikompresi agar hemat kuota dan pas untuk kartu E-KTA.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tombol Submit -->
+      <div class="pt-2">
+        <button type="submit" id="btn-submit-pendaftaran" 
+                class="w-full py-3.5 px-6 gradient-pmii text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-blue-900/25 hover:shadow-xl hover:opacity-95 transition flex items-center justify-center gap-2 active:scale-98">
+          <i data-lucide="send" class="w-4 h-4 text-yellow-400"></i>
+          <span>Kirim Data Registrasi Kader</span>
+        </button>
+        <p class="text-center text-[11px] text-slate-400 mt-2.5">
+          Dengan mengklik kirim, Anda menyetujui data Anda dicatat di database resmi PK PMII ISMU.
+        </p>
+      </div>
+
+    </form>
+
+  </main>
+
+  <!-- Footer Publik -->
+  <footer class="bg-white border-t border-slate-100 py-4 mt-8">
+    <div class="max-w-xl mx-auto px-4 text-center space-y-1">
+      <p class="text-xs font-bold text-slate-700">Pengurus Komisariat PMII ISMU Tarate Sumenep</p>
+      <p class="text-[10px] text-slate-400">@chass-07 2026</p>
+    </div>
+  </footer>
+
+  <!-- MODAL SUKSES & BUKTI REGISTRASI DIGITAL -->
+  <div id="modal-sukses" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Icon Sukses -->
+      <div class="text-center space-y-1.5">
+        <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md shadow-emerald-500/20">
+          <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
+        </div>
+        <h3 class="text-lg font-black text-slate-900">Alhamdulillah! Data Berhasil Disimpan</h3>
+        <p class="text-xs text-slate-500">Biodata Anda telah resmi masuk ke antrean database PK PMII ISMU</p>
+      </div>
+
+      <!-- Kartu Digital Pratinjau KTA Sementara -->
+      <div id="bukti-kartu" class="gradient-pmii rounded-2xl p-4 text-white shadow-md relative overflow-hidden border border-yellow-400/30">
+        <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-yellow-400/20 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between pb-2 border-b border-white/15 mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-md bg-white p-0.5 flex items-center justify-center shrink-0">
+              <img src="assets/logo-pmii.webp" alt="Logo PMII" class="w-full h-full object-contain">
+            </div>
+            <span class="text-[10px] font-black tracking-wider text-yellow-300 uppercase">KARTU TANDA ANGGOTA SEMENTARA</span>
+          </div>
+          <span class="text-[9px] bg-emerald-500/80 px-2 py-0.5 rounded font-bold">Terverifikasi</span>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <img id="sukses-card-foto" src="https://via.placeholder.com/80" alt="Foto" class="w-16 h-20 rounded-xl object-cover border-2 border-yellow-400 shadow-sm shrink-0 bg-slate-800">
+          <div class="space-y-0.5 text-xs">
+            <h4 id="sukses-card-nama" class="font-extrabold text-sm text-white leading-tight">-</h4>
+            <p id="sukses-card-nim" class="font-mono text-yellow-300 text-[11px] font-bold">NIM: -</p>
+            <p id="sukses-card-prodi" class="text-[11px] text-slate-200">-</p>
+            <p id="sukses-card-kaderisasi" class="text-[10px] text-slate-300 font-semibold pt-1">Status: MAPABA 2026</p>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-300">
+          <span>PK PMII ISMU TARATE</span>
+          <span id="sukses-card-kta" class="font-mono text-yellow-300 font-bold">13.01.2026.***</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2.5 pt-1">
+        <!-- Konfirmasi via WhatsApp -->
+        <a id="btn-wa-konfirmasi" href="#" target="_blank" 
+           class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>Konfirmasi ke WhatsApp Pengurus</span>
+        </a>
+
+        <!-- Isi Form Lain / Tutup -->
+        <button type="button" onclick="location.reload()" 
+                class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+          Daftarkan Sahabat/i Lainnya
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC FORMULIR -->
+  <script>
+    // Data Program Studi per Fakultas ISMU Tarate
+    const prodiByFakultas = {
+      "Fakultas Tarbiyah": [
+        "Pendidikan Agama Islam (PAI)",
+        "Manajemen Pendidikan Islam (MPI)",
+        "Pendidikan Guru Madrasah Ibtidaiyah (PGMI)"
+      ],
+      "Fakultas Syariah": [
+        "Hukum Keluarga Islam (HKI / Ahwal Syakhshiyyah)",
+        "Hukum Ekonomi Syariah (HES / Muamalah)"
+      ],
+      "Fakultas Ekonomi & Bisnis Islam": [
+        "Ekonomi Syariah",
+        "Perbankan Syariah"
+      ],
+      "Program Pascasarjana": [
+        "Magister Pendidikan Agama Islam (S2 PAI)"
+      ]
+    };
+
+    // Inisialisasi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+      handleFakultasChange('Fakultas Tarbiyah');
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+
+    // Handle Perubahan Fakultas
+    function handleFakultasChange(fakultas) {
+      const selJurusan = document.getElementById('kader-jurusan');
+      if (!selJurusan) return;
+
+      const prodiList = prodiByFakultas[fakultas] || prodiByFakultas["Fakultas Tarbiyah"];
+      selJurusan.innerHTML = prodiList.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    // Handle Perubahan Gender (Tampilkan KOPRI jika perempuan)
+    function handleGenderChange(gender) {
+      const kopriSec = document.getElementById('section-kopri');
+      if (!kopriSec) return;
+      if (gender === 'Perempuan') {
+        kopriSec.classList.remove('hidden');
+      } else {
+        kopriSec.classList.add('hidden');
+      }
+    }
+
+    // Handle Upload & Kompresi Foto
+    function handleFotoFileSelect(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          // Kompresi via Canvas (max width 600px untuk menghemat ukuran)
+          const canvas = document.createElement('canvas');
+          const maxDim = 600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height *= maxDim / width;
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width *= maxDim / height;
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Ambil hasil base64 jpeg dengan quality 0.75
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+          // Update preview
+          const previewImg = document.getElementById('foto-preview-img');
+          const placeholder = document.getElementById('foto-placeholder-icon');
+          const hiddenInput = document.getElementById('kader-foto-base64');
+
+          if (previewImg && placeholder) {
+            previewImg.src = compressedBase64;
+            previewImg.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+          }
+          if (hiddenInput) {
+            hiddenInput.value = compressedBase64;
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Format Nomor WhatsApp agar otomatis 628...
+    function cleanPhoneNumber(raw) {
+      if (!raw) return '';
+      let num = raw.toString().replace(/[^0-9]/g, '');
+      if (num.startsWith('0')) {
+        num = '62' + num.slice(1);
+      } else if (num.startsWith('8')) {
+        num = '62' + num;
+      }
+      return num;
+    }
+
+    // Handle Form Submit
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const btnSubmit = document.getElementById('btn-submit-pendaftaran');
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span>Menyimpan Data Kader...</span>
+        `;
+      }
+
+      const nama = document.getElementById('kader-nama').value.trim();
+      const panggilan = document.getElementById('kader-panggilan').value.trim();
+      const gender = document.getElementById('kader-gender').value;
+      const tempatLahir = document.getElementById('kader-tempat-lahir').value.trim();
+      const tanggalLahir = document.getElementById('kader-tanggal-lahir').value;
+      const alamat = document.getElementById('kader-alamat').value.trim();
+
+      const nim = document.getElementById('kader-nim').value.trim();
+      const fakultas = document.getElementById('kader-fakultas').value;
+      const jurusan = document.getElementById('kader-jurusan').value;
+      const angkatan = document.getElementById('kader-angkatan').value;
+
+      const rawWa = document.getElementById('kader-whatsapp').value.trim();
+      const whatsapp = cleanPhoneNumber(rawWa);
+      const email = document.getElementById('kader-email').value.trim();
+
+      const formal = document.getElementById('kader-formal').value;
+      const tahunMapaba = document.getElementById('kader-tahun-mapaba').value.trim();
+      const penyMapaba = document.getElementById('kader-penyelenggara-mapaba').value.trim();
+      const kopri = (gender === 'Perempuan') ? document.getElementById('kader-kopri').value : '-';
+
+      // Foto default jika belum upload
+      const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=faces';
+      const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=faces';
+      const foto = document.getElementById('kader-foto-base64').value || (gender === 'Perempuan' ? defaultFemale : defaultMale);
+
+      const generatedId = 'KD-' + angkatan + '-' + Math.floor(1000 + Math.random() * 9000);
+      const generatedKta = '13.01.' + angkatan + '.' + Math.floor(100 + Math.random() * 900);
+
+      const payload = {
+        id: generatedId,
+        noKta: generatedKta,
+        nama: nama,
+        namaPanggilan: panggilan,
+        gender: gender,
+        tempatLahir: tempatLahir,
+        tanggalLahir: tanggalLahir,
+        alamat: alamat,
+        nim: nim,
+        fakultas: fakultas,
+        jurusan: jurusan,
+        angkatan: angkatan,
+        statusKuliah: 'Aktif',
+        whatsapp: whatsapp,
+        email: email,
+        foto: foto,
+        statusKader: 'Aktif',
+        formal: formal,
+        tahunMapaba: tahunMapaba,
+        penyelenggaraMapaba: penyMapaba,
+        kopri: kopri,
+        kaderisasi: {
+          formal: formal,
+          tahunMapaba: tahunMapaba,
+          penyelenggaraMapaba: penyMapaba,
+          kopri: kopri
+        }
+      };
+
+      let successData = payload;
+      let isSavedOnline = false;
+
+      // 1. Coba kirim ke Backend API jika berjalan di server HTTP/HTTPS
+      if (window.location.protocol.startsWith('http')) {
+        try {
+          const res = await fetch('api/register_kader.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'success' && json.data) {
+              successData = json.data;
+              isSavedOnline = true;
+            }
+          }
+        } catch (err) {
+          console.warn('[OFFLINE FALLBACK] Server API tidak terhubung, menyimpan ke LocalStorage:', err);
+        }
+      }
+
+      // 2. Simpan juga salinan ke localStorage browser agar sinkron jika dibuka di laptop/browser yang sama
+      try {
+        const localKaders = JSON.parse(localStorage.getItem('pmii_kaders') || '[]');
+        const existingIdx = localKaders.findIndex(k => k.nim === nim || k.id === payload.id);
+        if (existingIdx >= 0) {
+          localKaders[existingIdx] = Object.assign(localKaders[existingIdx], payload);
+        } else {
+          localKaders.unshift(payload);
+        }
+        localStorage.setItem('pmii_kaders', JSON.stringify(localKaders));
+      } catch (e) {
+        console.warn('Gagal menyimpan salinan offline localStorage:', e);
+      }
+
+      // 3. Tampilkan Modal Sukses
+      showSuccessModal(successData, isSavedOnline);
+    }
+
+    // Tampilkan Modal Hasil Pendaftaran
+    function showSuccessModal(data, isOnline) {
+      const modal = document.getElementById('modal-sukses');
+      if (!modal) return;
+
+      document.getElementById('sukses-card-nama').textContent = data.nama || '-';
+      document.getElementById('sukses-card-nim').textContent = 'NIM: ' + (data.nim || '-');
+      document.getElementById('sukses-card-prodi').textContent = (data.jurusan || '-') + ' • ' + (data.fakultas || '-');
+      document.getElementById('sukses-card-kaderisasi').textContent = `Status: ${data.formal || 'MAPABA'} (${data.angkatan || '2026'})`;
+      document.getElementById('sukses-card-kta').textContent = data.noKta || '13.01.2026.***';
+
+      const cardFoto = document.getElementById('sukses-card-foto');
+      if (cardFoto && data.foto) {
+        cardFoto.src = data.foto;
+      }
+
+      // Siapkan Link Konfirmasi WhatsApp ke Pengurus
+      const btnWa = document.getElementById('btn-wa-konfirmasi');
+      if (btnWa) {
+        const noWaPengurus = '6281234567801'; // Default no Sekum / Ketum
+        const pesan = encodeURIComponent(
+          `Assalamu'alaikum Sahabat Pengurus PK PMII ISMU,\n\n` +
+          `Saya telah mengisi formulir registrasi kader mandiri:\n` +
+          `• Nama Lengkap: ${data.nama}\n` +
+          `• NIM: ${data.nim}\n` +
+          `• Fakultas / Prodi: ${data.fakultas} - ${data.jurusan}\n` +
+          `• Angkatan: ${data.angkatan}\n` +
+          `• No. WhatsApp: +${data.whatsapp || '-'}\n` +
+          `• Jenjang: ${data.formal || 'MAPABA'}\n\n` +
+          `Mohon untuk diverifikasi ke sistem pendataan kader. Terima kasih! Salam Pergerakan!`
+        );
+        btnWa.href = `https://wa.me/${noWaPengurus}?text=${pesan}`;
+      }
+
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+  </script>
+
+</body>
+</html>
+

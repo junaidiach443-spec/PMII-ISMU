@@ -1,0 +1,22 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment Variables & Keys
+.env
+.env.local
+.env.*.local
+api/config.local.php
+config.local.php
+
+# Test & Debug Scripts with Private Keys
+check_users.ps1
+check_user_count.ps1
+
+# Temporary & Log Files
+*.log
+node_modules/
+.vscode/
+.idea/
+

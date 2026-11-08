@@ -1,0 +1,254 @@
+/* PMII Modern Dashboard Theme (Vibrant Blue & Yellow) */
+:root {
+  --pmii-navy: #002B66;
+  --pmii-blue: #004B99;
+  --pmii-blue-light: #2563EB;
+  --pmii-yellow: #F5B000;
+  --pmii-yellow-light: #FDE047;
+  --pmii-gold: #D49A00;
+  --canvas-bg: #F4F7FC;
+  --card-bg: #FFFFFF;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--canvas-bg);
+  color: #0F172A;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Hierarchy & Harmonious Contrast */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.025em;
+  color: #0F172A;
+}
+
+/* Modern Card Styling */
+.card-saas {
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease-in-out;
+}
+
+.card-saas:hover {
+  box-shadow: 0 4px 16px -2px rgba(0, 43, 102, 0.08);
+  border-color: rgba(203, 213, 225, 0.9);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #EEF2F6;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Sidebar Nav Button Styles */
+.nav-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-btn-active {
+  background: linear-gradient(135deg, #004B99 0%, #1E40AF 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(0, 75, 153, 0.25) !important;
+  font-weight: 700 !important;
+}
+
+.nav-btn-active i {
+  color: #FACC15 !important;
+}
+
+.nav-btn-inactive {
+  color: #475569 !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+.nav-btn-inactive:hover {
+  background: #EFF6FF !important;
+  color: #004B99 !important;
+}
+
+.nav-btn-inactive:hover i {
+  color: #004B99 !important;
+}
+
+/* KTA Card Container (Standard ID Card CR80: 85.6mm x 54mm = ratio 1.585) */
+.kta-card {
+  width: 428px;
+  height: 270px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 43, 102, 0.25), 0 8px 10px -6px rgba(0, 43, 102, 0.15);
+  background: linear-gradient(135deg, #002b66 0%, #004b99 65%, #0066cc 100%);
+  color: #ffffff;
+  user-select: none;
+}
+
+.kta-card-back {
+  width: 428px;
+  height: 270px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 43, 102, 0.25), 0 8px 10px -6px rgba(0, 43, 102, 0.15);
+  background: linear-gradient(135deg, #001a40 0%, #002b66 60%, #003d80 100%);
+  color: #ffffff;
+  user-select: none;
+}
+
+/* Watermark PMII */
+.kta-watermark {
+  position: absolute;
+  right: -30px;
+  bottom: -30px;
+  width: 220px;
+  height: 220px;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+/* Yellow Ribbon / Accent */
+.kta-accent-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
+  background: linear-gradient(135deg, transparent 50%, #f5b000 50%);
+  z-index: 1;
+}
+
+/* Badge Kaderisasi Colors */
+.badge-mapaba {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+.badge-pkd {
+  background-color: #DBEAFE;
+  color: #1E40AF;
+  border: 1px solid #BFDBFE;
+}
+.badge-pkl {
+  background-color: #DCFCE7;
+  color: #166534;
+  border: 1px solid #BBF7D0;
+}
+.badge-pkn {
+  background-color: #F3E8FF;
+  color: #6B21A8;
+  border: 1px solid #E9D5FF;
+}
+
+/* Modal animation */
+.modal-enter {
+  animation: modalFadeIn 0.2s ease-out forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  /* Sembunyikan elemen navigasi dan tombol saat print */
+  aside, header, #sidebar, .no-print, button, input, select {
+    display: none !important;
+  }
+
+  /* Mode Cetak Kwitansi Pemasukan */
+  body:has(#modal-detail-pemasukan:not(.hidden)) * {
+    visibility: hidden;
+  }
+  body:has(#modal-detail-pemasukan:not(.hidden)) #kwitansi-pemasukan-print-area,
+  body:has(#modal-detail-pemasukan:not(.hidden)) #kwitansi-pemasukan-print-area * {
+    visibility: visible;
+  }
+  body:has(#modal-detail-pemasukan:not(.hidden)) #kwitansi-pemasukan-print-area {
+    position: fixed;
+    left: 5%;
+    top: 50px;
+    width: 90%;
+    margin: 0;
+    border: 2px solid #002b66 !important;
+    background: #ffffff !important;
+  }
+
+  /* Mode Cetak Bukti Pengeluaran */
+  body:has(#modal-detail-pengeluaran:not(.hidden)) * {
+    visibility: hidden;
+  }
+  body:has(#modal-detail-pengeluaran:not(.hidden)) #kwitansi-pengeluaran-print-area,
+  body:has(#modal-detail-pengeluaran:not(.hidden)) #kwitansi-pengeluaran-print-area * {
+    visibility: visible;
+  }
+  body:has(#modal-detail-pengeluaran:not(.hidden)) #kwitansi-pengeluaran-print-area {
+    position: fixed;
+    left: 5%;
+    top: 50px;
+    width: 90%;
+    margin: 0;
+    border: 2px solid #002b66 !important;
+    background: #ffffff !important;
+  }
+
+  /* Mode Cetak Kartu E-KTA */
+  body:has(#tab-kta:not(.hidden)) * {
+    visibility: hidden;
+  }
+  body:has(#tab-kta:not(.hidden)) #kta-card-front,
+  body:has(#tab-kta:not(.hidden)) #kta-card-front *,
+  body:has(#tab-kta:not(.hidden)) #kta-card-back,
+  body:has(#tab-kta:not(.hidden)) #kta-card-back * {
+    visibility: visible;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body:has(#tab-kta:not(.hidden)) #kta-card-front {
+    position: fixed;
+    left: 50px;
+    top: 50px;
+  }
+  body:has(#tab-kta:not(.hidden)) #kta-card-back {
+    position: fixed;
+    left: 50px;
+    top: 360px;
+  }
+
+  /* Mode Cetak Laporan Rekapitulasi */
+  body:has(#tab-laporan:not(.hidden)) #tab-laporan,
+  body:has(#tab-laporan:not(.hidden)) #tab-laporan * {
+    visibility: visible;
+  }
+}
+
