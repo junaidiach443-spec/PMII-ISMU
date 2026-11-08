@@ -902,13 +902,13 @@ async function executeNeonSql(query, params = []) {
     throw new Error('Konfigurasi database Neon belum lengkap atau tidak valid.');
   }
 
-  // Strategi 1: Gunakan Vercel Serverless Function Proxy (/api/neon) jika di web
+  // Strategi 1: Gunakan Vercel Serverless Function Proxy (/api/neon atau /api/neon.php) jika di web
   // Menghilangkan kendala CORS, adblocker, dan DNS timeout pada browser/HP
   if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 25000);
-      const proxyRes = await fetch('api/neon', {
+      let proxyRes = await fetch('api/neon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -917,6 +917,17 @@ async function executeNeonSql(query, params = []) {
         body: JSON.stringify({ query, params }),
         signal: controller.signal
       });
+      if (proxyRes.status === 404) {
+        proxyRes = await fetch('api/neon.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Neon-Connection-String': cfg.connectionString || ''
+          },
+          body: JSON.stringify({ query, params }),
+          signal: controller.signal
+        });
+      }
       clearTimeout(timeoutId);
 
       if (proxyRes.ok) {
@@ -991,12 +1002,12 @@ async function executeNeonBatch(queries = []) {
     throw new Error('Konfigurasi database Neon belum lengkap atau tidak valid.');
   }
 
-  // Strategi 1: Kirim seluruh query sekaligus ke Vercel Serverless Function Proxy (/api/neon)
+  // Strategi 1: Kirim seluruh query sekaligus ke Vercel Serverless Function Proxy (/api/neon atau /api/neon.php)
   if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 45000);
-      const proxyRes = await fetch('api/neon', {
+      let proxyRes = await fetch('api/neon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1005,6 +1016,17 @@ async function executeNeonBatch(queries = []) {
         body: JSON.stringify({ queries }),
         signal: controller.signal
       });
+      if (proxyRes.status === 404) {
+        proxyRes = await fetch('api/neon.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Neon-Connection-String': cfg.connectionString || ''
+          },
+          body: JSON.stringify({ queries }),
+          signal: controller.signal
+        });
+      }
       clearTimeout(timeoutId);
 
       if (proxyRes.ok) {

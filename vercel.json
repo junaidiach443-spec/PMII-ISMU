@@ -3,6 +3,7 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/api/neon", "destination": "/api/neon.php" },
     { "source": "/portal-kader", "destination": "/portal-kader.html" },
     { "source": "/kader", "destination": "/portal-kader.html" },
     { "source": "/form-kader", "destination": "/form-kader.html" }
@@ -10,9 +11,6 @@
   "functions": {
     "api/*.php": {
       "runtime": "vercel-php@0.7.3"
-    },
-    "api/*.js": {
-      "runtime": "nodejs20.x"
     }
   },
   "headers": [
@@ -26,4 +24,3 @@
     }
   ]
 }
-
