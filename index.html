@@ -200,6 +200,14 @@
         </div>
       </div>
 
+      <!-- Tombol Install PWA di Halaman Login -->
+      <div id="login-pwa-install-container" class="mt-4 pt-3 border-t border-slate-100 text-center hidden">
+        <button type="button" onclick="triggerPwaInstall()" class="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl font-extrabold text-xs shadow-sm transition flex items-center justify-center gap-2 cursor-pointer">
+          <i data-lucide="download" class="w-4 h-4 stroke-[2.5]"></i>
+          <span>Pasang / Install Aplikasi di HP</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -388,6 +396,12 @@
         </button>
 
         <div class="pt-2 mt-2 border-t border-slate-100 space-y-1">
+          <!-- Tombol Install PWA Sidebar (Otomatis tampil di HP/browser yang mendukung) -->
+          <button id="sidebar-pwa-install-btn" type="button" onclick="triggerPwaInstall()" class="hidden w-full items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition text-left cursor-pointer shadow-xs">
+            <i data-lucide="download" class="w-4 h-4 text-amber-700 stroke-[2.5]"></i>
+            <span>Install Aplikasi di HP</span>
+          </button>
+
           <button id="btn-nav-pengaturan" onclick="switchTab('pengaturan')" class="nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
             <i data-lucide="settings" class="w-4 h-4 text-slate-600"></i>
             <span>Pengaturan Komisariat</span>
@@ -437,6 +451,12 @@
             <span id="db-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
             <span id="db-status-text"></span>
           </div>
+
+          <!-- Tombol Install PWA Header (Tampil otomatis di perangkat yang mendukung) -->
+          <button type="button" id="header-pwa-install-btn" onclick="triggerPwaInstall()" title="Install aplikasi ini ke HP atau Laptop Anda" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-400 hover:from-yellow-300 hover:to-amber-300 text-slate-900 text-xs font-black shadow-xs transition cursor-pointer">
+            <i data-lucide="download" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+            <span class="hidden sm:inline">Install App</span>
+          </button>
 
           <!-- Dynamic Tahun Khidmat Active Badge & Switcher Shortcut -->
           <button type="button" id="header-masa-khidmat-pill" onclick="switchTab('pengaturan')" title="Klik untuk kelola & ganti Tahun Khidmat di Pengaturan" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-xs font-bold transition cursor-pointer shadow-xs">
@@ -4116,6 +4136,57 @@
         <button onclick="openFormInNewTab()" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition flex items-center justify-center gap-1.5">
           <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
           <span>Buka di Tab Baru</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: PANDUAN INSTALL APLIKASI (PWA CROSS-DEVICE)       -->
+  <!-- ======================================================== -->
+  <div id="modal-pwa-guide" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl modal-enter space-y-5">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <i data-lucide="smartphone" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-800 text-sm">Pasang Aplikasi di Perangkat</h3>
+            <p class="text-[11px] text-slate-400">Akses langsung dari Layar Utama HP / Laptop</p>
+          </div>
+        </div>
+        <button onclick="closePwaGuideModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- App Card Preview -->
+      <div class="flex items-center gap-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/60 to-slate-50 border border-blue-100/70">
+        <div class="w-12 h-12 rounded-2xl bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+          <img src="assets/logo-pmii.webp" alt="Logo PMII" class="w-full h-full object-contain">
+        </div>
+        <div class="space-y-0.5">
+          <h4 class="font-extrabold text-xs text-slate-900">PK PMII ISMU Sumenep</h4>
+          <p class="text-[11px] text-slate-500">Aplikasi Sistem Informasi & Pendataan Kader</p>
+          <div class="flex items-center gap-1.5 text-[10px] text-emerald-700 font-bold pt-0.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>Bisa dibuka offline • Ringan • Standalone</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Petunjuk Dinamis Berdasarkan OS / Browser -->
+      <div id="pwa-guide-steps" class="space-y-2.5 text-xs text-slate-700">
+        <!-- Akan diisi secara otomatis oleh JavaScript sesuai perangkat Android / iOS / PC -->
+      </div>
+
+      <!-- Tombol Aksi -->
+      <div class="pt-2 flex items-center justify-end">
+        <button onclick="closePwaGuideModal()" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition text-center">
+          Mengerti & Tutup
         </button>
       </div>
 

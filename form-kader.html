@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Formulir Pendataan Mandiri Kader PMII ISMU Sumenep</title>
   
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="icon" type="image/webp" href="assets/logo-pmii.webp">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#002b66">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PMII ISMU">
+  <link rel="apple-touch-icon" href="assets/logo-pmii.webp">
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -81,9 +91,15 @@
           <p class="text-[11px] text-yellow-300 font-medium">Institut Miftahul Ulum • PC PMII Sumenep</p>
         </div>
       </div>
-      <div class="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full border border-white/15 text-[10px] text-white">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Form Mandiri</span>
+      <div class="flex items-center gap-2">
+        <button id="btn-install-form" type="button" onclick="triggerPwaInstall()" class="hidden items-center gap-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-900 font-black text-[11px] px-3 py-1 rounded-full shadow-sm transition cursor-pointer">
+          <i data-lucide="download" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+          <span>Install App</span>
+        </button>
+        <div class="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full border border-white/15 text-[10px] text-white">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Form Mandiri</span>
+        </div>
       </div>
     </div>
   </header>
@@ -486,6 +502,53 @@
     </div>
   </div>
 
+  <!-- MODAL: PANDUAN INSTALL APLIKASI (PWA CROSS-DEVICE) -->
+  <div id="modal-pwa-guide" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <i data-lucide="smartphone" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-800 text-sm">Pasang Aplikasi di HP</h3>
+            <p class="text-[11px] text-slate-400">Akses cepat dari Layar Utama perangkat Anda</p>
+          </div>
+        </div>
+        <button onclick="closePwaGuideModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- App Card Preview -->
+      <div class="flex items-center gap-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/60 to-slate-50 border border-blue-100/70">
+        <div class="w-12 h-12 rounded-2xl bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+          <img src="assets/logo-pmii.webp" alt="Logo PMII" class="w-full h-full object-contain">
+        </div>
+        <div class="space-y-0.5">
+          <h4 class="font-extrabold text-xs text-slate-900">PK PMII ISMU Sumenep</h4>
+          <p class="text-[11px] text-slate-500">Formulir Pendaftaran Kader & Anggota</p>
+          <div class="flex items-center gap-1.5 text-[10px] text-emerald-700 font-bold pt-0.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>Akses langsung seperti aplikasi Play Store</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Petunjuk Dinamis Berdasarkan OS / Browser -->
+      <div id="pwa-guide-steps" class="space-y-2.5 text-xs text-slate-700"></div>
+
+      <!-- Tombol Aksi -->
+      <div class="pt-2 flex items-center justify-end">
+        <button onclick="closePwaGuideModal()" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition text-center">
+          Mengerti & Tutup
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- JAVASCRIPT LOGIC FORMULIR -->
   <script>
     // Data Program Studi per Fakultas ISMU Tarate
@@ -754,6 +817,150 @@
 
       modal.classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
+    }
+
+    // ==========================================
+    // PWA INSTALLATION CONTROLLER (FORM MANDIRI)
+    // ==========================================
+    let deferredPwaPrompt = null;
+
+    function isPwaStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches || 
+             window.navigator.standalone === true || 
+             (document.referrer && document.referrer.includes('android-app://'));
+    }
+
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('[PWA Form] Service Worker aktif:', reg.scope))
+          .catch(err => console.warn('[PWA Form] Gagal registrasi SW:', err));
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPwaPrompt = e;
+      const btn = document.getElementById('btn-install-form');
+      if (btn && !isPwaStandalone()) {
+        btn.classList.remove('hidden');
+        btn.classList.add('inline-flex');
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPwaPrompt = null;
+      const btn = document.getElementById('btn-install-form');
+      if (btn) btn.classList.add('hidden');
+    });
+
+    const isMobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+    if (isMobile && !isPwaStandalone()) {
+      setTimeout(() => {
+        const btn = document.getElementById('btn-install-form');
+        if (btn) {
+          btn.classList.remove('hidden');
+          btn.classList.add('inline-flex');
+        }
+      }, 1000);
+    }
+
+    function triggerPwaInstall() {
+      if (deferredPwaPrompt) {
+        deferredPwaPrompt.prompt();
+        deferredPwaPrompt.userChoice.then(() => {
+          deferredPwaPrompt = null;
+        });
+      } else {
+        openPwaGuideModal();
+      }
+    }
+
+    function openPwaGuideModal() {
+      const modal = document.getElementById('modal-pwa-guide');
+      const container = document.getElementById('pwa-guide-steps');
+      if (!modal || !container) return;
+
+      const userAgent = navigator.userAgent || '';
+      const isIos = /iphone|ipad|ipod/i.test(userAgent);
+      const isAndroid = /android/i.test(userAgent);
+
+      let stepsHtml = '';
+      if (isIos) {
+        stepsHtml = `
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">1</span>
+              <span>Buka di browser Safari</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Buka link ini di aplikasi <strong>Safari</strong> iPhone/iPad Anda.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">2</span>
+              <span>Ketuk tombol Bagikan (Share)</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Ketuk ikon kotak dengan panah ke atas (<strong>Share</strong>) di bagian bawah Safari.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">3</span>
+              <span>Pilih "Tambahkan ke Layar Utama"</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Gulir ke bawah dan ketuk <strong>"Add to Home Screen"</strong>, lalu ketuk <strong>Tambah</strong>.</p>
+          </div>
+        `;
+      } else if (isAndroid) {
+        stepsHtml = `
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">1</span>
+              <span>Buka Menu Browser Chrome</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Ketuk tombol <strong>titik tiga (⋮)</strong> di pojok kanan atas browser Google Chrome.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">2</span>
+              <span>Pilih "Instal Aplikasi" / "Tambahkan ke Layar Utama"</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Pilih menu <strong>"Instal aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">3</span>
+              <span>Ketuk "Instal"</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Aplikasi form PMII ISMU akan terpasang di layar utama HP Anda.</p>
+          </div>
+        `;
+      } else {
+        stepsHtml = `
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">1</span>
+              <span>Klik Ikon Install di Kolom URL</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Di sisi kanan kolom alamat URL browser (Chrome / Edge), klik ikon <strong>Install</strong>.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+            <p class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">2</span>
+              <span>Klik "Install"</span>
+            </p>
+            <p class="text-slate-600 pl-7 text-[11px]">Aplikasi akan terpasang di Desktop & Start Menu komputer Anda.</p>
+          </div>
+        `;
+      }
+
+      container.innerHTML = stepsHtml;
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closePwaGuideModal() {
+      const modal = document.getElementById('modal-pwa-guide');
+      if (modal) modal.classList.add('hidden');
     }
   </script>
 

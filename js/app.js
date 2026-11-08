@@ -9663,3 +9663,187 @@ function terbilang(angka) {
   if (angka === 0) return 'Nol';
   return convert(angka).replace(/\s+/g, ' ').trim();
 }
+
+// ==========================================
+// 13. PWA INSTALLATION CONTROLLER (Cross-Device)
+// ==========================================
+let deferredPwaPrompt = null;
+
+function isPwaStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true || 
+         (document.referrer && document.referrer.includes('android-app://'));
+}
+
+function initPwaInstallHandlers() {
+  if (isPwaStandalone()) {
+    console.log('[PWA] Aplikasi sudah berjalan dalam mode standalone (terpasang).');
+    updatePwaButtonsVisibility(false);
+    return;
+  }
+
+  // Tangkap event sebelum instalasi muncul otomatis
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPwaPrompt = e;
+    console.log('[PWA] beforeinstallprompt tertangkap, menampilkan tombol install');
+    updatePwaButtonsVisibility(true);
+  });
+
+  window.addEventListener('appinstalled', () => {
+    console.log('[PWA] Aplikasi berhasil dipasang!');
+    deferredPwaPrompt = null;
+    updatePwaButtonsVisibility(false);
+    if (typeof showToast === 'function') {
+      showToast('Aplikasi berhasil dipasang di layar utama!', 'success');
+    }
+  });
+
+  // Untuk perangkat mobile / iOS (Safari) agar tombol tetap muncul
+  const isMobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+  if (isMobile && !isPwaStandalone()) {
+    setTimeout(() => {
+      updatePwaButtonsVisibility(true);
+    }, 1000);
+  }
+}
+
+function updatePwaButtonsVisibility(show) {
+  if (isPwaStandalone()) {
+    show = false;
+  }
+  const btnIds = [
+    'header-pwa-install-btn',
+    'sidebar-pwa-install-btn',
+    'login-pwa-install-container',
+    'btn-install-form'
+  ];
+  btnIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (show) {
+        el.classList.remove('hidden');
+        if (el.tagName === 'BUTTON') {
+          el.classList.add('inline-flex');
+        } else {
+          el.classList.add('block');
+        }
+      } else {
+        el.classList.add('hidden');
+        el.classList.remove('inline-flex', 'block', 'flex');
+      }
+    }
+  });
+}
+
+function triggerPwaInstall() {
+  if (deferredPwaPrompt) {
+    deferredPwaPrompt.prompt();
+    deferredPwaPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult && choiceResult.outcome === 'accepted') {
+        console.log('[PWA] Pengguna menerima pemasangan aplikasi.');
+        if (typeof showToast === 'function') {
+          showToast('Menginstal aplikasi ke perangkat Anda...', 'info');
+        }
+      } else {
+        console.log('[PWA] Pengguna menolak pemasangan aplikasi.');
+      }
+      deferredPwaPrompt = null;
+    });
+  } else {
+    openPwaGuideModal();
+  }
+}
+
+function openPwaGuideModal() {
+  const modal = document.getElementById('modal-pwa-guide');
+  const container = document.getElementById('pwa-guide-steps');
+  if (!modal || !container) return;
+
+  const userAgent = navigator.userAgent || '';
+  const isIos = /iphone|ipad|ipod/i.test(userAgent);
+  const isAndroid = /android/i.test(userAgent);
+
+  let stepsHtml = '';
+  if (isIos) {
+    stepsHtml = `
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">1</span>
+          <span>Buka di browser Safari</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Pastikan tautan dibuka di aplikasi <strong>Safari</strong> bawaan iPhone/iPad Anda.</p>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">2</span>
+          <span>Ketuk tombol Bagikan (Share)</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Ketuk ikon kotak dengan panah ke atas (<strong>Share</strong>) di bilah bawah Safari.</p>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">3</span>
+          <span>Pilih "Tambahkan ke Layar Utama"</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Gulir ke bawah dan ketuk <strong>"Add to Home Screen"</strong>, lalu klik <strong>Tambah</strong> di pojok kanan atas.</p>
+      </div>
+    `;
+  } else if (isAndroid) {
+    stepsHtml = `
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">1</span>
+          <span>Buka Menu Browser Chrome</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Ketuk tombol <strong>titik tiga (⋮)</strong> di pojok kanan atas browser Google Chrome.</p>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">2</span>
+          <span>Pilih "Instal Aplikasi" / "Tambahkan ke Layar Utama"</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Ketuk menu <strong>"Instal aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</p>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">3</span>
+          <span>Ketuk "Instal"</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Aplikasi PMII ISMU akan terpasang di layar utama HP Anda dengan ikon resmi.</p>
+      </div>
+    `;
+  } else {
+    // Desktop / Laptop
+    stepsHtml = `
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">1</span>
+          <span>Klik Ikon Install di Kolom URL</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Di sisi kanan kolom alamat URL browser (Chrome / Edge), klik ikon <strong>komputer / pasang aplikasi</strong>.</p>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <p class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">2</span>
+          <span>Klik "Install"</span>
+        </p>
+        <p class="text-slate-600 pl-7 text-[11px]">Aplikasi akan terbuka mandiri di Desktop & Start Menu komputer Anda.</p>
+      </div>
+    `;
+  }
+
+  container.innerHTML = stepsHtml;
+  modal.classList.remove('hidden');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closePwaGuideModal() {
+  const modal = document.getElementById('modal-pwa-guide');
+  if (modal) modal.classList.add('hidden');
+}
+
+// Inisialisasi otomatis
+if (typeof window !== 'undefined') {
+  initPwaInstallHandlers();
+}

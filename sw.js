@@ -3,10 +3,11 @@
  * Cache-first for core assets, Network-first for API requests
  */
 
-const CACHE_NAME = 'pmii-ismu-cache-v2.6';
+const CACHE_NAME = 'pmii-ismu-cache-v2.8';
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './form-kader.html',
   './css/style.css',
   './js/data.js',
   './js/app.js',
