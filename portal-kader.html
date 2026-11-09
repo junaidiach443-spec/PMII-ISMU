@@ -669,12 +669,12 @@
         const saved = localStorage.getItem('pmii_fakultas_prodi');
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) faculties = parsed.map(f => f.nama);
+          if (Array.isArray(parsed)) faculties = parsed.map(f => f.fakultas || f.nama).filter(Boolean);
         }
       } catch (e) {}
 
       if (faculties.length === 0 && typeof defaultFakultasProdi !== 'undefined') {
-        faculties = defaultFakultasProdi.map(f => f.nama);
+        faculties = defaultFakultasProdi.map(f => f.fakultas || f.nama).filter(Boolean);
       }
       if (faculties.length === 0) {
         faculties = ['Fakultas Tarbiyah', 'Fakultas Syariah', 'Fakultas Ekonomi & Bisnis Islam'];

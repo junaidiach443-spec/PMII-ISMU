@@ -243,10 +243,7 @@
             </label>
             <select id="kader-fakultas" required onchange="handleFakultasChange(this.value)"
                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
-              <option value="Fakultas Tarbiyah">Fakultas Tarbiyah</option>
-              <option value="Fakultas Syariah">Fakultas Syariah</option>
-              <option value="Fakultas Ekonomi & Bisnis Islam">Fakultas Ekonomi & Bisnis Islam (FEBI)</option>
-              <option value="Program Pascasarjana">Program Pascasarjana</option>
+              <!-- Populated dynamically via JS -->
             </select>
           </div>
 
@@ -621,13 +618,42 @@
     });
 
     async function fetchLatestFakultasProdiFromServer() {
+      // 1. Coba koneksi langsung ke Neon Cloud (High Performance & Zero Proxy Latency)
+      const directNeonUrl = 'https://ep-nameless-salad-betekr6e.c-9.us-east-2.aws.neon.tech/sql';
+      const connStr = 'postgresql://neondb_owner:npg_nTzvpcJeB07A@ep-nameless-salad-betekr6e-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+      try {
+        const res = await fetch(directNeonUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Neon-Connection-String': connStr
+          },
+          body: JSON.stringify({ query: 'SELECT fakultas_prodi FROM tb_komisariat WHERE id = 1;' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const raw = data.rows && data.rows[0] ? data.rows[0].fakultas_prodi : null;
+          if (raw) {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(parsed));
+              initFakultasSelect();
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[FORM-KADER] Direct Neon query fallback:', e);
+      }
+
+      // 2. Fallback ke endpoint proxy jika direct query gagal
       const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
       for (const ep of endpoints) {
         try {
           const res = await fetch(ep, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: 'SELECT fakultas_prodi FROM tb_komisariat LIMIT 1;' })
+            body: JSON.stringify({ query: 'SELECT fakultas_prodi FROM tb_komisariat WHERE id = 1;' })
           });
           if (res.ok) {
             const data = await res.json();

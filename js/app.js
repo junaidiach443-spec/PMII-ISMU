@@ -1883,8 +1883,24 @@ function renderHeader() {
   }
 }
 
+function populateBroadcastFakultasFilter() {
+  const selFakultas = document.getElementById('bc-filter-fakultas');
+  if (!selFakultas) return;
+  const current = selFakultas.value || 'semua';
+  const list = getFakultasProdiList();
+  selFakultas.innerHTML = '<option value="semua">Semua Fakultas</option>' +
+    list.map(item => `<option value="${escapeHtml(item.fakultas)}">${escapeHtml(item.fakultas)}</option>`).join('');
+  if (list.some(item => item.fakultas === current) || current === 'semua') {
+    selFakultas.value = current;
+  }
+}
+
 function renderApp() {
   renderHeader();
+  populateFakultasFilterOptions();
+  populateAdminKaderFakultasSelect();
+  initJoinKaderTab();
+  populateBroadcastFakultasFilter();
   switchTab(currentTab);
 }
 
@@ -3319,9 +3335,11 @@ function populateMapabaFilterOptions() {
   const selAngkatan = document.getElementById('filter-mapaba-angkatan');
 
   if (selFakultas) {
-    const listFakultas = [...new Set(mapabaKaders.map(k => k.fakultas).filter(Boolean))].sort();
+    const masterFaks = (typeof getFakultasProdiList === 'function' ? getFakultasProdiList() : []).map(item => item.fakultas);
+    const kaderFaks = mapabaKaders.map(k => k.fakultas).filter(Boolean);
+    const listFakultas = [...new Set([...masterFaks, ...kaderFaks])].sort();
     selFakultas.innerHTML = '<option value="all">Semua Fakultas</option>' +
-      listFakultas.map(f => `<option value="${f}" ${filterMapabaFakultas === f ? 'selected' : ''}>${f}</option>`).join('');
+      listFakultas.map(f => `<option value="${escapeHtml(f)}" ${filterMapabaFakultas === f ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('');
   }
 
   if (selAngkatan) {
@@ -3645,9 +3663,11 @@ function populatePkdFilterOptions() {
   const selAngkatan = document.getElementById('filter-pkd-angkatan');
 
   if (selFakultas) {
-    const listFakultas = [...new Set(pkdKaders.map(k => k.fakultas).filter(Boolean))].sort();
+    const masterFaks = (typeof getFakultasProdiList === 'function' ? getFakultasProdiList() : []).map(item => item.fakultas);
+    const kaderFaks = pkdKaders.map(k => k.fakultas).filter(Boolean);
+    const listFakultas = [...new Set([...masterFaks, ...kaderFaks])].sort();
     selFakultas.innerHTML = '<option value="all">Semua Fakultas</option>' +
-      listFakultas.map(f => `<option value="${f}" ${filterPkdFakultas === f ? 'selected' : ''}>${f}</option>`).join('');
+      listFakultas.map(f => `<option value="${escapeHtml(f)}" ${filterPkdFakultas === f ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('');
   }
 
   if (selAngkatan) {
@@ -5988,9 +6008,14 @@ async function saveFakultasProdiList(silent = false) {
     }
   }
 
+  // Perbarui seluruh tampilan & dropdown terkait di aplikasi
   renderSettingFakultasProdi();
   populateFakultasFilterOptions();
   populateAdminKaderFakultasSelect();
+  if (typeof initJoinKaderTab === 'function') initJoinKaderTab();
+  if (typeof populateMapabaFilterOptions === 'function') populateMapabaFilterOptions();
+  if (typeof populatePkdFilterOptions === 'function') populatePkdFilterOptions();
+  if (typeof populateBroadcastFakultasFilter === 'function') populateBroadcastFakultasFilter();
   if (typeof renderFakultasBarChart === 'function') renderFakultasBarChart();
 
   if (!silent) {
@@ -6038,11 +6063,11 @@ function renderSettingFakultasProdi() {
                 </div>
               </div>
               <div class="flex items-center gap-1 shrink-0">
-                <button type="button" onclick="openModalEditProdi('${escapeHtml(item.fakultas)}', '${escapeHtml(p)}')"
+                <button type="button" onclick="openModalEditProdi(${fakIdx}, ${pIdx})"
                   class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer" title="Edit nama prodi">
                   <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                 </button>
-                <button type="button" onclick="deleteProdi('${escapeHtml(item.fakultas)}', '${escapeHtml(p)}')"
+                <button type="button" onclick="deleteProdi(${fakIdx}, ${pIdx})"
                   class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" title="Hapus prodi ini">
                   <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                 </button>
@@ -6077,18 +6102,18 @@ function renderSettingFakultasProdi() {
 
           <!-- Action Buttons Fakultas -->
           <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end flex-wrap">
-            <button type="button" onclick="openModalTambahProdi('${escapeHtml(item.fakultas)}')"
+            <button type="button" onclick="openModalTambahProdi(${fakIdx})"
               class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl transition flex items-center gap-1 border border-emerald-200 cursor-pointer">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
               <span>+ Tambah Prodi</span>
             </button>
-            <button type="button" onclick="openModalEditFakultas('${escapeHtml(item.fakultas)}')"
+            <button type="button" onclick="openModalEditFakultas(${fakIdx})"
               class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1 border border-slate-200 cursor-pointer"
               title="Ganti nama fakultas">
               <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
               <span>Edit</span>
             </button>
-            <button type="button" onclick="deleteFakultas('${escapeHtml(item.fakultas)}')"
+            <button type="button" onclick="deleteFakultas(${fakIdx})"
               class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-xl transition flex items-center gap-1 border border-rose-200 cursor-pointer"
               title="Hapus fakultas beserta prodinya">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -6116,6 +6141,8 @@ function renderSettingFakultasProdi() {
 // Modal Fakultas
 function openModalTambahFakultas() {
   document.getElementById('modal-fakultas-title').textContent = 'Tambah Fakultas Baru';
+  const idxEl = document.getElementById('fakultas-index');
+  if (idxEl) idxEl.value = '';
   document.getElementById('fakultas-old-name').value = '';
   document.getElementById('fakultas-nama-input').value = '';
   const modal = document.getElementById('modal-fakultas');
@@ -6123,10 +6150,17 @@ function openModalTambahFakultas() {
   initLucide();
 }
 
-function openModalEditFakultas(nama) {
+function openModalEditFakultas(fakIdx) {
+  const list = getFakultasProdiList();
+  const item = typeof fakIdx === 'number' ? list[fakIdx] : list.find(f => f.fakultas === fakIdx);
+  if (!item) return;
+
+  const actualIdx = typeof fakIdx === 'number' ? fakIdx : list.indexOf(item);
   document.getElementById('modal-fakultas-title').textContent = 'Edit Nama Fakultas';
-  document.getElementById('fakultas-old-name').value = nama;
-  document.getElementById('fakultas-nama-input').value = nama;
+  const idxEl = document.getElementById('fakultas-index');
+  if (idxEl) idxEl.value = String(actualIdx);
+  document.getElementById('fakultas-old-name').value = item.fakultas;
+  document.getElementById('fakultas-nama-input').value = item.fakultas;
   const modal = document.getElementById('modal-fakultas');
   if (modal) modal.classList.remove('hidden');
   initLucide();
@@ -6139,6 +6173,7 @@ function closeModalFakultas() {
 
 async function handleFakultasFormSubmit(event) {
   event.preventDefault();
+  const fakIdxStr = document.getElementById('fakultas-index')?.value ?? '';
   const oldName = document.getElementById('fakultas-old-name').value.trim();
   const newName = document.getElementById('fakultas-nama-input').value.trim();
 
@@ -6149,16 +6184,18 @@ async function handleFakultasFormSubmit(event) {
 
   const list = getFakultasProdiList();
 
-  if (oldName) {
-    // Edit Mode
-    const found = list.find(item => item.fakultas === oldName);
-    if (found) {
-      found.fakultas = newName;
+  if (fakIdxStr !== '' && !isNaN(parseInt(fakIdxStr))) {
+    // Edit Mode via Index
+    const idx = parseInt(fakIdxStr);
+    const item = list[idx];
+    if (item) {
+      const prevName = item.fakultas;
+      item.fakultas = newName;
 
       // Update data kader yang terdaftar pada fakultas ini
       let updatedKaders = 0;
       (kaders || []).forEach(k => {
-        if (k.fakultas === oldName) {
+        if (k.fakultas === prevName || (oldName && k.fakultas === oldName)) {
           k.fakultas = newName;
           updatedKaders++;
         }
@@ -6168,7 +6205,9 @@ async function handleFakultasFormSubmit(event) {
       (pengurus || []).forEach(p => {
         if (Array.isArray(p.struktur)) {
           p.struktur.forEach(s => {
-            if (s.fakultas === oldName) s.fakultas = newName;
+            if (s.fakultas === prevName || (oldName && s.fakultas === oldName)) {
+              s.fakultas = newName;
+            }
           });
         }
       });
@@ -6176,6 +6215,21 @@ async function handleFakultasFormSubmit(event) {
       if (updatedKaders > 0) {
         saveData();
       }
+    }
+    showToast(`Fakultas "${newName}" berhasil diperbarui!`, 'success');
+  } else if (oldName) {
+    // Fallback edit by oldName
+    const found = list.find(item => item.fakultas === oldName);
+    if (found) {
+      found.fakultas = newName;
+      let updatedKaders = 0;
+      (kaders || []).forEach(k => {
+        if (k.fakultas === oldName) {
+          k.fakultas = newName;
+          updatedKaders++;
+        }
+      });
+      if (updatedKaders > 0) saveData();
     }
     showToast(`Fakultas "${newName}" berhasil diperbarui!`, 'success');
   } else {
@@ -6195,13 +6249,14 @@ async function handleFakultasFormSubmit(event) {
   await saveFakultasProdiList(true);
 }
 
-function deleteFakultas(nama) {
+function deleteFakultas(fakIdx) {
   const list = getFakultasProdiList();
-  const found = list.find(item => item.fakultas === nama);
-  if (!found) return;
+  const item = typeof fakIdx === 'number' ? list[fakIdx] : list.find(f => f.fakultas === fakIdx);
+  if (!item) return;
 
+  const nama = item.fakultas;
   const countKader = (kaders || []).filter(k => k.fakultas === nama).length;
-  const countProdi = (found.prodi || []).length;
+  const countProdi = (item.prodi || []).length;
 
   showConfirmModal({
     title: 'Hapus Fakultas',
@@ -6211,7 +6266,10 @@ function deleteFakultas(nama) {
     type: 'danger',
     icon: 'trash-2',
     onConfirm: async () => {
-      fakultasProdiList = list.filter(item => item.fakultas !== nama);
+      const idxToRemove = list.indexOf(item);
+      if (idxToRemove !== -1) {
+        list.splice(idxToRemove, 1);
+      }
       await saveFakultasProdiList(true);
       showToast(`Fakultas "${nama}" berhasil dihapus.`, 'info');
     }
@@ -6219,10 +6277,19 @@ function deleteFakultas(nama) {
 }
 
 // Modal Program Studi (Prodi)
-function openModalTambahProdi(fakultasNama) {
+function openModalTambahProdi(fakIdx) {
+  const list = getFakultasProdiList();
+  const item = typeof fakIdx === 'number' ? list[fakIdx] : list.find(f => f.fakultas === fakIdx);
+  if (!item) return;
+
+  const actualIdx = typeof fakIdx === 'number' ? fakIdx : list.indexOf(item);
   document.getElementById('modal-prodi-title').textContent = 'Tambah Program Studi';
-  document.getElementById('prodi-fakultas-target').value = fakultasNama;
-  document.getElementById('prodi-fakultas-display').value = fakultasNama;
+  const fIdxEl = document.getElementById('prodi-fakultas-index');
+  if (fIdxEl) fIdxEl.value = String(actualIdx);
+  const pIdxEl = document.getElementById('prodi-index');
+  if (pIdxEl) pIdxEl.value = '';
+  document.getElementById('prodi-fakultas-target').value = item.fakultas;
+  document.getElementById('prodi-fakultas-display').value = item.fakultas;
   document.getElementById('prodi-old-name').value = '';
   document.getElementById('prodi-nama-input').value = '';
   const modal = document.getElementById('modal-prodi');
@@ -6230,12 +6297,24 @@ function openModalTambahProdi(fakultasNama) {
   initLucide();
 }
 
-function openModalEditProdi(fakultasNama, prodiNama) {
+function openModalEditProdi(fakIdx, pIdx) {
+  const list = getFakultasProdiList();
+  const item = typeof fakIdx === 'number' ? list[fakIdx] : list.find(f => f.fakultas === fakIdx);
+  if (!item || !Array.isArray(item.prodi)) return;
+
+  const prodiNama = typeof pIdx === 'number' ? item.prodi[pIdx] : pIdx;
+  const actualPIdx = typeof pIdx === 'number' ? pIdx : item.prodi.indexOf(prodiNama);
+  const actualFakIdx = typeof fakIdx === 'number' ? fakIdx : list.indexOf(item);
+
   document.getElementById('modal-prodi-title').textContent = 'Edit Program Studi';
-  document.getElementById('prodi-fakultas-target').value = fakultasNama;
-  document.getElementById('prodi-fakultas-display').value = fakultasNama;
-  document.getElementById('prodi-old-name').value = prodiNama;
-  document.getElementById('prodi-nama-input').value = prodiNama;
+  const fIdxEl = document.getElementById('prodi-fakultas-index');
+  if (fIdxEl) fIdxEl.value = String(actualFakIdx);
+  const pIdxEl = document.getElementById('prodi-index');
+  if (pIdxEl) pIdxEl.value = String(actualPIdx);
+  document.getElementById('prodi-fakultas-target').value = item.fakultas;
+  document.getElementById('prodi-fakultas-display').value = item.fakultas;
+  document.getElementById('prodi-old-name').value = prodiNama || '';
+  document.getElementById('prodi-nama-input').value = prodiNama || '';
   const modal = document.getElementById('modal-prodi');
   if (modal) modal.classList.remove('hidden');
   initLucide();
@@ -6248,6 +6327,8 @@ function closeModalProdi() {
 
 async function handleProdiFormSubmit(event) {
   event.preventDefault();
+  const fIdxStr = document.getElementById('prodi-fakultas-index')?.value ?? '';
+  const pIdxStr = document.getElementById('prodi-index')?.value ?? '';
   const fakultasNama = document.getElementById('prodi-fakultas-target').value.trim();
   const oldName = document.getElementById('prodi-old-name').value.trim();
   const newName = document.getElementById('prodi-nama-input').value.trim();
@@ -6258,7 +6339,14 @@ async function handleProdiFormSubmit(event) {
   }
 
   const list = getFakultasProdiList();
-  const foundFak = list.find(item => item.fakultas === fakultasNama);
+  let foundFak = null;
+  if (fIdxStr !== '' && !isNaN(parseInt(fIdxStr))) {
+    foundFak = list[parseInt(fIdxStr)];
+  }
+  if (!foundFak) {
+    foundFak = list.find(item => item.fakultas === fakultasNama);
+  }
+
   if (!foundFak) {
     showToast('Fakultas induk tidak ditemukan!', 'error');
     return;
@@ -6268,13 +6356,30 @@ async function handleProdiFormSubmit(event) {
     foundFak.prodi = [];
   }
 
-  if (oldName) {
-    // Edit Mode
+  if (pIdxStr !== '' && !isNaN(parseInt(pIdxStr))) {
+    // Edit Mode via Index
+    const pIdx = parseInt(pIdxStr);
+    const prevProdi = foundFak.prodi[pIdx];
+    foundFak.prodi[pIdx] = newName;
+
+    // Update data kader yang memiliki jurusan lama ini
+    let updatedKaders = 0;
+    (kaders || []).forEach(k => {
+      if ((k.fakultas === foundFak.fakultas || k.fakultas === fakultasNama) && 
+          (k.jurusan === prevProdi || (oldName && k.jurusan === oldName))) {
+        k.jurusan = newName;
+        updatedKaders++;
+      }
+    });
+    if (updatedKaders > 0) {
+      saveData();
+    }
+    showToast(`Program studi "${newName}" berhasil diperbarui!`, 'success');
+  } else if (oldName) {
+    // Fallback edit by oldName
     const pIdx = foundFak.prodi.indexOf(oldName);
     if (pIdx !== -1) {
       foundFak.prodi[pIdx] = newName;
-
-      // Update data kader yang memiliki jurusan ini
       let updatedKaders = 0;
       (kaders || []).forEach(k => {
         if (k.fakultas === fakultasNama && k.jurusan === oldName) {
@@ -6282,9 +6387,7 @@ async function handleProdiFormSubmit(event) {
           updatedKaders++;
         }
       });
-      if (updatedKaders > 0) {
-        saveData();
-      }
+      if (updatedKaders > 0) saveData();
     }
     showToast(`Program studi "${newName}" berhasil diperbarui!`, 'success');
   } else {
@@ -6294,18 +6397,20 @@ async function handleProdiFormSubmit(event) {
       return;
     }
     foundFak.prodi.push(newName);
-    showToast(`Program studi "${newName}" berhasil ditambahkan ke ${fakultasNama}!`, 'success');
+    showToast(`Program studi "${newName}" berhasil ditambahkan ke ${foundFak.fakultas}!`, 'success');
   }
 
   closeModalProdi();
   await saveFakultasProdiList(true);
 }
 
-function deleteProdi(fakultasNama, prodiNama) {
+function deleteProdi(fakIdx, pIdx) {
   const list = getFakultasProdiList();
-  const foundFak = list.find(item => item.fakultas === fakultasNama);
-  if (!foundFak || !Array.isArray(foundFak.prodi)) return;
+  const item = typeof fakIdx === 'number' ? list[fakIdx] : list.find(f => f.fakultas === fakIdx);
+  if (!item || !Array.isArray(item.prodi)) return;
 
+  const prodiNama = typeof pIdx === 'number' ? item.prodi[pIdx] : pIdx;
+  const fakultasNama = item.fakultas;
   const countKader = (kaders || []).filter(k => k.fakultas === fakultasNama && k.jurusan === prodiNama).length;
 
   showConfirmModal({
@@ -6316,7 +6421,10 @@ function deleteProdi(fakultasNama, prodiNama) {
     type: 'danger',
     icon: 'trash-2',
     onConfirm: async () => {
-      foundFak.prodi = foundFak.prodi.filter(p => p !== prodiNama);
+      const idxToRemove = typeof pIdx === 'number' ? pIdx : item.prodi.indexOf(prodiNama);
+      if (idxToRemove !== -1) {
+        item.prodi.splice(idxToRemove, 1);
+      }
       await saveFakultasProdiList(true);
       showToast(`Program studi "${prodiNama}" berhasil dihapus.`, 'info');
     }
@@ -6347,7 +6455,7 @@ function populateAdminKaderFakultasSelect(selectedFakultas = '', selectedJurusan
   if (!selFak) return;
 
   const list = getFakultasProdiList();
-  let options = '';
+  let options = '<option value="">-- Pilih Fakultas --</option>';
   list.forEach(item => {
     const isSel = item.fakultas === selectedFakultas ? 'selected' : '';
     options += `<option value="${escapeHtml(item.fakultas)}" ${isSel}>${escapeHtml(item.fakultas)}</option>`;
@@ -6361,7 +6469,12 @@ function populateAdminKaderFakultasSelect(selectedFakultas = '', selectedJurusan
   selFak.innerHTML = options;
 
   const activeFak = selectedFakultas || (list[0] ? list[0].fakultas : '');
-  handleAdminKaderFakultasChange(activeFak, selectedJurusan);
+  if (selectedFakultas) {
+    selFak.value = selectedFakultas;
+  } else if (list[0]) {
+    selFak.value = list[0].fakultas;
+  }
+  handleAdminKaderFakultasChange(selFak.value, selectedJurusan);
 }
 
 function handleAdminKaderFakultasChange(fakultas, selectedJurusan = '') {
@@ -6372,7 +6485,7 @@ function handleAdminKaderFakultasChange(fakultas, selectedJurusan = '') {
   const found = list.find(item => item.fakultas === fakultas);
   const prodiArr = found ? (found.prodi || []) : [];
 
-  let options = '';
+  let options = '<option value="">-- Pilih Program Studi --</option>';
   prodiArr.forEach(p => {
     const isSel = p === selectedJurusan ? 'selected' : '';
     options += `<option value="${escapeHtml(p)}" ${isSel}>${escapeHtml(p)}</option>`;
@@ -6384,6 +6497,11 @@ function handleAdminKaderFakultasChange(fakultas, selectedJurusan = '') {
   }
 
   selJur.innerHTML = options;
+  if (selectedJurusan) {
+    selJur.value = selectedJurusan;
+  } else if (prodiArr.length > 0) {
+    selJur.value = prodiArr[0];
+  }
 }
 
 // ==========================================
@@ -10688,29 +10806,20 @@ if (typeof window !== 'undefined') {
 // ==========================================
 let newlyJoinedKaderId = null;
 
-const JOIN_PRODI_BY_FAKULTAS = {
-  "Fakultas Tarbiyah": [
-    "Pendidikan Agama Islam (PAI)",
-    "Manajemen Pendidikan Islam (MPI)",
-    "Pendidikan Guru Madrasah Ibtidaiyah (PGMI)"
-  ],
-  "Fakultas Syariah": [
-    "Hukum Keluarga Islam (HKI / Ahwal Syakhshiyyah)",
-    "Hukum Ekonomi Syariah (HES / Muamalah)"
-  ],
-  "Fakultas Ekonomi & Bisnis Islam": [
-    "Ekonomi Syariah",
-    "Perbankan Syariah"
-  ],
-  "Program Pascasarjana": [
-    "Magister Pendidikan Agama Islam (S2 PAI)"
-  ]
-};
-
 function initJoinKaderTab() {
   const selFakultas = document.getElementById('join-fakultas');
   if (selFakultas) {
-    handleJoinKaderFakultasChange(selFakultas.value || 'Fakultas Tarbiyah');
+    const list = getFakultasProdiList();
+    const currentVal = selFakultas.value;
+    selFakultas.innerHTML = list.map(item => 
+      `<option value="${escapeHtml(item.fakultas)}">${escapeHtml(item.fakultas)}</option>`
+    ).join('');
+
+    const activeFak = list.some(item => item.fakultas === currentVal)
+      ? currentVal
+      : (list[0] ? list[0].fakultas : '');
+    selFakultas.value = activeFak;
+    handleJoinKaderFakultasChange(activeFak);
   }
   const selGender = document.getElementById('join-gender');
   if (selGender) {
@@ -10723,8 +10832,10 @@ function handleJoinKaderFakultasChange(fakultas) {
   const selJurusan = document.getElementById('join-jurusan');
   if (!selJurusan) return;
 
-  const prodiList = JOIN_PRODI_BY_FAKULTAS[fakultas] || JOIN_PRODI_BY_FAKULTAS["Fakultas Tarbiyah"];
-  selJurusan.innerHTML = prodiList.map(p => `<option value="${p}">${p}</option>`).join('');
+  const list = getFakultasProdiList();
+  const found = list.find(item => item.fakultas === fakultas);
+  const prodiList = found ? (found.prodi || []) : [];
+  selJurusan.innerHTML = prodiList.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
 }
 
 function handleJoinKaderGenderChange(gender) {
