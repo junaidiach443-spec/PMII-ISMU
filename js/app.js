@@ -1839,12 +1839,159 @@ function resetToDefaultData() {
 }
 
 // ==========================================
-// 3. TAB NAVIGATION & CORE RENDER
+// 3. TAB NAVIGATION, SECURITY GUARDS & CORE RENDER
 // ==========================================
+const DEFAULT_PENGATURAN_PASSWORD = 'juna321';
+let pendingTabAfterUnlock = 'pengaturan';
+
+function openAuthPengaturanModal(targetTab = 'pengaturan') {
+  pendingTabAfterUnlock = targetTab;
+  const modal = document.getElementById('modal-auth-pengaturan');
+  const card = document.getElementById('modal-auth-pengaturan-card');
+  const input = document.getElementById('input-password-pengaturan');
+  const err = document.getElementById('error-password-pengaturan');
+
+  if (err) err.classList.add('hidden');
+  if (input) {
+    input.value = '';
+    input.type = 'password';
+    input.classList.remove('border-rose-500', 'bg-rose-50/50');
+    const icon = document.getElementById('icon-toggle-pass-pengaturan');
+    if (icon) icon.setAttribute('data-lucide', 'eye');
+  }
+
+  if (modal && card) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+      card.classList.remove('scale-95', 'opacity-0');
+      card.classList.add('scale-100', 'opacity-100');
+      if (input) input.focus();
+    }, 20);
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeAuthPengaturanModal() {
+  const modal = document.getElementById('modal-auth-pengaturan');
+  const card = document.getElementById('modal-auth-pengaturan-card');
+  if (card) {
+    card.classList.remove('scale-100', 'opacity-100');
+    card.classList.add('scale-95', 'opacity-0');
+  }
+  setTimeout(() => {
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }, 150);
+}
+
+function togglePengaturanPasswordVisibility() {
+  const input = document.getElementById('input-password-pengaturan');
+  const icon = document.getElementById('icon-toggle-pass-pengaturan');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) icon.setAttribute('data-lucide', 'eye-off');
+  } else {
+    input.type = 'password';
+    if (icon) icon.setAttribute('data-lucide', 'eye');
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function handlePengaturanAuthSubmit(event) {
+  event.preventDefault();
+  const input = document.getElementById('input-password-pengaturan');
+  const err = document.getElementById('error-password-pengaturan');
+  const errText = document.getElementById('error-password-pengaturan-text');
+  const entered = (input?.value || '').trim();
+
+  const currentPass = localStorage.getItem('pmii_pengaturan_password') || DEFAULT_PENGATURAN_PASSWORD;
+
+  if (entered === currentPass) {
+    sessionStorage.setItem('pmii_pengaturan_unlocked', 'true');
+    if (err) err.classList.add('hidden');
+    closeAuthPengaturanModal();
+    showToast('Akses Pengaturan berhasil dibuka!', 'success');
+    switchTab(pendingTabAfterUnlock || 'pengaturan');
+  } else {
+    if (err) {
+      err.classList.remove('hidden');
+      if (errText) errText.textContent = 'Password salah! Akses ditolak.';
+    }
+    if (input) {
+      input.classList.add('border-rose-500', 'bg-rose-50/50');
+      input.select();
+      setTimeout(() => {
+        input.classList.remove('border-rose-500', 'bg-rose-50/50');
+      }, 1500);
+    }
+  }
+}
+
+function lockPengaturanTab() {
+  sessionStorage.removeItem('pmii_pengaturan_unlocked');
+  showToast('Akses Pengaturan telah dikunci.', 'info');
+  switchTab('dashboard');
+}
+
+function handleUpdatePengaturanPassword(event) {
+  event.preventDefault();
+  const input = document.getElementById('input-new-pass-pengaturan');
+  const val = (input?.value || '').trim();
+  if (!val) {
+    showToast('Silakan masukkan password baru.', 'warning');
+    return;
+  }
+  localStorage.setItem('pmii_pengaturan_password', val);
+  updatePengaturanPasswordDisplay();
+  if (input) input.value = '';
+  showToast(`Password Pengaturan berhasil diubah menjadi: "${val}"`, 'success');
+}
+
+function resetPengaturanPasswordDefault() {
+  localStorage.setItem('pmii_pengaturan_password', DEFAULT_PENGATURAN_PASSWORD);
+  updatePengaturanPasswordDisplay();
+  const input = document.getElementById('input-new-pass-pengaturan');
+  if (input) input.value = '';
+  showToast(`Password Pengaturan dikembalikan ke default: "${DEFAULT_PENGATURAN_PASSWORD}"`, 'info');
+}
+
+function updatePengaturanPasswordDisplay() {
+  const el = document.getElementById('display-pass-pengaturan');
+  const p = localStorage.getItem('pmii_pengaturan_password') || DEFAULT_PENGATURAN_PASSWORD;
+  if (el) el.textContent = p;
+}
+
+function toggleNewPassVisibility() {
+  const input = document.getElementById('input-new-pass-pengaturan');
+  const icon = document.getElementById('icon-toggle-new-pass');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) icon.setAttribute('data-lucide', 'eye-off');
+  } else {
+    input.type = 'password';
+    if (icon) icon.setAttribute('data-lucide', 'eye');
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
 function switchTab(tabName) {
   const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'kta', 'joinkader'];
   if (isKaderUser() && !cadreAllowedTabs.includes(tabName)) {
     tabName = 'dashboard';
+  }
+
+  // Proteksi Password Khusus Menu Pengaturan (Password: juna321)
+  if (tabName === 'pengaturan') {
+    const isUnlocked = sessionStorage.getItem('pmii_pengaturan_unlocked') === 'true';
+    if (!isUnlocked) {
+      openAuthPengaturanModal('pengaturan');
+      return;
+    }
   }
 
   currentTab = tabName;
@@ -10550,6 +10697,7 @@ function loadPengaturanForm() {
   renderSettingFakultasProdi();
   renderSettingPengurus();
   renderSettingKetum();
+  updatePengaturanPasswordDisplay();
 }
 
 async function saveCloudDbConfig() {
