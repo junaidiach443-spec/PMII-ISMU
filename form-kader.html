@@ -27,7 +27,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Data Awal & Konfigurasi Cloud -->
-  <script src="js/data.js?v=20261110_v3"></script>
+  <script src="js/data.js?v=20261110_v4"></script>
 
   <script>
     tailwind.config = {
@@ -619,8 +619,8 @@
 
     async function fetchLatestFakultasProdiFromServer() {
       // 1. Coba koneksi langsung ke Neon Cloud (High Performance & Zero Proxy Latency)
-      const connStr = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_mGjhwyJfM02X@ep-hidden-cell-betxyhtd-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
-      let cleanHost = 'ep-hidden-cell-betxyhtd.c-9.us-east-2.aws.neon.tech';
+      const connStr = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+      let cleanHost = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
       if (connStr) {
         const m = connStr.match(/@([^:\/?]+)/);
         if (m && m[1]) cleanHost = m[1].replace('-pooler', '');
@@ -882,8 +882,8 @@
               foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
               updated_at = CURRENT_TIMESTAMP;
           `;
-          const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_mGjhwyJfM02X@ep-hidden-cell-betxyhtd-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
-          let hostDirect = 'ep-hidden-cell-betxyhtd.c-9.us-east-2.aws.neon.tech';
+          const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+          let hostDirect = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
           if (connStrDirect) {
             const m = connStrDirect.match(/@([^:\/?]+)/);
             if (m && m[1]) hostDirect = m[1].replace('-pooler', '');
