@@ -658,7 +658,16 @@ function loadFromLocalStorage() {
     }
 
     const savedKaders = localStorage.getItem('pmii_kaders');
-    let rawKaders = savedKaders ? JSON.parse(savedKaders) : defaultKaders;
+    let rawKaders = null;
+    try {
+      if (savedKaders) {
+        const parsed = JSON.parse(savedKaders);
+        if (Array.isArray(parsed) && parsed.length > 0) rawKaders = parsed;
+      }
+    } catch (e) {}
+    if (!rawKaders || rawKaders.length === 0) {
+      rawKaders = typeof defaultKaders !== 'undefined' ? JSON.parse(JSON.stringify(defaultKaders)) : [];
+    }
     if (Array.isArray(rawKaders) && rawKaders.some(k => k.id === 'KD-2021-001' || k.id === 'KD-2021-002')) {
       rawKaders = defaultKaders;
       localStorage.setItem('pmii_kaders', JSON.stringify(defaultKaders));
@@ -680,22 +689,37 @@ function loadFromLocalStorage() {
     });
 
     const savedMabinkom = localStorage.getItem('pmii_mabinkom');
-    mabinkom = savedMabinkom ? JSON.parse(savedMabinkom) : (typeof defaultMabinkom !== 'undefined' ? defaultMabinkom : []);
+    let rawMabinkom = null;
+    try {
+      if (savedMabinkom) {
+        const parsed = JSON.parse(savedMabinkom);
+        if (Array.isArray(parsed) && parsed.length > 0) rawMabinkom = parsed;
+      }
+    } catch (e) {}
+    mabinkom = rawMabinkom || (typeof defaultMabinkom !== 'undefined' ? JSON.parse(JSON.stringify(defaultMabinkom)) : []);
 
     const savedPemasukan = localStorage.getItem('pmii_pemasukan');
     pemasukan = savedPemasukan ? JSON.parse(savedPemasukan) : (typeof defaultPemasukan !== 'undefined' ? defaultPemasukan : []);
 
     const savedPengeluaran = localStorage.getItem('pmii_pengeluaran');
-    pengeluaran = savedPengeluaran ? JSON.parse(savedPengeluaran) : (typeof defaultPengeluaran !== 'undefined' ? defaultPengeluaran : []);
-    if (!Array.isArray(pengeluaran)) {
-      pengeluaran = typeof defaultPengeluaran !== 'undefined' ? JSON.parse(JSON.stringify(defaultPengeluaran)) : [];
-    }
+    let rawPengeluaran = null;
+    try {
+      if (savedPengeluaran) {
+        const parsed = JSON.parse(savedPengeluaran);
+        if (Array.isArray(parsed) && parsed.length > 0) rawPengeluaran = parsed;
+      }
+    } catch (e) {}
+    pengeluaran = rawPengeluaran || (typeof defaultPengeluaran !== 'undefined' ? JSON.parse(JSON.stringify(defaultPengeluaran)) : []);
 
     const savedPengurus = localStorage.getItem('pmii_pengurus');
-    pengurus = savedPengurus ? JSON.parse(savedPengurus) : (typeof defaultPengurus !== 'undefined' ? defaultPengurus : []);
-    if (!Array.isArray(pengurus)) {
-      pengurus = typeof defaultPengurus !== 'undefined' ? JSON.parse(JSON.stringify(defaultPengurus)) : [];
-    }
+    let rawPengurus = null;
+    try {
+      if (savedPengurus) {
+        const parsed = JSON.parse(savedPengurus);
+        if (Array.isArray(parsed) && parsed.length > 0) rawPengurus = parsed;
+      }
+    } catch (e) {}
+    pengurus = rawPengurus || (typeof defaultPengurus !== 'undefined' ? JSON.parse(JSON.stringify(defaultPengurus)) : []);
 
     // Bersihkan periode kosong tanpa struktur personalia (misal periode kosong hasil uji coba)
     pengurus = pengurus.filter(p => (Array.isArray(p.struktur) && p.struktur.length > 0) || p.isAktif);
@@ -717,19 +741,34 @@ function loadFromLocalStorage() {
     }
 
     const savedKetum = localStorage.getItem('pmii_ketum');
-    ketumKom = savedKetum ? JSON.parse(savedKetum) : (typeof defaultKetumKom !== 'undefined' ? defaultKetumKom : []);
+    let rawKetum = null;
+    try {
+      if (savedKetum) {
+        const parsed = JSON.parse(savedKetum);
+        if (Array.isArray(parsed) && parsed.length > 0) rawKetum = parsed;
+      }
+    } catch (e) {}
+    ketumKom = rawKetum || (typeof defaultKetumKom !== 'undefined' ? JSON.parse(JSON.stringify(defaultKetumKom)) : []);
 
     const savedAnggaran = localStorage.getItem('pmii_anggaran');
-    anggaran = savedAnggaran ? JSON.parse(savedAnggaran) : (typeof defaultAnggaran !== 'undefined' ? defaultAnggaran : []);
-    if (!Array.isArray(anggaran)) {
-      anggaran = typeof defaultAnggaran !== 'undefined' ? JSON.parse(JSON.stringify(defaultAnggaran)) : [];
-    }
+    let rawAnggaran = null;
+    try {
+      if (savedAnggaran) {
+        const parsed = JSON.parse(savedAnggaran);
+        if (Array.isArray(parsed) && parsed.length > 0) rawAnggaran = parsed;
+      }
+    } catch (e) {}
+    anggaran = rawAnggaran || (typeof defaultAnggaran !== 'undefined' ? JSON.parse(JSON.stringify(defaultAnggaran)) : []);
 
     const savedRapat = localStorage.getItem('pmii_rapat');
-    rapat = savedRapat ? JSON.parse(savedRapat) : (typeof defaultRapat !== 'undefined' ? defaultRapat : []);
-    if (!Array.isArray(rapat)) {
-      rapat = typeof defaultRapat !== 'undefined' ? JSON.parse(JSON.stringify(defaultRapat)) : [];
-    }
+    let rawRapat = null;
+    try {
+      if (savedRapat) {
+        const parsed = JSON.parse(savedRapat);
+        if (Array.isArray(parsed) && parsed.length > 0) rawRapat = parsed;
+      }
+    } catch (e) {}
+    rapat = rawRapat || (typeof defaultRapat !== 'undefined' ? JSON.parse(JSON.stringify(defaultRapat)) : []);
 
     // Load Daftar Tahun Khidmat & Periode Aktif
     const savedTahunKhidmatList = localStorage.getItem('pmii_tahun_khidmat_list');
@@ -828,9 +867,9 @@ function getCloudConfig() {
   let url = (localStorage.getItem('pmii_cloud_db_url') || '').trim();
   let key = (localStorage.getItem('pmii_cloud_db_key') || '').trim();
 
-  // Prioritaskan DEFAULT_CLOUD_CONFIG dari data.js jika url di localStorage kosong / beda / placeholder
-  if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
-    if (!url || url !== DEFAULT_CLOUD_CONFIG.url.trim()) {
+  // Gunakan DEFAULT_CLOUD_CONFIG dari data.js hanya jika url di localStorage belum diisi atau placeholder dummy
+  if (!url || url.includes('ep-xxx') || url.includes('xyzcompany') || url.includes('ep-cool-fog')) {
+    if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
       url = DEFAULT_CLOUD_CONFIG.url.trim();
       key = (DEFAULT_CLOUD_CONFIG.key || '').trim();
       try {
@@ -1066,7 +1105,13 @@ async function testCloudConnection(silent = false) {
     }
   } catch (err) {
     console.error('Test Cloud Connection Error:', err);
-    if (!silent) showToast('Gagal terhubung ke Cloud: ' + err.message, 'error');
+    if (!silent) {
+      if (err.message && err.message.includes('password authentication failed')) {
+        showToast('Gagal terhubung ke Cloud: Password Neon salah atau telah di-reset di console.neon.tech.<br><span class="text-[11px] font-normal block mt-1">Silakan copy Connection String terbaru dari Neon Console, lalu simpan di menu Pengaturan. Data lokal Anda tetap aman.</span>', 'error');
+      } else {
+        showToast('Gagal terhubung ke Cloud: ' + err.message, 'error');
+      }
+    }
   }
   return false;
 }
@@ -1122,6 +1167,13 @@ async function fetchDataFromCloud(silent = false) {
         }
       } catch (batchErr) {
         console.warn('Single round-trip fetch lewati / coba per tabel:', batchErr.message);
+
+        // Jika error autentikasi fatal, hentikan dan JANGAN timpa data lokal
+        const errMsg = (batchErr.message || '').toLowerCase();
+        if (errMsg.includes('password authentication failed') || errMsg.includes('authentication failed') || errMsg.includes('access denied')) {
+          throw batchErr;
+        }
+
         const results = await Promise.allSettled([
           executeNeonSql('SELECT * FROM tb_komisariat LIMIT 1'),
           executeNeonSql('SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC'),
@@ -1135,6 +1187,18 @@ async function fetchDataFromCloud(silent = false) {
           executeNeonSql('SELECT * FROM tb_rapat ORDER BY tanggal DESC, id DESC'),
           executeNeonSql('SELECT * FROM tb_presensi_rapat ORDER BY id ASC')
         ]);
+
+        // Cek jika ada penolakan akibat autentikasi
+        const authRejected = results.find(r => r.status === 'rejected' && (r.reason?.message || '').toLowerCase().includes('authentication failed'));
+        if (authRejected) {
+          throw new Error(authRejected.reason.message);
+        }
+
+        // Cek jika seluruh query gagal (koneksi terputus total)
+        const fulfilledCount = results.filter(r => r.status === 'fulfilled').length;
+        if (fulfilledCount === 0) {
+          throw new Error('Koneksi ke database Cloud terputus. Data lokal tetap aman & dipertahankan.');
+        }
 
         komRows = results[0].status === 'fulfilled' ? results[0].value : [];
         kdrRows = results[1].status === 'fulfilled' ? results[1].value : [];
@@ -1355,7 +1419,10 @@ async function fetchDataFromCloud(silent = false) {
     }
   } catch (err) {
     console.error('Fetch Cloud Data Error:', err);
-    if (!silent) showToast('Gagal menarik data dari Cloud: ' + err.message, 'error');
+    updateDbStatusIndicator(false, { error: err.message, type: cfg ? cfg.type : 'neon' });
+    if (!silent) {
+      showToast('Gagal menarik data dari Cloud: ' + err.message + '<br><span class="text-[11px] font-normal opacity-90 block mt-0.5">Data lokal Anda tetap aman & tidak terhapus.</span>', 'error');
+    }
   }
   return false;
 }
