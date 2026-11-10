@@ -17,10 +17,10 @@ if (!empty($_SERVER['HTTP_NEON_CONNECTION_STRING'])) {
 } elseif (!empty($_SERVER['Neon-Connection-String'])) {
     $connStr = trim($_SERVER['Neon-Connection-String']);
 } else {
-    $connStr = getenv('DATABASE_URL') ?: getenv('NEON_DATABASE_URL') ?: 'postgresql://neondb_owner:npg_nTzvpcJeB07A@ep-nameless-salad-betekr6e-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+    $connStr = getenv('DATABASE_URL') ?: getenv('NEON_DATABASE_URL') ?: 'postgresql://neondb_owner:npg_mGjhwyJfM02X@ep-hidden-cell-betxyhtd-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
 }
 
-$host = 'ep-nameless-salad-betekr6e-pooler.c-9.us-east-2.aws.neon.tech';
+$host = 'ep-hidden-cell-betxyhtd-pooler.c-9.us-east-2.aws.neon.tech';
 if (preg_match('/@([^:\/?]+)/', $connStr, $m)) {
     $host = $m[1];
 }
