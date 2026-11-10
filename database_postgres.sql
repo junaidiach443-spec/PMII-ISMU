@@ -33,6 +33,7 @@ CREATE TABLE tb_komisariat (
   alamat TEXT,
   email VARCHAR(150) DEFAULT 'pmii.ismu.tarate@gmail.com',
   telepon VARCHAR(50) DEFAULT '085231998877',
+  fakultas_prodi TEXT,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
