@@ -867,8 +867,8 @@ function getCloudConfig() {
   let url = (localStorage.getItem('pmii_cloud_db_url') || '').trim();
   let key = (localStorage.getItem('pmii_cloud_db_key') || '').trim();
 
-  // Gunakan DEFAULT_CLOUD_CONFIG dari data.js hanya jika url di localStorage belum diisi atau placeholder dummy
-  if (!url || url.includes('ep-xxx') || url.includes('xyzcompany') || url.includes('ep-cool-fog')) {
+  // Gunakan DEFAULT_CLOUD_CONFIG dari data.js hanya jika url di localStorage belum diisi atau placeholder dummy / URL kadaluarsa
+  if (!url || url.includes('ep-xxx') || url.includes('xyzcompany') || url.includes('ep-cool-fog') || url.includes('ep-nameless-salad-betekr6e') || url.includes('npg_nTzvpcJeB07A')) {
     if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
       url = DEFAULT_CLOUD_CONFIG.url.trim();
       key = (DEFAULT_CLOUD_CONFIG.key || '').trim();
@@ -1117,6 +1117,14 @@ async function testCloudConnection(silent = false) {
 }
 
 function testCloudConnectionUI() {
+  const urlEl = document.getElementById('cloud-db-url');
+  const keyEl = document.getElementById('cloud-db-key');
+  if (urlEl && urlEl.value.trim()) {
+    localStorage.setItem('pmii_cloud_db_url', urlEl.value.trim());
+  }
+  if (keyEl && keyEl.value.trim()) {
+    localStorage.setItem('pmii_cloud_db_key', keyEl.value.trim());
+  }
   testCloudConnection(false);
 }
 
@@ -1465,6 +1473,14 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function fetchDataFromCloudUI() {
+  const urlEl = document.getElementById('cloud-db-url');
+  const keyEl = document.getElementById('cloud-db-key');
+  if (urlEl && urlEl.value.trim()) {
+    localStorage.setItem('pmii_cloud_db_url', urlEl.value.trim());
+  }
+  if (keyEl && keyEl.value.trim()) {
+    localStorage.setItem('pmii_cloud_db_key', keyEl.value.trim());
+  }
   fetchDataFromCloud(false);
 }
 
@@ -10525,8 +10541,8 @@ function loadPengaturanForm() {
   const defaultKey = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.key) ? DEFAULT_CLOUD_CONFIG.key : '';
   const savedUrl = localStorage.getItem('pmii_cloud_db_url') || '';
   const savedKey = localStorage.getItem('pmii_cloud_db_key') || '';
-  const finalUrl = (!savedUrl || savedUrl.includes('xyzcompany') || savedUrl.includes('ep-xxx') || savedUrl.includes('ep-cool-fog')) ? defaultUrl : savedUrl;
-  const finalKey = (!savedKey || savedKey.includes('eyJhbG')) ? defaultKey : savedKey;
+  const finalUrl = (!savedUrl || savedUrl.includes('xyzcompany') || savedUrl.includes('ep-xxx') || savedUrl.includes('ep-cool-fog') || savedUrl.includes('ep-nameless-salad-betekr6e') || savedUrl.includes('npg_nTzvpcJeB07A')) ? defaultUrl : savedUrl;
+  const finalKey = (!savedKey || savedKey.includes('eyJhbG') || savedKey === 'npg_nTzvpcJeB07A') ? defaultKey : savedKey;
   if (elCloudUrl) elCloudUrl.value = finalUrl;
   if (elCloudKey) elCloudKey.value = finalKey;
 
@@ -10554,6 +10570,7 @@ async function saveCloudDbConfig() {
   if (ok) {
     // Tarik data terbaru dari Neon agar sinkron dengan yang ada di server
     await fetchDataFromCloud(false);
+    renderApp();
     // Aktifkan auto-sync berkala di background
     startAutoSync();
   }
