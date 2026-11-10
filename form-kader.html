@@ -978,8 +978,22 @@
           .then(reg => {
             console.log('[PWA Form] Service Worker aktif:', reg.scope);
             if (reg.update) reg.update();
+
+            document.addEventListener('visibilitychange', () => {
+              if (!document.hidden && reg.update) {
+                reg.update();
+              }
+            });
           })
           .catch(err => console.warn('[PWA Form] Gagal registrasi SW:', err));
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
       });
     }
 

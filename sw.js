@@ -1,9 +1,9 @@
 /**
  * Service Worker - Sistem Informasi & Pendataan Kader PK PMII ISMU
- * Versi 3.5: Direct Neon Cloud Sync & Permanent Deletion
+ * Versi 4.0: Fresh Neon Cloud Setup & Sistem Edit Mandiri Kader
  */
 
-const CACHE_NAME = 'pmii-ismu-v3.5';
+const CACHE_NAME = 'pmii-ismu-v4.0-neon-20261110';
 const STATIC_ASSETS = [
   './',
   './index.html',

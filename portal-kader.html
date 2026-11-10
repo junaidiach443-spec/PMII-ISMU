@@ -1588,6 +1588,32 @@
         alert('Untuk memasang di HP: Buka menu titik tiga (⋮) di Chrome lalu pilih "Instal aplikasi" / "Tambahkan ke Layar Utama".');
       }
     }
+
+    // Registrasi & Auto-Update Service Worker untuk PWA
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => {
+            console.log('[PWA Portal] Service Worker aktif:', reg.scope);
+            if (reg.update) reg.update();
+
+            document.addEventListener('visibilitychange', () => {
+              if (!document.hidden && reg.update) {
+                reg.update();
+              }
+            });
+          })
+          .catch(err => console.warn('[PWA Portal] Gagal registrasi SW:', err));
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+      });
+    }
   </script>
 
 </body>
