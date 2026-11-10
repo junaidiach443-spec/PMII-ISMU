@@ -2752,13 +2752,13 @@ function renderKaderTable() {
             <button onclick="viewKaderDetail('${k.id}')" title="Lihat Profil Lengkap" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
-            ${!isKader ? `
             <button onclick="openKtaForKader('${k.id}')" title="Cetak E-KTA" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition">
               <i data-lucide="credit-card" class="w-4 h-4"></i>
             </button>
-            <button onclick="openEditKaderModal('${k.id}')" title="Edit Data" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
+            <button onclick="openEditKaderModal('${k.id}')" title="Edit / Koreksi Data" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
               <i data-lucide="edit-3" class="w-4 h-4"></i>
             </button>
+            ${!isKader ? `
             <button onclick="deleteKader('${k.id}')" title="Hapus Data Kader Ini" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-lg border border-rose-200 hover:border-rose-600 transition shadow-xs">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span>Hapus</span>
@@ -3107,10 +3107,7 @@ function openAddKaderModal() {
 }
 
 function openEditKaderModal(id) {
-  if (isKaderUser()) {
-    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
-    return;
-  }
+  // Kader dan Admin diizinkan mengedit/mengoreksi data kader
   currentModalMode = 'kader';
   const kader = kaders.find(k => k.id === id);
   if (!kader) return;
@@ -3185,13 +3182,14 @@ function handleFotoUpload(event) {
 function saveKaderForm(event) {
   event.preventDefault();
 
-  if (isKaderUser()) {
-    showToast('Akses ditolak: Akun Kader bersifat Read-Only (Hanya Lihat).', 'warning');
-    return;
-  }
-
   const id = document.getElementById('kader-id').value;
   const isEdit = !!id;
+
+  // Jika akun kader, izinkan mengoreksi data yang sudah ada (isEdit)
+  if (isKaderUser() && !isEdit) {
+    showToast('Akses ditolak: Akun Kader hanya dapat mengoreksi/mengedit data yang sudah ada.', 'warning');
+    return;
+  }
 
   const kaderData = {
     id: id || `KDR-${Date.now().toString().slice(-6)}`,
@@ -3375,6 +3373,14 @@ function cetakKtaFromDetail() {
   if (currentKaderDetail) {
     closeKaderDetailModal();
     openKtaForKader(currentKaderDetail.id);
+  }
+}
+
+function editKaderFromDetail() {
+  if (currentKaderDetail) {
+    const id = currentKaderDetail.id;
+    closeKaderDetailModal();
+    openEditKaderModal(id);
   }
 }
 
@@ -3712,13 +3718,13 @@ function renderMapabaTable() {
             <button onclick="viewKaderDetail('${k.id}')" title="Lihat Profil Lengkap" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
-            ${!isKader ? `
-            <button onclick="openEditKaderModal('${k.id}')" title="Edit Data" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition">
+            <button onclick="openEditKaderModal('${k.id}')" title="Edit / Koreksi Data" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition">
               <i data-lucide="edit" class="w-4 h-4"></i>
             </button>
             <button onclick="quickGenerateKTA('${k.id}')" title="Cetak Kartu Tanda Anggota (KTA)" class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 transition">
               <i data-lucide="credit-card" class="w-4 h-4"></i>
             </button>
+            ${!isKader ? `
             <button onclick="deleteKader('${k.id}')" title="Hapus Data Kader Ini" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-lg border border-rose-200 hover:border-rose-600 transition shadow-xs">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span>Hapus</span>
@@ -4044,13 +4050,13 @@ function renderPkdTable() {
             <button onclick="viewKaderDetail('${k.id}')" title="Lihat Profil Lengkap" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition">
               <i data-lucide="eye" class="w-4 h-4"></i>
             </button>
-            ${!isKader ? `
-            <button onclick="openEditKaderModal('${k.id}')" title="Edit Data" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition">
+            <button onclick="openEditKaderModal('${k.id}')" title="Edit / Koreksi Data" class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition">
               <i data-lucide="edit" class="w-4 h-4"></i>
             </button>
             <button onclick="quickGenerateKTA('${k.id}')" title="Cetak Kartu Tanda Anggota (KTA)" class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 transition">
               <i data-lucide="credit-card" class="w-4 h-4"></i>
             </button>
+            ${!isKader ? `
             <button onclick="deleteKader('${k.id}')" title="Hapus Data Kader Ini" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-lg border border-rose-200 hover:border-rose-600 transition shadow-xs">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span>Hapus</span>

@@ -5025,10 +5025,15 @@
             <span>Hapus Kader Ini</span>
           </button>
           <div class="flex items-center gap-2">
+            <button type="button" onclick="editKaderFromDetail()"
+              class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm">
+              <i data-lucide="edit-3" class="w-4 h-4 text-yellow-300"></i>
+              <span>Edit / Koreksi Data</span>
+            </button>
             <button onclick="cetakKtaFromDetail()"
-              class="admin-only inline-flex items-center gap-2 px-4 py-2 bg-pmii-blue hover:bg-pmii-navy text-white text-xs font-bold rounded-xl transition cursor-pointer">
+              class="inline-flex items-center gap-2 px-4 py-2 bg-pmii-blue hover:bg-pmii-navy text-white text-xs font-bold rounded-xl transition cursor-pointer">
               <i data-lucide="credit-card" class="w-4 h-4 text-yellow-300"></i>
-              <span>Cetak E-KTA Kader Ini</span>
+              <span>Cetak E-KTA</span>
             </button>
             <button onclick="closeKaderDetailModal()"
               class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition cursor-pointer">
@@ -6786,8 +6791,8 @@
   </div>
 
   <!-- App Logic & Scripts -->
-  <script src="js/data.js?v=20261110_v5"></script>
-  <script src="js/app.js?v=20261110_v5"></script>
+  <script src="js/data.js?v=20261110_v6"></script>
+  <script src="js/app.js?v=20261110_v6"></script>
 
   <!-- Service Worker Registration for PWA & Offline Support -->
   <script>

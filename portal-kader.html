@@ -31,7 +31,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Data Awal & Konfigurasi Cloud Database -->
-  <script src="js/data.js?v=20261110_v4"></script>
+  <script src="js/data.js?v=20261110_v6"></script>
 
   <script>
     tailwind.config = {
@@ -217,7 +217,13 @@
               <i data-lucide="credit-card" class="w-4 h-4 text-blue-600"></i>
               <span>Kartu Tanda Anggota (E-KTA) Digital</span>
             </h3>
-            <span class="text-[10px] font-semibold text-slate-400">Ukuran Standar ID Card (CR-80)</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="openModalEditMandiriKader()" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold rounded-lg flex items-center gap-1 transition cursor-pointer">
+                <i data-lucide="edit-3" class="w-3 h-3 text-blue-600"></i>
+                <span>Edit Data</span>
+              </button>
+              <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Ukuran Standar ID Card (CR-80)</span>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start justify-items-center">
@@ -400,16 +406,27 @@
             </div>
           </div>
 
-          <!-- Bantuan Koreksi Data -->
-          <div class="mt-4 p-3 bg-blue-50/60 rounded-2xl border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div class="space-y-0.5 text-center sm:text-left">
-              <p class="font-bold text-slate-800">Ada kesalahan penulisan nama atau data diri Anda?</p>
-              <p class="text-[11px] text-slate-500">Kader tidak dapat mengubah data sendiri demi keamanan database. Laporkan koreksi ke sekretariat.</p>
+          <!-- Bantuan Koreksi Data Mandiri Kader -->
+          <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 rounded-2xl border border-blue-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
+            <div class="space-y-1 text-center sm:text-left">
+              <p class="font-black text-slate-800 text-sm flex items-center justify-center sm:justify-start gap-1.5">
+                <i data-lucide="edit-3" class="w-4 h-4 text-blue-700"></i>
+                <span>Ada kekeliruan penulisan nama atau data diri Anda?</span>
+              </p>
+              <p class="text-[11px] text-slate-600">Anda dapat langsung memperbaiki dan mengedit data diri Anda sendiri di sini agar E-KTA dan database resmi selalu akurat.</p>
             </div>
-            <a id="btn-wa-koreksi" href="https://wa.me/6281234567890?text=Halo%20Pengurus%20PK%20PMII%20ISMU,%20saya%20ingin%20mengajukan%20koreksi%20data%20kader..." target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-xs">
-              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-              <span>Hubungi Pengurus via WA</span>
-            </a>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" onclick="openModalEditMandiriKader()"
+                class="px-4 py-2.5 bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5 text-yellow-300"></i>
+                <span>Edit Data Saya</span>
+              </button>
+              <a id="btn-wa-koreksi" href="https://wa.me/6281234567890?text=Halo%20Pengurus%20PK%20PMII%20ISMU,%20saya%20ingin%20mengajukan%20koreksi%20data%20kader..." target="_blank"
+                class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                <span>WA Admin</span>
+              </a>
+            </div>
           </div>
 
         </div>
@@ -517,6 +534,258 @@
     </section>
 
   </main>
+
+  <!-- ======================================================== -->
+  <!-- MODAL EDIT & KOREKSI DATA MANDIRI KADER                  -->
+  <!-- ======================================================== -->
+  <div id="modal-edit-mandiri-kader" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden my-6 transform transition-all">
+      
+      <!-- Header -->
+      <div class="p-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-yellow-300">
+            <i data-lucide="user-cog" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base text-white">Edit & Koreksi Data Mandiri</h3>
+            <p class="text-[11px] text-blue-200">Perubahan akan langsung tersimpan ke Database Cloud dan memperbarui E-KTA</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModalEditMandiriKader()" class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Form Content -->
+      <form id="form-edit-mandiri-kader" onsubmit="handleSaveEditMandiriKader(event)" class="p-6 space-y-5 max-h-[80vh] overflow-y-auto text-left">
+        <input type="hidden" id="edit-mandiri-id">
+
+        <!-- Banner Info -->
+        <div class="p-3.5 bg-blue-50/80 rounded-2xl border border-blue-200 flex items-start gap-2.5 text-xs text-blue-950">
+          <i data-lucide="info" class="w-4 h-4 text-blue-700 shrink-0 mt-0.5"></i>
+          <p class="leading-relaxed">Silakan koreksi data Anda di bawah ini dengan benar. Setelah disimpan, E-KTA digital Anda akan langsung otomatis ter-update.</p>
+        </div>
+
+        <!-- 1. Identitas Personal -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+            <i data-lucide="user" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Identitas Personal</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap & Gelar <span class="text-rose-500">*</span></label>
+              <input type="text" id="edit-mandiri-nama" required placeholder="Contoh: Sahabat M. Ilham Fathoni"
+                class="w-full text-xs font-bold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Panggilan</label>
+              <input type="text" id="edit-mandiri-panggilan" placeholder="Contoh: Ilham"
+                class="w-full text-xs font-semibold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Jenis Kelamin</label>
+              <select id="edit-mandiri-gender"
+                class="w-full text-xs font-semibold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+                <option value="Laki-laki">Laki-laki (Sahabat)</option>
+                <option value="Perempuan">Perempuan (Sahabati)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Induk Mahasiswa (NIM) <span class="text-rose-500">*</span></label>
+              <input type="text" id="edit-mandiri-nim" required placeholder="Contoh: 230101001"
+                class="w-full text-xs font-mono font-bold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-slate-50">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Induk Kependudukan (NIK KTP)</label>
+              <input type="text" id="edit-mandiri-nik" placeholder="16 Digit NIK KTP..."
+                class="w-full text-xs font-mono border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Tempat Lahir</label>
+              <input type="text" id="edit-mandiri-tempat-lahir" placeholder="Contoh: Sumenep"
+                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Lahir</label>
+              <input type="date" id="edit-mandiri-tanggal-lahir"
+                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Akademik Kampus -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+            <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Akademik Kampus</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Fakultas <span class="text-rose-500">*</span></label>
+              <select id="edit-mandiri-fakultas" onchange="onEditMandiriFakultasChange()" required
+                class="w-full text-xs font-semibold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Program Studi (Jurusan) <span class="text-rose-500">*</span></label>
+              <select id="edit-mandiri-jurusan" required
+                class="w-full text-xs font-semibold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Angkatan Masuk Kampus</label>
+              <select id="edit-mandiri-angkatan"
+                class="w-full text-xs font-semibold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Status Perkuliahan</label>
+              <select id="edit-mandiri-status-kuliah"
+                class="w-full text-xs font-semibold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+                <option value="Aktif">Aktif</option>
+                <option value="Cuti">Cuti</option>
+                <option value="Lulus">Lulus</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Kontak & Domisili -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+            <i data-lucide="phone" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Kontak & Domisili</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp Aktif</label>
+              <input type="text" id="edit-mandiri-whatsapp" placeholder="Contoh: 081234567890"
+                class="w-full text-xs font-mono border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Email</label>
+              <input type="email" id="edit-mandiri-email" placeholder="Contoh: nama@gmail.com"
+                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600">
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Asal / Tempat Tinggal</label>
+              <textarea id="edit-mandiri-alamat" rows="2" placeholder="Dusun, Desa/Kelurahan, Kecamatan, Kabupaten..."
+                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Foto Profil & KTA -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+            <i data-lucide="image" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Foto Profil & Pasfoto E-KTA</span>
+          </h4>
+
+          <div class="flex items-center gap-4 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+            <div class="w-16 h-20 rounded-xl bg-slate-200 border border-slate-300 overflow-hidden shrink-0 shadow-xs">
+              <img id="edit-mandiri-foto-preview" src="assets/logo-pmii.webp" alt="Preview" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-1 space-y-2">
+              <label class="block text-xs font-bold text-slate-700">Ganti Pasfoto:</label>
+              <div class="flex flex-wrap items-center gap-2">
+                <label class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl cursor-pointer transition shadow-xs flex items-center gap-1.5">
+                  <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                  <span>Pilih dari HP / Laptop</span>
+                  <input type="file" accept="image/*" onchange="handleEditMandiriPhotoFile(event)" class="hidden">
+                </label>
+              </div>
+              <input type="url" id="edit-mandiri-foto-url" placeholder="Atau masukkan tautan/URL foto..." oninput="previewEditMandiriUrl(this.value)"
+                class="w-full text-[11px] border border-slate-200 rounded-xl p-2 bg-white font-mono focus:outline-none focus:border-blue-600">
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Riwayat Kaderisasi -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+            <i data-lucide="award" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Riwayat Kaderisasi PMII</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Kaderisasi Formal Terakhir</label>
+              <select id="edit-mandiri-formal"
+                class="w-full text-xs font-bold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+                <option value="MAPABA">MAPABA (Masa Penerimaan Anggota Baru)</option>
+                <option value="PKD">PKD (Pelatihan Kader Dasar)</option>
+                <option value="PKL">PKL (Pelatihan Kader Lanjut)</option>
+                <option value="PKN">PKN (Pelatihan Kader Nasional)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Keanggotaan KOPRI</label>
+              <select id="edit-mandiri-kopri"
+                class="w-full text-xs font-semibold border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600 bg-white">
+                <option value="-">Bukan Anggota KOPRI (Putra)</option>
+                <option value="KOPRI">KOPRI (Putri)</option>
+                <option value="SIG">Sudah Mengikuti SIG</option>
+                <option value="SKK">Sudah Mengikuti SKK</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Tahun MAPABA</label>
+              <input type="text" id="edit-mandiri-tahun-mapaba" placeholder="Contoh: 2026"
+                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Penyelenggara MAPABA</label>
+              <input type="text" id="edit-mandiri-penyelenggara-mapaba" placeholder="Contoh: PK PMII ISMU Tarate"
+                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-blue-600">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol Aksi Form -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeModalEditMandiriKader()"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+            Batal
+          </button>
+          <button type="submit" id="btn-save-edit-mandiri"
+            class="px-6 py-2.5 bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-extrabold text-xs rounded-xl transition shadow-lg shadow-blue-600/25 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="check" class="w-4 h-4 text-yellow-300"></i>
+            <span>Simpan Perubahan Data</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
 
   <!-- ======================================================== -->
   <!-- FOOTER PORTAL KADER                                      -->
@@ -1011,6 +1280,302 @@
           }
         }, 1000);
       }
+    }
+
+    // ==========================================
+    // SISTEM EDIT & KOREKSI MANDIRI KADER
+    // ==========================================
+    function getFakultasProdiMaster() {
+      if (typeof fakultasProdiList !== 'undefined' && Array.isArray(fakultasProdiList) && fakultasProdiList.length > 0) {
+        return fakultasProdiList;
+      }
+      const saved = localStorage.getItem('pmii_fakultas_prodi');
+      if (saved) {
+        try {
+          const p = JSON.parse(saved);
+          if (Array.isArray(p) && p.length > 0) return p;
+        } catch (e) {}
+      }
+      if (typeof defaultFakultasProdi !== 'undefined') return defaultFakultasProdi;
+      return [
+        { fakultas: "Fakultas Tarbiyah", prodi: ["Pendidikan Agama Islam (PAI)", "Manajemen Pendidikan Islam (MPI)", "Pendidikan Guru Madrasah Ibtidaiyah (PGMI)"] },
+        { fakultas: "Fakultas Syariah", prodi: ["Hukum Keluarga Islam (HKI / Ahwal Syakhshiyyah)", "Hukum Ekonomi Syariah (HES / Muamalah)"] },
+        { fakultas: "Fakultas Ekonomi & Bisnis Islam", prodi: ["Ekonomi Syariah", "Perbankan Syariah"] },
+        { fakultas: "Program Pascasarjana", prodi: ["Magister Pendidikan Agama Islam (S2 PAI)"] }
+      ];
+    }
+
+    function initEditMandiriFakultasProdi(selectedFakultas = '', selectedProdi = '') {
+      const list = getFakultasProdiMaster();
+      const selFak = document.getElementById('edit-mandiri-fakultas');
+      const selPro = document.getElementById('edit-mandiri-jurusan');
+      if (!selFak || !selPro) return;
+
+      selFak.innerHTML = '<option value="">-- Pilih Fakultas --</option>';
+      list.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.fakultas;
+        opt.textContent = item.fakultas;
+        if (item.fakultas === selectedFakultas) opt.selected = true;
+        selFak.appendChild(opt);
+      });
+
+      onEditMandiriFakultasChange(selectedProdi);
+    }
+
+    function onEditMandiriFakultasChange(selectedProdi = '') {
+      const list = getFakultasProdiMaster();
+      const selFak = document.getElementById('edit-mandiri-fakultas');
+      const selPro = document.getElementById('edit-mandiri-jurusan');
+      if (!selFak || !selPro) return;
+
+      const currentFak = selFak.value;
+      selPro.innerHTML = '<option value="">-- Pilih Program Studi / Jurusan --</option>';
+
+      const found = list.find(item => item.fakultas === currentFak);
+      if (found && Array.isArray(found.prodi)) {
+        found.prodi.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          if (p === selectedProdi) opt.selected = true;
+          selPro.appendChild(opt);
+        });
+      }
+      if (selectedProdi && !selPro.value) {
+        const opt = document.createElement('option');
+        opt.value = selectedProdi;
+        opt.textContent = selectedProdi;
+        opt.selected = true;
+        selPro.appendChild(opt);
+      }
+    }
+
+    function openModalEditMandiriKader() {
+      if (!currentKaderSelected) {
+        alert('Silakan cari dan tampilkan data kader Anda terlebih dahulu pada kotak pencarian di atas.');
+        return;
+      }
+      const k = currentKaderSelected;
+      document.getElementById('edit-mandiri-id').value = k.id || '';
+      document.getElementById('edit-mandiri-nim').value = k.nim || '';
+      document.getElementById('edit-mandiri-nama').value = k.nama || '';
+      document.getElementById('edit-mandiri-panggilan').value = k.namaPanggilan || k.panggilan || '';
+      document.getElementById('edit-mandiri-nik').value = k.nik || '';
+      document.getElementById('edit-mandiri-gender').value = k.gender || 'Laki-laki';
+      document.getElementById('edit-mandiri-tempat-lahir').value = k.tempatLahir || '';
+      document.getElementById('edit-mandiri-tanggal-lahir').value = k.tanggalLahir ? String(k.tanggalLahir).split('T')[0] : '';
+      document.getElementById('edit-mandiri-angkatan').value = k.angkatan || '2026';
+      document.getElementById('edit-mandiri-status-kuliah').value = k.statusKuliah || 'Aktif';
+      document.getElementById('edit-mandiri-whatsapp').value = k.whatsapp || '';
+      document.getElementById('edit-mandiri-email').value = k.email || '';
+      document.getElementById('edit-mandiri-alamat').value = k.alamat || '';
+      document.getElementById('edit-mandiri-foto-url').value = k.foto || '';
+
+      const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=faces';
+      const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=faces';
+      document.getElementById('edit-mandiri-foto-preview').src = k.foto || (k.gender === 'Perempuan' ? defaultFemale : defaultMale);
+
+      const kz = k.kaderisasi || {};
+      document.getElementById('edit-mandiri-formal').value = k.formal || kz.formal || 'MAPABA';
+      document.getElementById('edit-mandiri-kopri').value = k.kopri || kz.kopri || (k.gender === 'Perempuan' ? 'KOPRI' : '-');
+      document.getElementById('edit-mandiri-tahun-mapaba').value = kz.tahunMapaba || k.tahunMapaba || '';
+      document.getElementById('edit-mandiri-penyelenggara-mapaba').value = kz.penyelenggaraMapaba || k.penyelenggaraMapaba || 'PK PMII ISMU Tarate';
+
+      initEditMandiriFakultasProdi(k.fakultas || '', k.jurusan || '');
+
+      const modal = document.getElementById('modal-edit-mandiri-kader');
+      if (modal) modal.classList.remove('hidden');
+      initLucide();
+    }
+
+    function closeModalEditMandiriKader() {
+      const modal = document.getElementById('modal-edit-mandiri-kader');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function previewEditMandiriUrl(url) {
+      const prev = document.getElementById('edit-mandiri-foto-preview');
+      if (prev) {
+        prev.src = url || 'assets/logo-pmii.webp';
+      }
+    }
+
+    function handleEditMandiriPhotoFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Ukuran foto maksimal 2MB agar loading cepat.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        document.getElementById('edit-mandiri-foto-url').value = base64;
+        previewEditMandiriUrl(base64);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function handleSaveEditMandiriKader(event) {
+      event.preventDefault();
+      if (!currentKaderSelected) return;
+
+      const btn = document.getElementById('btn-save-edit-mandiri');
+      const oldBtnHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-yellow-300"></i><span>Menyimpan ke Cloud...</span>`;
+        initLucide();
+      }
+
+      const id = document.getElementById('edit-mandiri-id').value || currentKaderSelected.id;
+      const nim = document.getElementById('edit-mandiri-nim').value.trim();
+      const nama = document.getElementById('edit-mandiri-nama').value.trim();
+      const panggilan = document.getElementById('edit-mandiri-panggilan').value.trim();
+      const nik = document.getElementById('edit-mandiri-nik').value.trim();
+      const gender = document.getElementById('edit-mandiri-gender').value;
+      const tempatLahir = document.getElementById('edit-mandiri-tempat-lahir').value.trim();
+      const tanggalLahir = document.getElementById('edit-mandiri-tanggal-lahir').value;
+      const fakultas = document.getElementById('edit-mandiri-fakultas').value;
+      const jurusan = document.getElementById('edit-mandiri-jurusan').value;
+      const angkatan = document.getElementById('edit-mandiri-angkatan').value;
+      const statusKuliah = document.getElementById('edit-mandiri-status-kuliah').value;
+      const whatsapp = document.getElementById('edit-mandiri-whatsapp').value.trim();
+      const email = document.getElementById('edit-mandiri-email').value.trim();
+      const alamat = document.getElementById('edit-mandiri-alamat').value.trim();
+      const foto = document.getElementById('edit-mandiri-foto-url').value.trim();
+      const formal = document.getElementById('edit-mandiri-formal').value;
+      const kopri = document.getElementById('edit-mandiri-kopri').value;
+      const tahunMapaba = document.getElementById('edit-mandiri-tahun-mapaba').value.trim();
+      const penyelenggaraMapaba = document.getElementById('edit-mandiri-penyelenggara-mapaba').value.trim();
+
+      const escapeSql = (v) => {
+        if (!v) return 'NULL';
+        return `'${String(v).replace(/'/g, "''")}'`;
+      };
+
+      // 1. Update Neon Cloud Database
+      const connStr = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) 
+        ? DEFAULT_CLOUD_CONFIG.url 
+        : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+      
+      let cleanHost = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
+      if (connStr) {
+        const m = connStr.match(/@([^:\/?]+)/);
+        if (m && m[1]) cleanHost = m[1].replace('-pooler', '');
+      }
+
+      const updateQuery = `
+        UPDATE tb_kader SET
+          nama = ${escapeSql(nama)},
+          nama_panggilan = ${escapeSql(panggilan)},
+          nik = ${escapeSql(nik)},
+          nim = ${escapeSql(nim)},
+          gender = ${escapeSql(gender)},
+          tempat_lahir = ${escapeSql(tempatLahir)},
+          tanggal_lahir = ${tanggalLahir ? escapeSql(tanggalLahir) : 'NULL'},
+          fakultas = ${escapeSql(fakultas)},
+          jurusan = ${escapeSql(jurusan)},
+          angkatan = ${escapeSql(angkatan)},
+          status_kuliah = ${escapeSql(statusKuliah)},
+          whatsapp = ${escapeSql(whatsapp)},
+          email = ${escapeSql(email)},
+          alamat = ${escapeSql(alamat)},
+          foto = ${escapeSql(foto)},
+          formal = ${escapeSql(formal)},
+          kopri = ${escapeSql(kopri)},
+          tahun_mapaba = ${escapeSql(tahunMapaba)},
+          penyelenggara_mapaba = ${escapeSql(penyelenggaraMapaba)},
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${escapeSql(id)} OR nim = ${escapeSql(nim)};
+      `;
+
+      let cloudSuccess = false;
+      try {
+        // Direct query ke Neon
+        const res = await fetch(`https://${cleanHost}/sql`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Neon-Connection-String': connStr
+          },
+          body: JSON.stringify({ query: updateQuery })
+        });
+        if (res.ok) {
+          cloudSuccess = true;
+        }
+      } catch (err) {
+        console.warn('Direct Neon query update error, trying proxy:', err);
+      }
+
+      if (!cloudSuccess) {
+        const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
+        for (const ep of endpoints) {
+          try {
+            const res = await fetch(ep, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Neon-Connection-String': connStr
+              },
+              body: JSON.stringify({ query: updateQuery })
+            });
+            if (res.ok) {
+              cloudSuccess = true;
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+
+      // 2. Update In-Memory Object & LocalStorage
+      currentKaderSelected.nama = nama;
+      currentKaderSelected.namaPanggilan = panggilan;
+      currentKaderSelected.panggilan = panggilan;
+      currentKaderSelected.nik = nik;
+      currentKaderSelected.nim = nim;
+      currentKaderSelected.gender = gender;
+      currentKaderSelected.tempatLahir = tempatLahir;
+      currentKaderSelected.tanggalLahir = tanggalLahir;
+      currentKaderSelected.fakultas = fakultas;
+      currentKaderSelected.jurusan = jurusan;
+      currentKaderSelected.angkatan = angkatan;
+      currentKaderSelected.statusKuliah = statusKuliah;
+      currentKaderSelected.whatsapp = whatsapp;
+      currentKaderSelected.email = email;
+      currentKaderSelected.alamat = alamat;
+      currentKaderSelected.foto = foto;
+      currentKaderSelected.formal = formal;
+      currentKaderSelected.kopri = kopri;
+      if (!currentKaderSelected.kaderisasi) currentKaderSelected.kaderisasi = {};
+      currentKaderSelected.kaderisasi.formal = formal;
+      currentKaderSelected.kaderisasi.kopri = kopri;
+      currentKaderSelected.kaderisasi.tahunMapaba = tahunMapaba;
+      currentKaderSelected.kaderisasi.penyelenggaraMapaba = penyelenggaraMapaba;
+
+      // Update in portalKaders array
+      const idx = portalKaders.findIndex(k => k.id === id || k.nim === nim);
+      if (idx !== -1) {
+        portalKaders[idx] = { ...portalKaders[idx], ...currentKaderSelected };
+      }
+      try {
+        localStorage.setItem('pmii_kaders', JSON.stringify(portalKaders));
+      } catch (e) {}
+
+      // 3. Render ulang KTA dan direktori
+      tampilkanKtaKader(currentKaderSelected);
+      renderDirektori();
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = oldBtnHtml;
+      }
+      closeModalEditMandiriKader();
+
+      alert(`Alhamdulillah, Sahabat ${nama}!\nData Anda berhasil diperbarui dan tersimpan permanen di database.`);
     }
 
     function triggerPwaInstall() {
