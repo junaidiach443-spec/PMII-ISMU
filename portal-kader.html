@@ -31,7 +31,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Data Awal & Konfigurasi Cloud Database -->
-  <script src="js/data.js?v=20261109_v3"></script>
+  <script src="js/data.js?v=20261110_v3"></script>
 
   <script>
     tailwind.config = {
@@ -607,11 +607,17 @@
           const sqlStruktur = "SELECT * FROM tb_struktur_pengurus ORDER BY urutan ASC, id ASC;";
           const sqlMbn = "SELECT * FROM tb_mabinkom ORDER BY id ASC;";
 
-          const res = await fetch('https://ep-nameless-salad-betekr6e.c-9.us-east-2.aws.neon.tech/sql', {
+          const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_mGjhwyJfM02X@ep-hidden-cell-betxyhtd-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+          let hostDirect = 'ep-hidden-cell-betxyhtd.c-9.us-east-2.aws.neon.tech';
+          if (connStrDirect) {
+            const m = connStrDirect.match(/@([^:\/?]+)/);
+            if (m && m[1]) hostDirect = m[1].replace('-pooler', '');
+          }
+          const res = await fetch(`https://${hostDirect}/sql`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Neon-Connection-String': DEFAULT_CLOUD_CONFIG.url
+              'Neon-Connection-String': connStrDirect
             },
             body: JSON.stringify({ query: `${sqlKader} ${sqlStruktur} ${sqlMbn}` })
           });
