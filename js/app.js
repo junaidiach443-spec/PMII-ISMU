@@ -884,7 +884,7 @@ function getCloudConfig() {
   let key = (localStorage.getItem('pmii_cloud_db_key') || '').trim();
 
   // Gunakan DEFAULT_CLOUD_CONFIG dari data.js hanya jika url di localStorage belum diisi atau placeholder dummy / URL kadaluarsa
-  if (!url || url.includes('ep-xxx') || url.includes('xyzcompany') || url.includes('ep-cool-fog') || url.includes('ep-nameless-salad-betekr6e') || url.includes('npg_nTzvpcJeB07A') || url.includes('ep-hidden-cell-betxyhtd') || url.includes('npg_mGjhwyJfM02X')) {
+  if (!url || url.includes('ep-xxx') || url.includes('xyzcompany') || url.includes('ep-cool-fog') || url.includes('ep-nameless-salad-betekr6e') || url.includes('npg_nTzvpcJeB07A') || url.includes('ep-hidden-cell-betxyhtd') || url.includes('npg_mGjhwyJfM02X') || url.includes('ep-wandering-wave') || url.includes('npg_XSdn0aN4xFLi')) {
     if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
       url = DEFAULT_CLOUD_CONFIG.url.trim();
       key = (DEFAULT_CLOUD_CONFIG.key || '').trim();
@@ -10913,6 +10913,10 @@ function openKtaForKader(id) {
   }
 }
 
+function quickGenerateKTA(id) {
+  openKtaForKader(id);
+}
+
 function renderKtaCard(kader) {
   if (!kader) return;
 
@@ -11275,8 +11279,8 @@ function loadPengaturanForm() {
   const defaultKey = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.key) ? DEFAULT_CLOUD_CONFIG.key : '';
   const savedUrl = localStorage.getItem('pmii_cloud_db_url') || '';
   const savedKey = localStorage.getItem('pmii_cloud_db_key') || '';
-  const finalUrl = (!savedUrl || savedUrl.includes('xyzcompany') || savedUrl.includes('ep-xxx') || savedUrl.includes('ep-cool-fog') || savedUrl.includes('ep-nameless-salad-betekr6e') || savedUrl.includes('ep-hidden-cell-betxyhtd') || savedUrl.includes('npg_nTzvpcJeB07A') || savedUrl.includes('npg_mGjhwyJfM02X')) ? defaultUrl : savedUrl;
-  const finalKey = (!savedKey || savedKey.includes('eyJhbG') || savedKey === 'npg_nTzvpcJeB07A' || savedKey === 'npg_mGjhwyJfM02X') ? defaultKey : savedKey;
+  const finalUrl = (!savedUrl || savedUrl.includes('xyzcompany') || savedUrl.includes('ep-xxx') || savedUrl.includes('ep-cool-fog') || savedUrl.includes('ep-nameless-salad-betekr6e') || savedUrl.includes('ep-hidden-cell-betxyhtd') || savedUrl.includes('npg_nTzvpcJeB07A') || savedUrl.includes('npg_mGjhwyJfM02X') || savedUrl.includes('ep-wandering-wave') || savedUrl.includes('npg_XSdn0aN4xFLi')) ? defaultUrl : savedUrl;
+  const finalKey = (!savedKey || savedKey.includes('eyJhbG') || savedKey === 'npg_nTzvpcJeB07A' || savedKey === 'npg_mGjhwyJfM02X' || savedKey === 'npg_XSdn0aN4xFLi') ? defaultKey : savedKey;
   if (elCloudUrl) elCloudUrl.value = finalUrl;
   if (elCloudKey) elCloudKey.value = finalKey;
 

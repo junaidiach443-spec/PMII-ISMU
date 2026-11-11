@@ -581,7 +581,7 @@
           <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
         </div>
         <h3 class="text-lg font-black text-slate-900">Alhamdulillah! Data Berhasil Disimpan</h3>
-        <p class="text-xs text-slate-500">Biodata Anda telah resmi masuk ke antrean database PK PMII ISMU</p>
+        <p id="sukses-sync-status-msg" class="text-xs text-slate-500">Biodata Anda telah resmi masuk ke antrean database PK PMII ISMU</p>
       </div>
 
       <!-- Kartu Digital Pratinjau KTA Sementara -->
@@ -1010,7 +1010,7 @@
       return num;
     }
 
-    async function executePublicNeonSql(sqlQuery) {
+    async function executePublicNeonQuery(sqlQuery) {
       const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url)
         ? DEFAULT_CLOUD_CONFIG.url
         : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
@@ -1029,7 +1029,12 @@
           },
           body: JSON.stringify({ query: sqlQuery })
         });
-        if (res.ok) return true;
+        if (res.ok) {
+          const json = await res.json();
+          if (!json.error && !json.code) {
+            return { ok: true, rows: json.rows || [] };
+          }
+        }
       } catch (e) {
         console.warn('[NEON DIRECT] Fallback ke proxy:', e);
       }
@@ -1045,10 +1050,20 @@
             },
             body: JSON.stringify({ query: sqlQuery })
           });
-          if (res.ok) return true;
+          if (res.ok) {
+            const json = await res.json();
+            if (!json.error && !json.code) {
+              return { ok: true, rows: json.rows || [] };
+            }
+          }
         } catch (e) {}
       }
-      return false;
+      return { ok: false, rows: [] };
+    }
+
+    async function executePublicNeonSql(sqlQuery) {
+      const r = await executePublicNeonQuery(sqlQuery);
+      return r.ok;
     }
 
     // Handle Form Submit
@@ -1127,6 +1142,15 @@
         }
 
         if (!isSavedOnline) {
+          if (nim && !/^0+$/.test(nim)) {
+            const existCheck = await executePublicNeonQuery(`SELECT id, no_kta FROM tb_kader WHERE nim = ${esc(nim)} LIMIT 1;`);
+            if (existCheck.ok && Array.isArray(existCheck.rows) && existCheck.rows[0]) {
+              payload.id = existCheck.rows[0].id || payload.id;
+              payload.noKta = existCheck.rows[0].no_kta || payload.noKta;
+              successData = payload;
+            }
+          }
+
           const sql = `
             INSERT INTO tb_kader (
               id, nama, nama_panggilan, no_kta, nim, gender, tempat_lahir, tanggal_lahir,
@@ -1140,9 +1164,23 @@
               ${esc(payload.whatsapp)}, ${esc(payload.email)},
               ${esc(payload.foto)}, 'Aktif', ${esc(payload.formal)}, ${esc(payload.tahunMapaba)},
               ${esc(payload.penyelenggaraMapaba)}, ${esc(payload.kopri)}
-            ) ON CONFLICT (nim) DO UPDATE SET
+            ) ON CONFLICT (id) DO UPDATE SET
               nama = EXCLUDED.nama,
+              nama_panggilan = EXCLUDED.nama_panggilan,
+              gender = EXCLUDED.gender,
+              tempat_lahir = EXCLUDED.tempat_lahir,
+              tanggal_lahir = EXCLUDED.tanggal_lahir,
+              fakultas = EXCLUDED.fakultas,
+              jurusan = EXCLUDED.jurusan,
+              angkatan = EXCLUDED.angkatan,
+              alamat = EXCLUDED.alamat,
+              whatsapp = EXCLUDED.whatsapp,
+              email = EXCLUDED.email,
               foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
+              formal = EXCLUDED.formal,
+              tahun_mapaba = EXCLUDED.tahun_mapaba,
+              penyelenggara_mapaba = EXCLUDED.penyelenggara_mapaba,
+              kopri = EXCLUDED.kopri,
               updated_at = CURRENT_TIMESTAMP;
           `;
           isSavedOnline = await executePublicNeonSql(sql);
@@ -1238,6 +1276,13 @@
       if (!modal) return;
 
       const headerLabel = document.getElementById('sukses-card-header-label');
+      const syncMsg = document.getElementById('sukses-sync-status-msg');
+      if (syncMsg) {
+        syncMsg.textContent = isOnline
+          ? 'Biodata Anda telah resmi tersimpan ke Cloud Neon & sinkron ke semua perangkat.'
+          : 'Koneksi ke Cloud bermasalah — data baru tersimpan di perangkat ini (lokal).';
+        syncMsg.className = isOnline ? 'text-xs text-slate-500' : 'text-xs text-amber-600 font-semibold';
+      }
       document.getElementById('sukses-card-nama').textContent = data.nama || '-';
 
       if (type === 'ika') {
