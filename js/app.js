@@ -2135,12 +2135,26 @@ function switchTab(tabName) {
     if (subnavChevron) subnavChevron.classList.remove('rotate-180');
   }
 
+  // Submenu Join: hanya terbuka ketika menu Join dipilih / dipencet
+  const subnavJoinWrapper = document.getElementById('subnav-join-wrapper');
+  const subnavJoinChevron = document.getElementById('join-nav-chevron');
+  if (tabName === 'joinkader') {
+    if (subnavJoinWrapper) subnavJoinWrapper.classList.remove('hidden');
+    if (subnavJoinChevron) subnavJoinChevron.classList.add('rotate-180');
+  } else {
+    if (subnavJoinWrapper) subnavJoinWrapper.classList.add('hidden');
+    if (subnavJoinChevron) subnavJoinChevron.classList.remove('rotate-180');
+  }
+
   // Sinkronisasi status subnav pos tabs
   if (typeof updatePengeluaranPosTabs === 'function') {
     updatePengeluaranPosTabs();
   }
   if (typeof updateAnggaranPosTabs === 'function') {
     updateAnggaranPosTabs();
+  }
+  if (typeof updateJoinSubnavTabs === 'function') {
+    updateJoinSubnavTabs();
   }
 
   // Tutup drawer sidebar mobile jika terbuka
@@ -11653,33 +11667,65 @@ function initJoinKaderTab() {
   initLucide();
 }
 
+function toggleJoinSubnav() {
+  const wrapper = document.getElementById('subnav-join-wrapper');
+  const chevron = document.getElementById('join-nav-chevron');
+  if (!wrapper) return;
+  const willOpen = wrapper.classList.contains('hidden');
+  wrapper.classList.toggle('hidden', !willOpen);
+  if (chevron) chevron.classList.toggle('rotate-180', willOpen);
+}
+
+function switchJoinSubmenu(type) {
+  const validTypes = ['kader', 'ika', 'mabinkom'];
+  const activeType = validTypes.includes(type) ? type : 'kader';
+  const hiddenInput = document.getElementById('join-target-type');
+  if (hiddenInput) hiddenInput.value = activeType;
+
+  // Sembunyikan alert sukses sebelumnya agar form bersih untuk entri baru
+  const successBox = document.getElementById('join-kader-success-box');
+  if (successBox) successBox.classList.add('hidden');
+
+  if (currentTab !== 'joinkader') {
+    switchTab('joinkader');
+  } else {
+    toggleMobileSidebar(false);
+    initLucide();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  switchJoinTargetType(activeType);
+}
+
+function updateJoinSubnavTabs() {
+  const activeType = (document.getElementById('join-target-type')?.value || 'kader').toLowerCase();
+  const configs = [
+    { type: 'kader', btnId: 'btn-subnav-join-kader', activeCls: 'w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-blue-900 bg-blue-100 transition text-left border-l-2 border-blue-700', hoverCls: 'hover:text-blue-700 hover:bg-blue-50/80' },
+    { type: 'ika', btnId: 'btn-subnav-join-ika', activeCls: 'w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-teal-900 bg-teal-100 transition text-left border-l-2 border-teal-700', hoverCls: 'hover:text-teal-700 hover:bg-teal-50/80' },
+    { type: 'mabinkom', btnId: 'btn-subnav-join-mabinkom', activeCls: 'w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-amber-900 bg-amber-100 transition text-left border-l-2 border-amber-600', hoverCls: 'hover:text-amber-700 hover:bg-amber-50/80' }
+  ];
+
+  configs.forEach(cfg => {
+    const btn = document.getElementById(cfg.btnId);
+    if (!btn) return;
+    if (currentTab === 'joinkader' && activeType === cfg.type) {
+      btn.className = cfg.activeCls;
+    } else {
+      btn.className = `w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-500 ${cfg.hoverCls} transition text-left`;
+    }
+  });
+}
+
+function openJoinPublicForm() {
+  const activeType = (document.getElementById('join-target-type')?.value || 'kader').toLowerCase();
+  window.open(`form-kader.html?type=${encodeURIComponent(activeType)}`, '_blank');
+}
+
 function switchJoinTargetType(type) {
   const validTypes = ['kader', 'ika', 'mabinkom'];
   const activeType = validTypes.includes(type) ? type : 'kader';
 
   const hiddenInput = document.getElementById('join-target-type');
   if (hiddenInput) hiddenInput.value = activeType;
-
-  // Update visual cards
-  const styles = {
-    kader: {
-      active: 'join-type-card p-3.5 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition cursor-pointer flex items-center gap-3 shadow-xs',
-      inactive: 'join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-blue-50/40 hover:border-blue-300 text-left transition cursor-pointer flex items-center gap-3'
-    },
-    ika: {
-      active: 'join-type-card p-3.5 rounded-2xl border-2 border-teal-600 bg-teal-50/70 text-left transition cursor-pointer flex items-center gap-3 shadow-xs',
-      inactive: 'join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-teal-50/40 hover:border-teal-300 text-left transition cursor-pointer flex items-center gap-3'
-    },
-    mabinkom: {
-      active: 'join-type-card p-3.5 rounded-2xl border-2 border-amber-500 bg-amber-50/70 text-left transition cursor-pointer flex items-center gap-3 shadow-xs',
-      inactive: 'join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-amber-50/40 hover:border-amber-300 text-left transition cursor-pointer flex items-center gap-3'
-    }
-  };
-
-  validTypes.forEach(t => {
-    const btn = document.getElementById(`btn-join-type-${t}`);
-    if (btn) btn.className = (t === activeType) ? styles[t].active : styles[t].inactive;
-  });
 
   // Toggle mode-specific sections
   const secKader = document.getElementById('join-section-kader');
@@ -11711,18 +11757,27 @@ function switchJoinTargetType(type) {
 
   // Update Header & Submit Button Copy
   const badgeEl = document.getElementById('join-header-badge');
+  const titleEl = document.getElementById('join-header-title');
+  const descEl = document.getElementById('join-header-desc');
   const submitLabelEl = document.getElementById('btn-submit-join-label');
   if (activeType === 'kader') {
-    if (badgeEl) badgeEl.textContent = 'Registrasi Kader';
+    if (badgeEl) badgeEl.textContent = 'Join Kader';
+    if (titleEl) titleEl.textContent = 'Formulir Pendaftaran Kader Baru (KADER)';
+    if (descEl) descEl.textContent = 'Pusat registrasi & pendataan anggota aktif PK PMII ISMU Tarate Sumenep. Data otomatis tersimpan permanen ke Cloud & diterbitkan nomor E-KTA.';
     if (submitLabelEl) submitLabelEl.textContent = 'Kirim Formulir Pendaftaran Kader';
   } else if (activeType === 'ika') {
-    if (badgeEl) badgeEl.textContent = 'Registrasi Alumni (IKA PMII)';
+    if (badgeEl) badgeEl.textContent = 'Join IKA (Alumni)';
+    if (titleEl) titleEl.textContent = 'Formulir Pendataan Alumni (IKA PMII)';
+    if (descEl) descEl.textContent = 'Daftarkan alumni PK PMII ISMU beserta profesi dan instansinya ke database Ikatan Keluarga Alumni (IKA). Tersimpan permanen & sinkron ke Cloud.';
     if (submitLabelEl) submitLabelEl.textContent = 'Simpan Data Alumni IKA';
   } else if (activeType === 'mabinkom') {
-    if (badgeEl) badgeEl.textContent = 'Registrasi Dewan Pembina (Mabinkom)';
+    if (badgeEl) badgeEl.textContent = 'Join Mabinkom';
+    if (titleEl) titleEl.textContent = 'Formulir Pendataan Dewan Pembina (MABINKOM)';
+    if (descEl) descEl.textContent = 'Masukkan data Majelis Pembina Komisariat (Mabinkom) langsung dari sini. Data otomatis tersimpan & muncul di menu Data Mabinkom.';
     if (submitLabelEl) submitLabelEl.textContent = 'Simpan Data Mabinkom';
   }
 
+  updateJoinSubnavTabs();
   initLucide();
 }
 

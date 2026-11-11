@@ -31,7 +31,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Data Awal & Konfigurasi Cloud Database -->
-  <script src="js/data.js?v=20261111_v1"></script>
+  <script src="js/data.js?v=20261111_v2"></script>
 
   <script>
     tailwind.config = {
@@ -134,10 +134,30 @@
         <i data-lucide="shield" class="w-3.5 h-3.5"></i>
         <span>Pengurus, IKA & Mabinkom</span>
       </button>
-      <a href="form-kader.html" class="py-2.5 px-3 border-b-2 border-transparent text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5 ml-auto transition shrink-0">
+      <button type="button" onclick="togglePortalJoinMenu()" id="tab-btn-join" class="py-2.5 px-3 border-b-2 border-transparent text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5 ml-auto transition shrink-0 cursor-pointer">
         <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-        <span>Join (Kader / IKA / Mabinkom)</span>
-      </a>
+        <span>Join</span>
+        <i id="portal-join-chevron" data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200"></i>
+      </button>
+    </div>
+
+    <!-- Submenu Join (Muncul di bawah saat menu Join dipencet: KADER, IKA, MABINKOM) -->
+    <div id="portal-join-submenu" class="hidden bg-slate-900/95 border-t border-white/10">
+      <div class="max-w-4xl mx-auto px-4 py-2 flex flex-wrap items-center justify-end gap-2 text-xs font-bold">
+        <span class="text-[10px] text-slate-400 uppercase tracking-wider mr-auto">Pilih Join:</span>
+        <a href="form-kader.html?type=kader" class="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-200 border border-blue-400/30 flex items-center gap-1.5 transition">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+          <span>KADER</span>
+        </a>
+        <a href="form-kader.html?type=ika" class="px-3 py-1.5 rounded-xl bg-teal-600/20 hover:bg-teal-600/40 text-teal-200 border border-teal-400/30 flex items-center gap-1.5 transition">
+          <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+          <span>IKA</span>
+        </a>
+        <a href="form-kader.html?type=mabinkom" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 text-amber-200 border border-amber-400/30 flex items-center gap-1.5 transition">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          <span>MABINKOM</span>
+        </a>
+      </div>
     </div>
   </header>
 
@@ -858,8 +878,23 @@
       if (window.lucide) lucide.createIcons();
     }
 
+    // Toggle Join Submenu (KADER / IKA / MABINKOM)
+    function togglePortalJoinMenu() {
+      const sub = document.getElementById('portal-join-submenu');
+      const chev = document.getElementById('portal-join-chevron');
+      if (!sub) return;
+      const willOpen = sub.classList.contains('hidden');
+      sub.classList.toggle('hidden', !willOpen);
+      if (chev) chev.classList.toggle('rotate-180', willOpen);
+    }
+
     // Switch Tab
     function switchPortalTab(tab) {
+      const sub = document.getElementById('portal-join-submenu');
+      const chev = document.getElementById('portal-join-chevron');
+      if (sub) sub.classList.add('hidden');
+      if (chev) chev.classList.remove('rotate-180');
+
       const tabs = ['kta', 'direktori', 'struktur'];
       tabs.forEach(t => {
         const sec = document.getElementById(`portal-tab-${t}`);
