@@ -6,14 +6,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Data Kader PMII - Tingkat Komisariat</title>
-  <link rel="icon" type="image/webp" href="assets/logo-pmii.webp">
+  <link rel="icon" type="image/png" href="assets/app-icon-192.png">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#002b66">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PMII ISMU">
-  <link rel="apple-touch-icon" href="assets/logo-pmii.webp">
+  <link rel="apple-touch-icon" href="assets/app-icon-maskable-512.png">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -87,6 +87,32 @@
   <!-- Mobile Sidebar Backdrop Overlay -->
   <div id="sidebar-backdrop" onclick="toggleMobileSidebar(false)"
     class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-30 hidden transition-opacity lg:hidden"></div>
+
+  <!-- ========================================== -->
+  <!-- SPLASH SCREEN AWAL MENUJU LOGIN            -->
+  <!-- ========================================== -->
+  <div id="pwa-launch-splash"
+    style="position:fixed;inset:0;z-index:1200;background:#051937;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.45s ease;">
+    <img src="assets/app-icon-512.png" alt="PK PMII ISMU"
+      style="width:152px;height:152px;object-fit:contain;filter:drop-shadow(0 18px 40px rgba(0,0,0,0.45));">
+  </div>
+  <script>
+    (function () {
+      const splash = document.getElementById('pwa-launch-splash');
+      if (!splash) return;
+      try {
+        if (sessionStorage.getItem('pmii_current_user')) {
+          splash.style.display = 'none';
+          return;
+        }
+      } catch (e) {}
+      setTimeout(function () {
+        splash.style.opacity = '0';
+        splash.style.pointerEvents = 'none';
+        setTimeout(function () { splash.style.display = 'none'; }, 480);
+      }, 750);
+    })();
+  </script>
 
   <!-- ========================================== -->
   <!-- TAMPILAN AWAL: LOGIN SCREEN (CENTERED)     -->
