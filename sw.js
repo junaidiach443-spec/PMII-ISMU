@@ -3,7 +3,7 @@
  * Versi 4.1: Menu IKA Alumni, Join 3 Kategori (Kader, IKA, Mabinkom) & Sync Aman
  */
 
-const CACHE_NAME = 'pmii-ismu-v4.4-icon-20261111';
+const CACHE_NAME = 'pmii-ismu-v4.5-manifest-20261111';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -15,8 +15,7 @@ const STATIC_ASSETS = [
   './assets/logo-pmii.webp',
   './assets/app-icon-192.png',
   './assets/app-icon-512.png',
-  './assets/app-icon-maskable-512.png',
-  './manifest.json'
+  './assets/app-icon-maskable-512.png'
 ];
 
 // Install: Cache aset penting satu per satu secara aman
@@ -54,8 +53,8 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // 1. Lewati request non-GET dan endpoint API backend
-  if (req.method !== 'GET' || url.pathname.includes('/api/') || url.pathname.includes('api/neon')) {
+  // 1. Lewati request non-GET, endpoint API backend, dan manifest.json (selalu ambil terbaru dari jaringan)
+  if (req.method !== 'GET' || url.pathname.includes('/api/') || url.pathname.includes('api/neon') || url.pathname.endsWith('/manifest.json')) {
     return;
   }
 
