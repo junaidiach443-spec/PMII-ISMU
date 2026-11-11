@@ -172,6 +172,8 @@ const defaultMabinkom = [
   }
 ];
 
+const defaultIka = [];
+
 const defaultKaders = [
   {
     id: "KDR-001",

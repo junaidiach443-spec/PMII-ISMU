@@ -31,7 +31,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Data Awal & Konfigurasi Cloud Database -->
-  <script src="js/data.js?v=20261110_v6"></script>
+  <script src="js/data.js?v=20261111_v1"></script>
 
   <script>
     tailwind.config = {
@@ -130,13 +130,13 @@
         <i data-lucide="users" class="w-3.5 h-3.5"></i>
         <span>Direktori Sahabat</span>
       </button>
-      <button onclick="switchPortalTab('struktur')" id="tab-btn-struktur" class="py-2.5 px-3 border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+      <button onclick="switchPortalTab('struktur')" id="tab-btn-struktur" class="py-2.5 px-3 border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-1.5 transition shrink-0">
         <i data-lucide="shield" class="w-3.5 h-3.5"></i>
-        <span>Pengurus Komisariat</span>
+        <span>Pengurus, IKA & Mabinkom</span>
       </button>
-      <a href="form-kader.html" class="py-2.5 px-3 border-b-2 border-transparent text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5 ml-auto transition">
+      <a href="form-kader.html" class="py-2.5 px-3 border-b-2 border-transparent text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5 ml-auto transition shrink-0">
         <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-        <span>Form Pendaftaran</span>
+        <span>Join (Kader / IKA / Mabinkom)</span>
       </a>
     </div>
   </header>
@@ -521,12 +521,36 @@
 
       <!-- Dewan Pembina (Mabinkom) -->
       <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
-        <div class="pb-3 border-b border-slate-100">
-          <h3 class="text-sm font-extrabold text-slate-900">Majelis Pembina Komisariat (Mabinkom)</h3>
-          <p class="text-[11px] text-slate-500">Alumni dan tokoh pembina pergerakan ISMU</p>
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900">Majelis Pembina Komisariat (Mabinkom)</h3>
+            <p class="text-[11px] text-slate-500">Alumni dan tokoh pembina pergerakan ISMU</p>
+          </div>
+          <a href="form-kader.html?type=mabinkom" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-[11px] font-bold rounded-xl transition flex items-center gap-1">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            <span>Join Mabinkom</span>
+          </a>
         </div>
 
         <div id="portal-mabinkom-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Ikatan Keluarga Alumni (IKA PMII) -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900">Ikatan Keluarga Alumni (IKA PMII)</h3>
+            <p class="text-[11px] text-slate-500">Jaringan alumni PK PMII ISMU Tarate Sumenep</p>
+          </div>
+          <a href="form-kader.html?type=ika" class="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 text-[11px] font-bold rounded-xl transition flex items-center gap-1">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            <span>Join IKA Alumni</span>
+          </a>
+        </div>
+
+        <div id="portal-ika-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- Populated by JS -->
         </div>
       </div>
@@ -820,6 +844,7 @@
     let portalKaders = [];
     let portalPengurus = [];
     let portalMabinkom = [];
+    let portalIka = [];
     let currentKaderSelected = null;
 
     // Inisialisasi saat halaman dimuat
@@ -867,16 +892,22 @@
         if (localPengurus) portalPengurus = JSON.parse(localPengurus);
         const localMabinkom = localStorage.getItem('pmii_mabinkom');
         if (localMabinkom) portalMabinkom = JSON.parse(localMabinkom);
+        const localIka = localStorage.getItem('pmii_ika');
+        if (localIka) portalIka = JSON.parse(localIka);
       } catch (e) {}
 
-      // 2. Tarik langsung dari Neon Cloud
+      // 2. Tarik langsung dari Neon Cloud (single round-trip query)
       if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
         try {
-          const sqlKader = "SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC;";
-          const sqlStruktur = "SELECT * FROM tb_struktur_pengurus ORDER BY urutan ASC, id ASC;";
-          const sqlMbn = "SELECT * FROM tb_mabinkom ORDER BY id ASC;";
+          const singleQuery = `
+            SELECT
+              (SELECT json_agg(t) FROM (SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC) t) as kader,
+              (SELECT json_agg(t) FROM (SELECT * FROM tb_mabinkom ORDER BY id ASC) t) as mabinkom,
+              (SELECT json_agg(t) FROM (SELECT * FROM tb_ika ORDER BY angkatan DESC, nama ASC) t) as ika,
+              (SELECT json_agg(t) FROM (SELECT * FROM tb_komisariat LIMIT 1) t) as komisariat;
+          `;
 
-          const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+          const connStrDirect = DEFAULT_CLOUD_CONFIG.url;
           let hostDirect = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
           if (connStrDirect) {
             const m = connStrDirect.match(/@([^:\/?]+)/);
@@ -888,31 +919,78 @@
               'Content-Type': 'application/json',
               'Neon-Connection-String': connStrDirect
             },
-            body: JSON.stringify({ query: `${sqlKader} ${sqlStruktur} ${sqlMbn}` })
+            body: JSON.stringify({ query: singleQuery })
           });
 
           if (res.ok) {
             const json = await res.json();
-            // Jika multi query atau single query
-            if (json && json.rows) {
-              portalKaders = json.rows.map(r => ({
-                id: r.id,
-                nama: r.nama,
-                namaPanggilan: r.nama_panggilan,
-                noKta: r.no_kta,
-                nim: r.nim,
-                gender: r.gender,
-                fakultas: r.fakultas,
-                jurusan: r.jurusan,
-                angkatan: r.angkatan,
-                statusKuliah: r.status_kuliah,
-                foto: r.foto,
-                formal: r.formal,
-                tahunMapaba: r.tahun_mapaba,
-                penyelenggaraMapaba: r.penyelenggara_mapaba,
-                kopri: r.kopri,
-                statusKader: r.status_kader || 'Aktif'
-              }));
+            if (json && json.rows && json.rows[0]) {
+              const b = json.rows[0];
+              if (Array.isArray(b.kader)) {
+                portalKaders = b.kader.map(r => ({
+                  id: r.id,
+                  nama: r.nama,
+                  namaPanggilan: r.nama_panggilan,
+                  noKta: r.no_kta,
+                  nik: r.nik || '',
+                  nim: r.nim,
+                  gender: r.gender,
+                  tempatLahir: r.tempat_lahir || '',
+                  tanggalLahir: r.tanggal_lahir ? String(r.tanggal_lahir).split('T')[0] : '',
+                  fakultas: r.fakultas,
+                  jurusan: r.jurusan,
+                  angkatan: r.angkatan,
+                  statusKuliah: r.status_kuliah,
+                  alamat: r.alamat || '',
+                  whatsapp: r.whatsapp || '',
+                  email: r.email || '',
+                  foto: r.foto,
+                  formal: r.formal,
+                  tahunMapaba: r.tahun_mapaba,
+                  penyelenggaraMapaba: r.penyelenggara_mapaba,
+                  kopri: r.kopri,
+                  statusKader: r.status_kader || 'Aktif'
+                }));
+                try { localStorage.setItem('pmii_kaders', JSON.stringify(portalKaders)); } catch (e) {}
+              }
+              if (Array.isArray(b.mabinkom)) {
+                portalMabinkom = b.mabinkom.map(r => ({
+                  id: r.id,
+                  nama: r.nama || '',
+                  jabatan: r.jabatan || '',
+                  profesi: r.profesi || '',
+                  instansi: r.instansi || '',
+                  angkatan: r.angkatan || '',
+                  whatsapp: r.kontak || '',
+                  foto: r.foto || ''
+                }));
+                try { localStorage.setItem('pmii_mabinkom', JSON.stringify(portalMabinkom)); } catch (e) {}
+              }
+              if (Array.isArray(b.ika)) {
+                portalIka = b.ika.map(r => ({
+                  id: r.id,
+                  nama: r.nama || '',
+                  jabatan: r.jabatan_alumni || 'Anggota IKA PMII',
+                  profesi: r.profesi || '',
+                  instansi: r.instansi || '',
+                  angkatan: r.angkatan || '',
+                  tahunLulus: r.tahun_lulus || '',
+                  fakultas: r.fakultas || '',
+                  jurusan: r.jurusan || '',
+                  foto: r.foto || ''
+                }));
+                try { localStorage.setItem('pmii_ika', JSON.stringify(portalIka)); } catch (e) {}
+              }
+              if (Array.isArray(b.komisariat) && b.komisariat[0] && b.komisariat[0].fakultas_prodi) {
+                try {
+                  const fp = typeof b.komisariat[0].fakultas_prodi === 'string'
+                    ? JSON.parse(b.komisariat[0].fakultas_prodi)
+                    : b.komisariat[0].fakultas_prodi;
+                  if (Array.isArray(fp) && fp.length > 0) {
+                    localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(fp));
+                  }
+                } catch (e) {}
+              }
             }
           }
         } catch (e) {
@@ -923,9 +1001,6 @@
       // Fallback jika kosong gunakan default
       if (!portalKaders || portalKaders.length === 0) {
         portalKaders = typeof defaultKaders !== 'undefined' ? defaultKaders : [];
-      }
-      if (!portalMabinkom || portalMabinkom.length === 0) {
-        portalMabinkom = typeof defaultMabinkom !== 'undefined' ? defaultMabinkom : [];
       }
 
       populateDropdownKader();
@@ -1206,6 +1281,7 @@
     function renderStruktur() {
       const bphGrid = document.getElementById('portal-struktur-grid');
       const mbnGrid = document.getElementById('portal-mabinkom-grid');
+      const ikaGrid = document.getElementById('portal-ika-grid');
 
       if (bphGrid) {
         bphGrid.innerHTML = `
@@ -1232,23 +1308,50 @@
         `;
       }
 
-      if (mbnGrid && portalMabinkom) {
+      if (mbnGrid) {
         mbnGrid.innerHTML = '';
-        portalMabinkom.forEach(m => {
-          const card = document.createElement('div');
-          card.className = "p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3";
-          card.innerHTML = `
-            <div class="w-11 h-11 rounded-xl bg-slate-200 overflow-hidden shrink-0">
-              <img src="${m.foto || 'assets/logo-pmii.webp'}" alt="${m.nama}" class="w-full h-full object-cover">
-            </div>
-            <div class="space-y-0.5 min-w-0">
-              <h5 class="font-bold text-xs text-slate-900 truncate">${m.nama}</h5>
-              <p class="text-[10px] text-blue-700 font-semibold">${m.jabatan || 'Dewan Mabinkom'}</p>
-              <p class="text-[10px] text-slate-400 truncate">${m.profesi || m.instansi || '-'}</p>
-            </div>
-          `;
-          mbnGrid.appendChild(card);
-        });
+        if (!portalMabinkom || portalMabinkom.length === 0) {
+          mbnGrid.innerHTML = '<div class="sm:col-span-2 text-center py-4 text-slate-400 text-xs">Belum ada data Mabinkom terdata. Klik "Join Mabinkom" untuk menambahkan.</div>';
+        } else {
+          portalMabinkom.forEach(m => {
+            const card = document.createElement('div');
+            card.className = "p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3";
+            card.innerHTML = `
+              <div class="w-11 h-11 rounded-xl bg-slate-200 overflow-hidden shrink-0">
+                <img src="${m.foto || 'assets/logo-pmii.webp'}" alt="${m.nama}" class="w-full h-full object-cover">
+              </div>
+              <div class="space-y-0.5 min-w-0">
+                <h5 class="font-bold text-xs text-slate-900 truncate">${m.nama}</h5>
+                <p class="text-[10px] text-blue-700 font-semibold">${m.jabatan || 'Dewan Mabinkom'}</p>
+                <p class="text-[10px] text-slate-400 truncate">${m.profesi || m.instansi || '-'}</p>
+              </div>
+            `;
+            mbnGrid.appendChild(card);
+          });
+        }
+      }
+
+      if (ikaGrid) {
+        ikaGrid.innerHTML = '';
+        if (!portalIka || portalIka.length === 0) {
+          ikaGrid.innerHTML = '<div class="sm:col-span-2 text-center py-4 text-slate-400 text-xs">Belum ada data Alumni IKA terdata. Klik "Join IKA Alumni" untuk menambahkan.</div>';
+        } else {
+          portalIka.forEach(a => {
+            const card = document.createElement('div');
+            card.className = "p-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3";
+            card.innerHTML = `
+              <div class="w-11 h-11 rounded-xl bg-slate-200 overflow-hidden shrink-0">
+                <img src="${a.foto || 'assets/logo-pmii.webp'}" alt="${a.nama}" class="w-full h-full object-cover">
+              </div>
+              <div class="space-y-0.5 min-w-0">
+                <h5 class="font-bold text-xs text-slate-900 truncate">${a.nama}</h5>
+                <p class="text-[10px] text-teal-700 font-semibold">${a.jabatan || 'Anggota IKA PMII'} ${a.angkatan ? '• ' + a.angkatan : ''}</p>
+                <p class="text-[10px] text-slate-400 truncate">${a.profesi || '-'}${a.instansi ? ' • ' + a.instansi : ''}</p>
+              </div>
+            `;
+            ikaGrid.appendChild(card);
+          });
+        }
       }
 
       initLucide();

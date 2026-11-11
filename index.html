@@ -246,6 +246,12 @@
           <span>Data Mabinkom</span>
         </button>
 
+        <button id="btn-nav-ika" onclick="switchTab('ika')"
+          class="nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
+          <i data-lucide="graduation-cap" class="w-4 h-4 text-teal-600"></i>
+          <span>Data IKA (Alumni)</span>
+        </button>
+
         <div class="pt-2 pb-1 px-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
           Kepengurusan
         </div>
@@ -271,7 +277,7 @@
         <button id="btn-nav-joinkader" onclick="switchTab('joinkader')"
           class="nav-btn nav-btn-inactive w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left">
           <i data-lucide="user-plus" class="w-4 h-4 text-emerald-600"></i>
-          <span>Join Kader</span>
+          <span>Join Anggota & Alumni</span>
         </button>
 
         <button id="btn-nav-rapat" onclick="switchTab('rapat')"
@@ -1712,6 +1718,136 @@
         </section>
 
         <!-- ========================================== -->
+        <!-- TAB 3b: DATA IKA (IKATAN KELUARGA ALUMNI)  -->
+        <!-- ========================================== -->
+        <section id="tab-ika" class="tab-content hidden space-y-6">
+
+          <!-- Banner Header & Action Buttons -->
+          <div
+            class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[11px] font-bold uppercase tracking-wider">Alumni
+                  PMII</span>
+                <span class="text-xs text-slate-400">• Ikatan Keluarga Alumni (IKA PMII ISMU)</span>
+              </div>
+              <h2 class="text-xl font-extrabold text-slate-800 mt-1">Data Ikatan Keluarga Alumni (IKA PMII)</h2>
+              <p class="text-xs text-slate-500">Direktori lengkap para alumni PK PMII Institut Miftahul Ulum (ISMU) Tarate Sumenep beserta kiprah dan profesinya</p>
+            </div>
+
+            <!-- Action buttons: Template, Import, Export, Tambah -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="downloadIkaTemplate()" title="Unduh format template Excel untuk data IKA Alumni"
+                class="admin-only inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>Template</span>
+              </button>
+
+              <input type="file" id="import-ika-file" accept=".xlsx, .xls" class="admin-only hidden"
+                onchange="handleImportIkaFile(event)">
+              <button onclick="document.getElementById('import-ika-file').click()"
+                title="Import data Alumni IKA dari Excel (.xlsx)"
+                class="admin-only inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200 transition">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span>Import Excel</span>
+              </button>
+
+              <button onclick="exportIkaExcel()" title="Export data IKA Alumni ke Excel (.xlsx)"
+                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-200 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Export Excel</span>
+              </button>
+
+              <button onclick="openAddIkaModal()"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-md shadow-teal-500/25 transition cursor-pointer">
+                <i data-lucide="user-plus" class="w-4 h-4 text-yellow-300"></i>
+                <span>+ Tambah Alumni IKA</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Metric Cards IKA -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-slate-500 uppercase">Total Alumni (IKA)</p>
+                <h3 id="stat-ika-total" class="text-2xl font-black text-slate-800">0</h3>
+                <p class="text-[11px] text-teal-600 font-medium">Alumni Terdata</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-slate-500 uppercase">Ragam Profesi</p>
+                <h3 id="stat-ika-profesi-count" class="text-2xl font-black text-slate-800">0</h3>
+                <p class="text-[11px] text-blue-600 font-medium">Jaringan Pengabdian Alumni</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i data-lucide="calendar" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-slate-500 uppercase">Angkatan Terbaru</p>
+                <h3 id="stat-ika-angkatan" class="text-2xl font-black text-slate-800">-</h3>
+                <p class="text-[11px] text-amber-600 font-medium">Generasi Alumni Aktif</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search & Filter Bar IKA -->
+          <div
+            class="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
+              <div class="relative w-full sm:w-80">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                <input type="text" id="search-ika-input" oninput="handleSearchIka(this.value)"
+                  placeholder="Cari nama alumni, profesi, instansi, angkatan..."
+                  class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:bg-white transition">
+              </div>
+              <select id="filter-ika-fakultas" onchange="handleFilterIkaFakultas(this.value)"
+                class="w-full sm:w-56 text-xs border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:outline-none focus:border-teal-500 font-semibold text-slate-700">
+                <option value="all">Semua Fakultas Asal</option>
+              </select>
+            </div>
+            <span id="ika-filtered-count" class="text-xs font-semibold text-slate-500"></span>
+          </div>
+
+          <!-- IKA Table Container -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase border-b border-slate-200">
+                  <tr>
+                    <th class="py-3.5 px-4 text-center">No</th>
+                    <th class="py-3.5 px-4">Nama Lengkap & Gelar</th>
+                    <th class="py-3.5 px-4">Peran / Status IKA</th>
+                    <th class="py-3.5 px-4 text-center">Angkatan / Lulus</th>
+                    <th class="py-3.5 px-4">Fakultas & Prodi Asal</th>
+                    <th class="py-3.5 px-4">Profesi / Instansi</th>
+                    <th class="py-3.5 px-4">Kontak WhatsApp</th>
+                    <th class="py-3.5 px-4">Domisili</th>
+                    <th class="py-3.5 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="ika-table-body">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========================================== -->
         <!-- TAB: PENGURUS KOMISARIAT -->
         <!-- ========================================== -->
         <section id="tab-pengurus" class="tab-content hidden space-y-6">
@@ -2724,11 +2860,11 @@
         </section>
 
         <!-- ========================================== -->
-        <!-- TAB: JOIN KADER (FORM PENDAFTARAN MANDIRI) -->
+        <!-- TAB: JOIN ANGGOTA (KADER / IKA / MABINKOM) -->
         <!-- ========================================== -->
         <section id="tab-joinkader" class="tab-content hidden space-y-6">
 
-          <!-- Header Banner Join Kader -->
+          <!-- Header Banner Join -->
           <div
             class="bg-gradient-to-r from-[#002B66] via-[#004B99] to-[#003366] rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-5 border border-blue-800">
             <div
@@ -2741,18 +2877,17 @@
               </div>
               <div>
                 <div class="flex items-center gap-2 mb-1">
-                  <span
+                  <span id="join-header-badge"
                     class="px-2.5 py-0.5 rounded-full bg-yellow-400 text-blue-950 font-black text-[10px] uppercase tracking-wider">
                     Registrasi Kader
                   </span>
                   <span class="text-xs text-blue-200">• Masa Khidmat 2026 - 2027</span>
                 </div>
-                <h2 class="text-xl md:text-2xl font-black text-white tracking-tight leading-tight">
-                  Formulir Pendaftaran Kader Baru (Join Kader)
+                <h2 id="join-header-title" class="text-xl md:text-2xl font-black text-white tracking-tight leading-tight">
+                  Formulir Pendataan & Join (Kader / IKA / Mabinkom)
                 </h2>
-                <p class="text-xs text-blue-100 mt-1 max-w-xl leading-relaxed">
-                  Pusat registrasi & pendataan anggota PK PMII Institut Miftahul Ulum (ISMU) Tarate Sumenep. Data
-                  otomatis tersimpan ke Cloud Database dan diterbitkan nomor E-KTA digital.
+                <p id="join-header-desc" class="text-xs text-blue-100 mt-1 max-w-xl leading-relaxed">
+                  Pilih kategori pendaftaran di bawah (Kader Aktif, Alumni IKA, atau Dewan Pembina Mabinkom). Data otomatis tersimpan permanen ke Cloud Database dan sinkron ke semua perangkat.
                 </p>
               </div>
             </div>
@@ -2761,7 +2896,55 @@
               <button type="button" onclick="window.open('form-kader.html', '_blank')"
                 class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold border border-white/20 transition flex items-center gap-2 shadow-sm cursor-pointer">
                 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                <span>Buka di Tab Baru</span>
+                <span>Buka Form Publik</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3-Pilihan Kategori Join (KADER / IKA / MABINKOM) -->
+          <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
+                <span>Pilih Kategori Pendataan (Join):</span>
+              </p>
+              <span class="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Auto-Sync Cloud</span>
+              </span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button type="button" id="btn-join-type-kader" onclick="switchJoinTargetType('kader')"
+                class="join-type-card p-3.5 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition cursor-pointer flex items-center gap-3 shadow-xs">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                  <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <span class="block font-black text-xs text-blue-950 uppercase">1. KADER PMII</span>
+                  <span class="block text-[11px] text-slate-600 leading-tight mt-0.5">Anggota / Kader Aktif & E-KTA</span>
+                </div>
+              </button>
+
+              <button type="button" id="btn-join-type-ika" onclick="switchJoinTargetType('ika')"
+                class="join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-teal-50/50 hover:border-teal-300 text-left transition cursor-pointer flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
+                  <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <span class="block font-black text-xs text-slate-800 uppercase">2. IKA (ALUMNI)</span>
+                  <span class="block text-[11px] text-slate-500 leading-tight mt-0.5">Ikatan Keluarga Alumni PMII</span>
+                </div>
+              </button>
+
+              <button type="button" id="btn-join-type-mabinkom" onclick="switchJoinTargetType('mabinkom')"
+                class="join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-amber-50/50 hover:border-amber-300 text-left transition cursor-pointer flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                  <i data-lucide="award" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <span class="block font-black text-xs text-slate-800 uppercase">3. MABINKOM</span>
+                  <span class="block text-[11px] text-slate-500 leading-tight mt-0.5">Dewan Pembina Komisariat</span>
+                </div>
               </button>
             </div>
           </div>
@@ -2776,9 +2959,9 @@
                   ✓
                 </div>
                 <div>
-                  <h3 class="font-black text-base">Alhamdulillah, Pendaftaran Kader Berhasil!</h3>
-                  <p id="join-kader-success-msg" class="text-xs text-emerald-100">Data kader Anda telah tersimpan secara
-                    resmi di database.</p>
+                  <h3 id="join-success-heading" class="font-black text-base">Alhamdulillah, Pendaftaran Berhasil!</h3>
+                  <p id="join-kader-success-msg" class="text-xs text-emerald-100">Data telah tersimpan secara
+                    resmi dan sinkron ke Cloud Database.</p>
                 </div>
               </div>
               <button type="button" onclick="document.getElementById('join-kader-success-box').classList.add('hidden')"
@@ -2789,23 +2972,24 @@
             <div
               class="p-3 bg-white/10 backdrop-blur rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
               <div>
-                <span class="text-emerald-200 block text-[11px]">Nomor E-KTA Diterbitkan:</span>
+                <span id="join-success-label-id" class="text-emerald-200 block text-[11px]">Nomor E-KTA / ID:</span>
                 <span id="join-kader-success-kta" class="font-mono font-black text-yellow-300 text-sm"></span>
               </div>
               <div>
                 <span class="text-emerald-200 block text-[11px]">Nama Terdaftar:</span>
                 <span id="join-kader-success-nama" class="font-bold text-white"></span>
               </div>
-              <button type="button" onclick="viewKtaAfterJoin()"
+              <button type="button" id="btn-join-after-action" onclick="viewAfterJoin()"
                 class="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-black rounded-xl text-xs shadow-md transition flex items-center gap-1.5 ml-auto cursor-pointer">
-                <i data-lucide="credit-card" class="w-4 h-4 text-blue-950"></i>
-                <span>Lihat E-KTA Saya</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 text-blue-950"></i>
+                <span id="btn-join-after-label">Lihat Data</span>
               </button>
             </div>
           </div>
 
           <!-- Form Kontainer -->
           <form id="form-join-kader" onsubmit="handleJoinKaderFormSubmit(event)" class="space-y-6">
+            <input type="hidden" id="join-target-type" value="kader">
 
             <!-- STEP 1: Identitas Diri (Personal) -->
             <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
@@ -2816,7 +3000,7 @@
                 </div>
                 <div>
                   <h3 class="text-sm font-extrabold text-slate-800">Identitas Diri (Personal)</h3>
-                  <p class="text-xs text-slate-400">Nama lengkap sesuai identitas resmi dan data diri kader</p>
+                  <p class="text-xs text-slate-400">Nama lengkap (beserta gelar jika ada) dan biodata utama</p>
                 </div>
               </div>
 
@@ -2824,14 +3008,14 @@
                 <!-- Nama Lengkap -->
                 <div class="md:col-span-2">
                   <label class="block text-xs font-bold text-slate-700 mb-1">
-                    Nama Lengkap <span class="text-rose-500">*</span>
+                    Nama Lengkap (& Gelar) <span class="text-rose-500">*</span>
                   </label>
-                  <input type="text" id="join-nama" required placeholder="Contoh: Sahabat M. Ilham Fathoni"
+                  <input type="text" id="join-nama" required placeholder="Contoh: Sahabat M. Ilham Fathoni / Dr. H. Ahmad Fauzi, M.Pd"
                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
                 </div>
 
-                <!-- Nama Panggilan -->
-                <div>
+                <!-- Nama Panggilan (Kader Only) -->
+                <div class="join-only-kader">
                   <label class="block text-xs font-bold text-slate-700 mb-1">
                     Nama Panggilan
                   </label>
@@ -2842,17 +3026,17 @@
                 <!-- Gender / Panggilan Kader -->
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1">
-                    Panggilan Kader <span class="text-rose-500">*</span>
+                    Jenis Kelamin <span class="text-rose-500">*</span>
                   </label>
                   <select id="join-gender" required onchange="handleJoinKaderGenderChange(this.value)"
                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
-                    <option value="Laki-laki">Sahabat (Putra / Laki-laki)</option>
-                    <option value="Perempuan">Sahabati (Putri / KOPRI)</option>
+                    <option value="Laki-laki">Laki-laki (Sahabat)</option>
+                    <option value="Perempuan">Perempuan (Sahabati)</option>
                   </select>
                 </div>
 
-                <!-- NIK -->
-                <div>
+                <!-- NIK (Kader Only) -->
+                <div class="join-only-kader">
                   <label class="block text-xs font-bold text-slate-700 mb-1">
                     NIK (Nomor Induk Kependudukan / KTP)
                   </label>
@@ -2860,8 +3044,8 @@
                     class="w-full text-xs font-mono border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
                 </div>
 
-                <!-- Tempat Lahir -->
-                <div>
+                <!-- Tempat Lahir (Kader Only) -->
+                <div class="join-only-kader">
                   <label class="block text-xs font-bold text-slate-700 mb-1">
                     Tempat Lahir
                   </label>
@@ -2869,8 +3053,8 @@
                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
                 </div>
 
-                <!-- Tanggal Lahir -->
-                <div>
+                <!-- Tanggal Lahir (Kader Only) -->
+                <div class="join-only-kader">
                   <label class="block text-xs font-bold text-slate-700 mb-1">
                     Tanggal Lahir
                   </label>
@@ -2881,7 +3065,7 @@
                 <!-- Foto Profil 3x4 -->
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1">
-                    Foto Profil Kader (3x4)
+                    Foto Profil Formal
                   </label>
                   <div class="flex items-center gap-3">
                     <div
@@ -2901,7 +3085,7 @@
                 <!-- Alamat Domisili -->
                 <div class="md:col-span-2">
                   <label class="block text-xs font-bold text-slate-700 mb-1">
-                    Alamat Domisili Asal
+                    Alamat Domisili Saat Ini
                   </label>
                   <textarea id="join-alamat" rows="2" placeholder="Contoh: Desa Tarate, Kec. Kota, Kab. Sumenep"
                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"></textarea>
@@ -2909,8 +3093,8 @@
               </div>
             </div>
 
-            <!-- STEP 2: Data Akademik Kampus ISMU -->
-            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
+            <!-- STEP 2A: Data Akademik Kampus ISMU (MODE: KADER) -->
+            <div id="join-section-kader" class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
               <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <div
                   class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-extrabold text-sm">
@@ -2974,6 +3158,129 @@
               </div>
             </div>
 
+            <!-- STEP 2B: Data Alumni IKA PMII (MODE: IKA) -->
+            <div id="join-section-ika" class="hidden bg-white rounded-3xl p-6 border border-teal-100 shadow-xs space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-teal-100">
+                <div
+                  class="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-extrabold text-sm">
+                  2
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-800">Data Alumni & Kiprah Profesi (IKA PMII)</h3>
+                  <p class="text-xs text-slate-400">Riwayat kampus serta profesi pengabdian alumni saat ini</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Profesi / Pekerjaan Saat Ini <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="join-ika-profesi" placeholder="Contoh: Guru, Pengusaha, Dosen, ASN, Advokat"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100 transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Instansi / Lembaga / Kantor
+                  </label>
+                  <input type="text" id="join-ika-instansi" placeholder="Contoh: Kemenag Sumenep / MA Miftahul Ulum"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100 transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Jabatan / Peran di IKA PMII
+                  </label>
+                  <input type="text" id="join-ika-jabatan" value="Anggota IKA PMII" placeholder="Contoh: Anggota IKA PMII / Koordinator Bidang"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100 transition font-semibold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Angkatan PMII</label>
+                    <input type="text" id="join-ika-angkatan" placeholder="Contoh: 2018"
+                      class="w-full text-xs font-mono border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Lulus</label>
+                    <input type="text" id="join-ika-tahun-lulus" placeholder="Contoh: 2022"
+                      class="w-full text-xs font-mono border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Fakultas Asal</label>
+                  <select id="join-ika-fakultas" onchange="handleJoinIkaFakultasChange(this.value)"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition font-semibold">
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Program Studi Asal</label>
+                  <select id="join-ika-jurusan"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition font-medium">
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2C: Data Dewan Pembina Mabinkom (MODE: MABINKOM) -->
+            <div id="join-section-mabinkom" class="hidden bg-white rounded-3xl p-6 border border-amber-100 shadow-xs space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-amber-100">
+                <div
+                  class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-extrabold text-sm">
+                  2
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-800">Data Majelis Pembina Komisariat (Mabinkom)</h3>
+                  <p class="text-xs text-slate-400">Informasi jabatan pembina, profesi, dan instansi</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Jabatan di Mabinkom <span class="text-rose-500">*</span>
+                  </label>
+                  <select id="join-mbk-jabatan"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 font-semibold">
+                    <option value="Ketua Dewan Mabinkom">Ketua Dewan Mabinkom</option>
+                    <option value="Wakil Ketua Mabinkom">Wakil Ketua Mabinkom</option>
+                    <option value="Sekretaris Mabinkom">Sekretaris Mabinkom</option>
+                    <option value="Anggota Pengarah" selected>Anggota Pengarah</option>
+                    <option value="Pembina Bidang Kaderisasi">Pembina Bidang Kaderisasi</option>
+                    <option value="Pembina Bidang Keilmuan & Riset">Pembina Bidang Keilmuan & Riset</option>
+                    <option value="Pembina Bidang Advokasi & Jaringan">Pembina Bidang Advokasi & Jaringan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Profesi / Aktivitas Utama <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="join-mbk-profesi" placeholder="Contoh: Dosen, Advokat, Pengusaha"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Instansi / Lembaga / Kantor
+                  </label>
+                  <input type="text" id="join-mbk-instansi" placeholder="Contoh: Institut Miftahul Ulum Tarate"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Alumni Angkatan / Tahun Kaderisasi
+                  </label>
+                  <input type="text" id="join-mbk-angkatan" placeholder="Contoh: Angkatan 2008 / Mapaba 2008"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 transition">
+                </div>
+              </div>
+            </div>
+
             <!-- STEP 3: Kontak & Komunikasi -->
             <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
               <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
@@ -3003,14 +3310,14 @@
                   <label class="block text-xs font-bold text-slate-700 mb-1">
                     Alamat Email Aktif
                   </label>
-                  <input type="email" id="join-email" placeholder="Contoh: kader@student.ismu.ac.id"
+                  <input type="email" id="join-email" placeholder="Contoh: nama@gmail.com"
                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
                 </div>
               </div>
             </div>
 
-            <!-- STEP 4: Riwayat Kaderisasi PMII -->
-            <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
+            <!-- STEP 4: Riwayat Kaderisasi PMII (Khusus Kader) -->
+            <div id="join-step-kaderisasi" class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
               <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <div
                   class="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-extrabold text-sm">
@@ -3102,7 +3409,7 @@
                 <button type="submit" id="btn-submit-joinkader"
                   class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2 cursor-pointer">
                   <i data-lucide="send" class="w-4 h-4 text-yellow-300"></i>
-                  <span>Kirim Formulir Pendaftaran Kader</span>
+                  <span id="btn-submit-join-label">Kirim Formulir Pendaftaran Kader</span>
                 </button>
               </div>
             </div>
@@ -5339,6 +5646,204 @@
   </div>
 
   <!-- ======================================================== -->
+  <!-- MODAL: TAMBAH / EDIT ALUMNI IKA PMII -->
+  <!-- ======================================================== -->
+  <div id="modal-ika" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl modal-enter">
+
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <h3 id="modal-ika-title" class="font-extrabold text-slate-800 text-lg">Tambah Alumni (IKA PMII)</h3>
+        <button type="button" onclick="closeIkaModal()"
+          class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-ika" onsubmit="saveIkaForm(event)" class="p-6 space-y-4">
+        <input type="hidden" id="ika-id">
+        <input type="hidden" id="ika-foto-url">
+
+        <!-- Photo & Basic Identity -->
+        <div class="flex flex-col sm:flex-row items-center gap-5 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <img id="ika-foto-preview" src="https://via.placeholder.com/120" alt="Preview"
+            class="w-20 h-20 rounded-full object-cover border-2 border-teal-600 shadow">
+          <div class="flex-1 w-full space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Foto Profil Alumni</label>
+            <input type="file" accept="image/*" onchange="handleIkaFotoUpload(event)"
+              class="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-100 file:text-teal-800 hover:file:bg-teal-200 cursor-pointer">
+            <p class="text-[11px] text-slate-400">Format JPG, PNG. Disarankan foto profil rapi.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap & Gelar <span
+                class="text-rose-500">*</span></label>
+            <input type="text" id="ika-nama" required placeholder="Contoh: Ahmad Fauzan, S.Pd.I., M.Pd."
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Jenis Kelamin</label>
+            <select id="ika-gender"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+              <option value="Laki-laki">Laki-laki (Sahabat)</option>
+              <option value="Perempuan">Perempuan (Sahabati)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Peran / Jabatan di IKA</label>
+            <input type="text" id="ika-jabatan" value="Anggota IKA PMII" placeholder="Contoh: Ketua IKA / Anggota IKA PMII"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Fakultas Asal</label>
+            <select id="ika-fakultas" onchange="populateIkaModalProdiOptions(this.value)"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Program Studi Asal</label>
+            <select id="ika-jurusan"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Angkatan Masuk</label>
+            <input type="text" id="ika-angkatan" placeholder="Contoh: 2018"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Lulus</label>
+            <input type="text" id="ika-tahun-lulus" placeholder="Contoh: 2022"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Profesi / Aktivitas Saat Ini <span
+                class="text-rose-500">*</span></label>
+            <input type="text" id="ika-profesi" required placeholder="Contoh: Guru, Pengusaha, Dosen, ASN"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Instansi / Lembaga / Usaha</label>
+            <input type="text" id="ika-instansi" placeholder="Contoh: Kemenag Sumenep / Yayasan"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp / HP <span
+                class="text-rose-500">*</span></label>
+            <input type="text" id="ika-kontak" required placeholder="08xxxxxxxxxx"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Email</label>
+            <input type="email" id="ika-email" placeholder="nama@email.com"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Domisili</label>
+            <textarea id="ika-alamat" rows="2" placeholder="Alamat tinggal / domisili alumni"
+              class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:border-teal-500 focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white py-3">
+          <button type="button" onclick="closeIkaModal()"
+            class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50">
+            Batal
+          </button>
+          <button type="submit"
+            class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer">
+            Simpan Data Alumni IKA
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: DETAIL ALUMNI IKA PMII -->
+  <!-- ======================================================== -->
+  <div id="modal-detail-ika" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl modal-enter">
+
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-extrabold text-slate-800 text-base">Profil Alumni (IKA PMII)</h3>
+        <button type="button" onclick="closeIkaDetailModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div
+          class="flex items-center gap-4 p-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl border border-teal-100">
+          <img id="detail-ika-foto" src="" alt=""
+            class="w-20 h-20 rounded-full object-cover border-2 border-teal-600 shadow">
+          <div>
+            <h2 id="detail-ika-nama" class="font-black text-slate-900 text-base">Nama Alumni</h2>
+            <div class="mt-1">
+              <span id="detail-ika-jabatan"
+                class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-700 text-white"></span>
+            </div>
+            <p id="detail-ika-profesi" class="text-xs font-medium text-slate-600 mt-1"></p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 bg-slate-50 rounded-xl">
+            <span class="text-slate-400 block mb-0.5">Fakultas / Prodi Asal:</span>
+            <span id="detail-ika-fakultas" class="font-bold text-slate-800"></span>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl">
+            <span class="text-slate-400 block mb-0.5">Angkatan / Tahun Lulus:</span>
+            <span id="detail-ika-angkatan" class="font-bold text-slate-800"></span>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl">
+            <span class="text-slate-400 block mb-0.5">Instansi / Lembaga:</span>
+            <span id="detail-ika-instansi" class="font-bold text-slate-800"></span>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl">
+            <span class="text-slate-400 block mb-0.5">No. WhatsApp / HP:</span>
+            <span id="detail-ika-kontak" class="font-bold text-emerald-600"></span>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl col-span-2">
+            <span class="text-slate-400 block mb-0.5">Email:</span>
+            <span id="detail-ika-email" class="font-medium text-slate-800"></span>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl col-span-2">
+            <span class="text-slate-400 block mb-0.5">Alamat Domisili:</span>
+            <span id="detail-ika-alamat" class="font-medium text-slate-800"></span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onclick="editIkaFromDetail()"
+            class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <span>Edit Data</span>
+          </button>
+          <button type="button" onclick="closeIkaDetailModal()"
+            class="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50">
+            Tutup
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
   <!-- MODAL: TAMBAH / EDIT PEMASUKAN KAS -->
   <!-- ======================================================== -->
   <div id="modal-pemasukan" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
@@ -6791,8 +7296,8 @@
   </div>
 
   <!-- App Logic & Scripts -->
-  <script src="js/data.js?v=20261110_v6"></script>
-  <script src="js/app.js?v=20261110_v6"></script>
+  <script src="js/data.js?v=20261111_v1"></script>
+  <script src="js/app.js?v=20261111_v1"></script>
 
   <!-- Service Worker Registration for PWA & Offline Support -->
   <script>

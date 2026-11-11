@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS tb_pemasukan CASCADE;
 DROP TABLE IF EXISTS tb_ketum_kom CASCADE;
 DROP TABLE IF EXISTS tb_struktur_pengurus CASCADE;
 DROP TABLE IF EXISTS tb_periode_pengurus CASCADE;
+DROP TABLE IF EXISTS tb_ika CASCADE;
 DROP TABLE IF EXISTS tb_mabinkom CASCADE;
 DROP TABLE IF EXISTS tb_kader CASCADE;
 DROP TABLE IF EXISTS tb_users CASCADE;
@@ -114,7 +115,11 @@ CREATE TABLE tb_mabinkom (
   periode VARCHAR(50) DEFAULT '2026-2027',
   kiprah TEXT,
   profesi VARCHAR(150),
+  instansi VARCHAR(150),
+  angkatan VARCHAR(50),
   kontak VARCHAR(50),
+  email VARCHAR(150),
+  alamat TEXT,
   foto TEXT,
   status VARCHAR(50) DEFAULT 'Aktif',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -125,6 +130,28 @@ VALUES
 ('MBN-001', 'Dr. KH. Achmad Fauzi', 'M.Pd.I', 'Ketua Dewan Pembina', '2026-2027', 'Mantan Ketua Umum PK PMII ISMU Angkatan 2008 & Dosen Senior Pascasarjana', 'Akademisi & Pimpinan Yayasan', '081233445566', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=300&q=80', 'Aktif'),
 ('MBN-002', 'K.H. Zainal Muttaqin', 'S.Sy., M.H.', 'Sekretaris Dewan Pembina', '2026-2027', 'Alumni Aktivis Advokasi PMII & Praktisi Hukum di Kab. Sumenep', 'Advokat / Praktisi Hukum', '081344556677', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300&q=80', 'Aktif'),
 ('MBN-003', 'Hj. Siti Romlah', 'M.Pd.', 'Anggota Dewan Pembina', '2026-2027', 'Penggerak KOPRI pertama di kampus ISMU Tarate & Pengurus Muslimat NU', 'Dosen Fakultas Tarbiyah', '081455667788', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80', 'Aktif');
+
+-- 4b. Tabel Ikatan Keluarga Alumni (IKA PMII)
+CREATE TABLE tb_ika (
+  id VARCHAR(50) PRIMARY KEY,
+  nama VARCHAR(150) NOT NULL,
+  gelar VARCHAR(100),
+  gender VARCHAR(20) DEFAULT 'Laki-laki',
+  angkatan VARCHAR(20),
+  tahun_lulus VARCHAR(20),
+  fakultas VARCHAR(100),
+  jurusan VARCHAR(100),
+  profesi VARCHAR(150),
+  instansi VARCHAR(150),
+  jabatan_alumni VARCHAR(150) DEFAULT 'Anggota IKA PMII',
+  whatsapp VARCHAR(50),
+  email VARCHAR(150),
+  alamat TEXT,
+  foto TEXT,
+  status VARCHAR(50) DEFAULT 'Aktif',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- 5. Tabel Periode & Struktur Pengurus
 CREATE TABLE tb_periode_pengurus (

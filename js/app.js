@@ -9,6 +9,7 @@
 let komisariat = {};
 let kaders = [];
 let mabinkom = [];
+let ikaList = [];
 let pemasukan = [];
 let pengeluaran = [];
 let pengurus = [];
@@ -30,6 +31,7 @@ let selectedAnggaranTahunKhidmat = null;
 let currentKaderForKTA = null;
 let currentKaderDetail = null;
 let currentMabinkomDetail = null;
+let currentIkaDetail = null;
 let currentPemasukanDetail = null;
 let currentPengeluaranDetail = null;
 let currentAnggaranDetail = null;
@@ -54,8 +56,10 @@ let filterPkdFakultas = 'all';
 let filterPkdGender = 'all';
 let filterPkdAngkatan = 'all';
 
-// Filter States - Mabinkom
+// Filter States - Mabinkom & IKA
 let searchMabinkomQuery = '';
+let searchIkaQuery = '';
+let filterIkaFakultas = 'all';
 
 // Filter States - Pemasukan
 let searchPemasukanQuery = '';
@@ -200,7 +204,7 @@ function applyUserRolePermissions() {
   const isKader = isKaderUser();
   if (isKader) {
     document.body.classList.add('role-kader');
-    const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'kta', 'joinkader'];
+    const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'ika', 'pengurus', 'ketum', 'kta', 'joinkader'];
     if (typeof currentTab !== 'undefined' && !cadreAllowedTabs.includes(currentTab)) {
       if (typeof switchTab === 'function') switchTab('dashboard');
     }
@@ -698,6 +702,16 @@ function loadFromLocalStorage() {
     } catch (e) {}
     mabinkom = rawMabinkom || (typeof defaultMabinkom !== 'undefined' ? JSON.parse(JSON.stringify(defaultMabinkom)) : []);
 
+    const savedIka = localStorage.getItem('pmii_ika');
+    let rawIka = null;
+    try {
+      if (savedIka) {
+        const parsed = JSON.parse(savedIka);
+        if (Array.isArray(parsed)) rawIka = parsed;
+      }
+    } catch (e) {}
+    ikaList = rawIka || (typeof defaultIka !== 'undefined' ? JSON.parse(JSON.stringify(defaultIka)) : []);
+
     const savedPemasukan = localStorage.getItem('pmii_pemasukan');
     pemasukan = savedPemasukan ? JSON.parse(savedPemasukan) : (typeof defaultPemasukan !== 'undefined' ? defaultPemasukan : []);
 
@@ -822,6 +836,7 @@ function loadFromLocalStorage() {
     komisariat = defaultKomisariat;
     kaders = defaultKaders;
     mabinkom = typeof defaultMabinkom !== 'undefined' ? defaultMabinkom : [];
+    ikaList = typeof defaultIka !== 'undefined' ? defaultIka : [];
     pemasukan = typeof defaultPemasukan !== 'undefined' ? defaultPemasukan : [];
     pengeluaran = typeof defaultPengeluaran !== 'undefined' ? defaultPengeluaran : [];
     pengurus = typeof defaultPengurus !== 'undefined' ? defaultPengurus : [];
@@ -837,6 +852,7 @@ function saveToLocalStorageOnly() {
   localStorage.setItem('pmii_komisariat', JSON.stringify(komisariat));
   localStorage.setItem('pmii_kaders', JSON.stringify(kaders));
   localStorage.setItem('pmii_mabinkom', JSON.stringify(mabinkom));
+  localStorage.setItem('pmii_ika', JSON.stringify(ikaList));
   localStorage.setItem('pmii_pemasukan', JSON.stringify(pemasukan));
   localStorage.setItem('pmii_pengeluaran', JSON.stringify(pengeluaran));
   localStorage.setItem('pmii_pengurus', JSON.stringify(pengurus));
@@ -1139,7 +1155,7 @@ async function fetchDataFromCloud(silent = false) {
 
   try {
     if (cfg.type === 'neon') {
-      let komRows = [], kdrRows = [], mbnRows = [], pmsRows = [], pngRows = [];
+      let komRows = [], kdrRows = [], mbnRows = [], ikaRows = [], pmsRows = [], pngRows = [];
       let agrRows = [], prdRows = [], strRows = [], ktmRows = [], rptRows = [], prsRows = [];
 
       try {
@@ -1149,6 +1165,7 @@ async function fetchDataFromCloud(silent = false) {
             (SELECT json_agg(t) FROM (SELECT * FROM tb_komisariat LIMIT 1) t) as komisariat,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC) t) as kader,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_mabinkom ORDER BY id ASC) t) as mabinkom,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_ika ORDER BY angkatan DESC, nama ASC) t) as ika,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_pemasukan ORDER BY tanggal DESC, id DESC) t) as pemasukan,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_pengeluaran ORDER BY tanggal DESC, id DESC) t) as pengeluaran,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_anggaran_rab ORDER BY pos ASC, id ASC) t) as anggaran,
@@ -1164,6 +1181,7 @@ async function fetchDataFromCloud(silent = false) {
           komRows = b.komisariat || [];
           kdrRows = b.kader || [];
           mbnRows = b.mabinkom || [];
+          ikaRows = b.ika || [];
           pmsRows = b.pemasukan || [];
           pngRows = b.pengeluaran || [];
           agrRows = b.anggaran || [];
@@ -1193,7 +1211,8 @@ async function fetchDataFromCloud(silent = false) {
           executeNeonSql('SELECT * FROM tb_struktur_pengurus ORDER BY urutan ASC, id ASC'),
           executeNeonSql('SELECT * FROM tb_ketum_kom ORDER BY tahun_mulai DESC'),
           executeNeonSql('SELECT * FROM tb_rapat ORDER BY tanggal DESC, id DESC'),
-          executeNeonSql('SELECT * FROM tb_presensi_rapat ORDER BY id ASC')
+          executeNeonSql('SELECT * FROM tb_presensi_rapat ORDER BY id ASC'),
+          executeNeonSql('SELECT * FROM tb_ika ORDER BY angkatan DESC, nama ASC')
         ]);
 
         // Cek jika ada penolakan akibat autentikasi
@@ -1219,6 +1238,7 @@ async function fetchDataFromCloud(silent = false) {
         ktmRows = results[8].status === 'fulfilled' ? results[8].value : [];
         rptRows = results[9].status === 'fulfilled' ? results[9].value : [];
         prsRows = results[10].status === 'fulfilled' ? results[10].value : [];
+        ikaRows = results[11].status === 'fulfilled' ? results[11].value : [];
       }
 
       // 1. Profil Komisariat
@@ -1296,8 +1316,33 @@ async function fetchDataFromCloud(silent = false) {
         periode: r.periode || '',
         kiprah: r.kiprah || '',
         profesi: r.profesi || '',
+        instansi: r.instansi || '',
+        angkatan: r.angkatan || '',
         kontak: r.kontak || '',
         whatsapp: r.kontak || '',
+        email: r.email || '',
+        alamat: r.alamat || '',
+        foto: r.foto || '',
+        status: r.status || 'Aktif'
+      }));
+
+      // 3b. IKA (Ikatan Keluarga Alumni)
+      ikaList = (ikaRows || []).map(r => ({
+        id: r.id,
+        nama: r.nama || '',
+        gelar: r.gelar || '',
+        gender: r.gender || 'Laki-laki',
+        angkatan: r.angkatan || '',
+        tahunLulus: r.tahun_lulus || '',
+        fakultas: r.fakultas || '',
+        jurusan: r.jurusan || '',
+        profesi: r.profesi || '',
+        instansi: r.instansi || '',
+        jabatan: r.jabatan_alumni || 'Anggota IKA PMII',
+        whatsapp: r.whatsapp || '',
+        kontak: r.whatsapp || '',
+        email: r.email || '',
+        alamat: r.alamat || '',
         foto: r.foto || '',
         status: r.status || 'Aktif'
       }));
@@ -1404,7 +1449,7 @@ async function fetchDataFromCloud(silent = false) {
       });
 
       // Cek apakah data berubah untuk efisiensi render
-      const currentFingerprint = `${kaders.length}|${mabinkom.length}|${pemasukan.length}|${pengeluaran.length}|${anggaran.length}|${pengurus.length}|${ketumKom.length}|${rapat.length}|${kaders[0]?.id || ''}|${pengeluaran[0]?.id || ''}|${pemasukan[0]?.id || ''}|${komisariat.nama || ''}`;
+      const currentFingerprint = `${kaders.length}|${mabinkom.length}|${ikaList.length}|${pemasukan.length}|${pengeluaran.length}|${anggaran.length}|${pengurus.length}|${ketumKom.length}|${rapat.length}|${kaders[0]?.id || ''}|${ikaList[0]?.id || ''}|${pengeluaran[0]?.id || ''}|${pemasukan[0]?.id || ''}|${komisariat.nama || ''}`;
       const isDataChanged = (currentFingerprint !== lastDataFingerprint);
       lastDataFingerprint = currentFingerprint;
 
@@ -1541,21 +1586,45 @@ async function syncToCloudServer(silent = true) {
       // 3. Mabinkom
       if (mabinkom && mabinkom.length > 0) {
         const mbnValues = mabinkom.map(m => {
-          return `(${sqlEscape(m.id)}, ${sqlEscape(m.nama)}, ${sqlEscape(m.gelar)}, ${sqlEscape(m.jabatan || 'Anggota Mabinkom')}, ${sqlEscape(m.periode)}, ${sqlEscape(m.kiprah || m.keterangan)}, ${sqlEscape(m.profesi)}, ${sqlEscape(m.kontak || m.whatsapp)}, ${sqlEscape(m.foto)}, ${sqlEscape(m.status || 'Aktif')})`;
+          return `(${sqlEscape(m.id)}, ${sqlEscape(m.nama)}, ${sqlEscape(m.gelar)}, ${sqlEscape(m.jabatan || 'Anggota Mabinkom')}, ${sqlEscape(m.periode)}, ${sqlEscape(m.kiprah || m.keterangan)}, ${sqlEscape(m.profesi)}, ${sqlEscape(m.instansi)}, ${sqlEscape(m.angkatan)}, ${sqlEscape(m.kontak || m.whatsapp)}, ${sqlEscape(m.email)}, ${sqlEscape(m.alamat)}, ${sqlEscape(m.foto)}, ${sqlEscape(m.status || 'Aktif')})`;
         }).join(', ');
         const validIds = mabinkom.map(m => sqlEscape(m.id)).join(', ');
 
         const qMabinkom = `
-          INSERT INTO tb_mabinkom (id, nama, gelar, jabatan, periode, kiprah, profesi, kontak, foto, status)
+          INSERT INTO tb_mabinkom (id, nama, gelar, jabatan, periode, kiprah, profesi, instansi, angkatan, kontak, email, alamat, foto, status)
           VALUES ${mbnValues}
           ON CONFLICT (id) DO UPDATE SET
             nama = EXCLUDED.nama, gelar = EXCLUDED.gelar, jabatan = EXCLUDED.jabatan, periode = EXCLUDED.periode,
-            kiprah = EXCLUDED.kiprah, profesi = EXCLUDED.profesi, kontak = EXCLUDED.kontak, foto = EXCLUDED.foto, status = EXCLUDED.status;
+            kiprah = EXCLUDED.kiprah, profesi = EXCLUDED.profesi, instansi = EXCLUDED.instansi, angkatan = EXCLUDED.angkatan,
+            kontak = EXCLUDED.kontak, email = EXCLUDED.email, alamat = EXCLUDED.alamat, foto = EXCLUDED.foto, status = EXCLUDED.status;
         `;
         neonQueries.push(qMabinkom);
         neonQueries.push(`DELETE FROM tb_mabinkom WHERE id NOT IN (${validIds});`);
       } else {
         neonQueries.push('DELETE FROM tb_mabinkom;');
+      }
+
+      // 3b. IKA (Ikatan Keluarga Alumni)
+      if (ikaList && ikaList.length > 0) {
+        const ikaValues = ikaList.map(a => {
+          return `(${sqlEscape(a.id)}, ${sqlEscape(a.nama)}, ${sqlEscape(a.gelar)}, ${sqlEscape(a.gender || 'Laki-laki')}, ${sqlEscape(a.angkatan)}, ${sqlEscape(a.tahunLulus)}, ${sqlEscape(a.fakultas)}, ${sqlEscape(a.jurusan)}, ${sqlEscape(a.profesi)}, ${sqlEscape(a.instansi)}, ${sqlEscape(a.jabatan || 'Anggota IKA PMII')}, ${sqlEscape(a.whatsapp || a.kontak)}, ${sqlEscape(a.email)}, ${sqlEscape(a.alamat)}, ${sqlEscape(a.foto)}, ${sqlEscape(a.status || 'Aktif')})`;
+        }).join(', ');
+        const validIds = ikaList.map(a => sqlEscape(a.id)).join(', ');
+
+        const qIka = `
+          INSERT INTO tb_ika (id, nama, gelar, gender, angkatan, tahun_lulus, fakultas, jurusan, profesi, instansi, jabatan_alumni, whatsapp, email, alamat, foto, status)
+          VALUES ${ikaValues}
+          ON CONFLICT (id) DO UPDATE SET
+            nama = EXCLUDED.nama, gelar = EXCLUDED.gelar, gender = EXCLUDED.gender, angkatan = EXCLUDED.angkatan,
+            tahun_lulus = EXCLUDED.tahun_lulus, fakultas = EXCLUDED.fakultas, jurusan = EXCLUDED.jurusan,
+            profesi = EXCLUDED.profesi, instansi = EXCLUDED.instansi, jabatan_alumni = EXCLUDED.jabatan_alumni,
+            whatsapp = EXCLUDED.whatsapp, email = EXCLUDED.email, alamat = EXCLUDED.alamat, foto = EXCLUDED.foto,
+            status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP;
+        `;
+        neonQueries.push(qIka);
+        neonQueries.push(`DELETE FROM tb_ika WHERE id NOT IN (${validIds});`);
+      } else {
+        neonQueries.push('DELETE FROM tb_ika;');
       }
 
       // 4. Pemasukan
@@ -1825,6 +1894,7 @@ function resetToDefaultData() {
       komisariat = JSON.parse(JSON.stringify(defaultKomisariat));
       kaders = JSON.parse(JSON.stringify(defaultKaders));
       mabinkom = typeof defaultMabinkom !== 'undefined' ? JSON.parse(JSON.stringify(defaultMabinkom)) : [];
+      ikaList = typeof defaultIka !== 'undefined' ? JSON.parse(JSON.stringify(defaultIka)) : [];
       pemasukan = typeof defaultPemasukan !== 'undefined' ? JSON.parse(JSON.stringify(defaultPemasukan)) : [];
       pengeluaran = typeof defaultPengeluaran !== 'undefined' ? JSON.parse(JSON.stringify(defaultPengeluaran)) : [];
       pengurus = typeof defaultPengurus !== 'undefined' ? JSON.parse(JSON.stringify(defaultPengurus)) : [];
@@ -1980,7 +2050,7 @@ function toggleNewPassVisibility() {
 }
 
 function switchTab(tabName) {
-  const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'kta', 'joinkader'];
+  const cadreAllowedTabs = ['dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'ika', 'pengurus', 'ketum', 'kta', 'joinkader'];
   if (isKaderUser() && !cadreAllowedTabs.includes(tabName)) {
     tabName = 'dashboard';
   }
@@ -1997,7 +2067,7 @@ function switchTab(tabName) {
   currentTab = tabName;
 
   const tabIds = [
-    'dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'pengurus', 'ketum', 'kta', 'joinkader', 'rapat', 'broadcast',
+    'dashboard', 'kader', 'mapaba', 'pkd', 'mabinkom', 'ika', 'pengurus', 'ketum', 'kta', 'joinkader', 'rapat', 'broadcast',
     'pemasukan', 'pengeluaran', 'anggaran', 'laporan', 'pengaturan'
   ];
 
@@ -2030,6 +2100,7 @@ function switchTab(tabName) {
   if (tabName === 'mapaba') renderMapabaSection();
   if (tabName === 'pkd') renderPkdSection();
   if (tabName === 'mabinkom') renderMabinkomSection();
+  if (tabName === 'ika') renderIkaSection();
   if (tabName === 'pengurus') renderPengurusSection();
   if (tabName === 'ketum') renderKetumSection();
   if (tabName === 'kta') renderKtaSection();
@@ -4623,6 +4694,502 @@ function exportMabinkomExcel() {
   XLSX.utils.book_append_sheet(wb, ws, "Data Mabinkom");
   XLSX.writeFile(wb, `Data_Mabinkom_PMII_${(komisariat.nama || 'Komisariat').replace(/\s+/g, '_')}.xlsx`);
   showToast('Data Mabinkom berhasil diexport ke Excel!', 'success');
+}
+
+// ==========================================
+// 6B. MODUL DATA IKA (IKATAN KELUARGA ALUMNI)
+// ==========================================
+function renderIkaSection() {
+  populateIkaFakultasFilter();
+  renderIkaList();
+}
+
+function populateIkaFakultasFilter() {
+  const select = document.getElementById('filter-ika-fakultas');
+  if (!select) return;
+  const current = filterIkaFakultas || 'all';
+  const masterFak = getFakultasProdiList().map(item => item.fakultas);
+  const existingFak = (ikaList || []).map(a => a.fakultas).filter(Boolean);
+  const uniqueFak = Array.from(new Set([...masterFak, ...existingFak])).filter(Boolean);
+
+  select.innerHTML = '<option value="all">Semua Fakultas Asal</option>' +
+    uniqueFak.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+  select.value = uniqueFak.includes(current) ? current : 'all';
+}
+
+function populateIkaModalFakultasOptions(selectedFak = '', selectedProdi = '') {
+  const selFak = document.getElementById('ika-fakultas');
+  if (!selFak) return;
+  const list = getFakultasProdiList();
+  selFak.innerHTML = '<option value="">-- Pilih Fakultas Asal --</option>' +
+    list.map(item => `<option value="${escapeHtml(item.fakultas)}">${escapeHtml(item.fakultas)}</option>`).join('');
+
+  if (selectedFak && !list.some(i => i.fakultas === selectedFak)) {
+    selFak.innerHTML += `<option value="${escapeHtml(selectedFak)}">${escapeHtml(selectedFak)}</option>`;
+  }
+  selFak.value = selectedFak || (list[0]?.fakultas || '');
+  populateIkaModalProdiOptions(selFak.value, selectedProdi);
+}
+
+function populateIkaModalProdiOptions(fakultas, selectedProdi = '') {
+  const selProdi = document.getElementById('ika-jurusan');
+  if (!selProdi) return;
+  const list = getFakultasProdiList();
+  const found = list.find(item => item.fakultas === fakultas);
+  const prodiArr = found ? (found.prodi || []) : [];
+
+  selProdi.innerHTML = '<option value="">-- Pilih Program Studi --</option>' +
+    prodiArr.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+  if (selectedProdi && !prodiArr.includes(selectedProdi)) {
+    selProdi.innerHTML += `<option value="${escapeHtml(selectedProdi)}">${escapeHtml(selectedProdi)}</option>`;
+  }
+  selProdi.value = selectedProdi || '';
+}
+
+function filterIkaData() {
+  return (ikaList || []).filter(a => {
+    const matchFak = (filterIkaFakultas === 'all') || (a.fakultas === filterIkaFakultas);
+    if (!matchFak) return false;
+    if (!searchIkaQuery) return true;
+    const q = searchIkaQuery.toLowerCase();
+    return (a.nama && a.nama.toLowerCase().includes(q)) ||
+      (a.jabatan && a.jabatan.toLowerCase().includes(q)) ||
+      (a.profesi && a.profesi.toLowerCase().includes(q)) ||
+      (a.instansi && a.instansi.toLowerCase().includes(q)) ||
+      (a.angkatan && String(a.angkatan).toLowerCase().includes(q)) ||
+      (a.alamat && a.alamat.toLowerCase().includes(q));
+  });
+}
+
+function renderIkaList() {
+  const tbody = document.getElementById('ika-table-body');
+  const counter = document.getElementById('ika-filtered-count');
+  if (!tbody) return;
+
+  const isKader = isKaderUser();
+  const list = ikaList || [];
+  const filtered = filterIkaData();
+  if (counter) counter.textContent = `Menampilkan ${filtered.length} dari ${list.length} alumni IKA`;
+
+  const totalEl = document.getElementById('stat-ika-total');
+  const profesiEl = document.getElementById('stat-ika-profesi-count');
+  const angkatanEl = document.getElementById('stat-ika-angkatan');
+
+  if (totalEl) totalEl.textContent = list.length;
+  if (profesiEl) {
+    const profesiSet = new Set(list.map(a => a.profesi).filter(Boolean));
+    profesiEl.textContent = `${profesiSet.size} Profesi`;
+  }
+  if (angkatanEl) {
+    const yrs = list.map(a => parseInt(a.angkatan)).filter(n => !isNaN(n));
+    angkatanEl.textContent = yrs.length > 0 ? `${Math.min(...yrs)} - ${Math.max(...yrs)}` : '-';
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="p-8 text-center text-slate-400">
+          <i data-lucide="graduation-cap" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+          <p class="font-semibold text-xs">Belum ada data alumni (IKA PMII) yang sesuai filter.</p>
+        </td>
+      </tr>
+    `;
+    initLucide();
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((a, index) => {
+    const waNum = (a.whatsapp || a.kontak || '').replace(/\D/g, '');
+    return `
+      <tr class="hover:bg-slate-50/80 transition text-xs border-b border-slate-100">
+        <td class="py-3 px-4 text-center text-slate-400 font-mono">${index + 1}</td>
+        <td class="py-3 px-4">
+          <div class="flex items-center gap-3">
+            <img src="${a.foto || 'https://via.placeholder.com/80'}" alt="${escapeHtml(a.nama)}" class="w-9 h-9 rounded-full object-cover border-2 border-teal-600/20 shrink-0">
+            <div>
+              <span class="font-bold text-slate-800 block text-xs hover:text-teal-700 cursor-pointer" onclick="viewIkaDetail('${a.id}')">${escapeHtml(a.nama)}</span>
+              <span class="text-[11px] text-slate-400">${escapeHtml(a.email || '-')}</span>
+            </div>
+          </div>
+        </td>
+        <td class="py-3 px-4 whitespace-nowrap">
+          <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-700 text-white">
+            ${escapeHtml(a.jabatan || 'Anggota IKA PMII')}
+          </span>
+        </td>
+        <td class="py-3 px-4 text-center font-mono font-bold text-slate-700 whitespace-nowrap">
+          <span>${escapeHtml(a.angkatan || '-')}</span>
+          ${a.tahunLulus ? `<span class="block text-[10px] text-slate-400 font-normal">Lulus: ${escapeHtml(a.tahunLulus)}</span>` : ''}
+        </td>
+        <td class="py-3 px-4">
+          <span class="font-medium text-slate-800 block">${escapeHtml(a.fakultas || '-')}</span>
+          <span class="text-[11px] text-slate-500">${escapeHtml(a.jurusan || '-')}</span>
+        </td>
+        <td class="py-3 px-4">
+          <span class="font-medium text-slate-800 block">${escapeHtml(a.profesi || '-')}</span>
+          <span class="text-[11px] text-slate-500">${escapeHtml(a.instansi || '-')}</span>
+        </td>
+        <td class="py-3 px-4 whitespace-nowrap">
+          ${waNum ? `
+            <a href="https://wa.me/${waNum}" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
+              <i data-lucide="phone" class="w-3 h-3"></i>
+              <span>${escapeHtml(a.whatsapp || a.kontak)}</span>
+            </a>
+          ` : '<span class="text-slate-400 text-[11px]">-</span>'}
+        </td>
+        <td class="py-3 px-4 max-w-[150px] truncate text-slate-600">
+          ${escapeHtml(a.alamat || '-')}
+        </td>
+        <td class="py-3 px-4 text-right whitespace-nowrap">
+          <div class="inline-flex items-center gap-1">
+            <button onclick="viewIkaDetail('${a.id}')" title="Lihat Profil" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+            <button onclick="openEditIkaModal('${a.id}')" title="Edit Data" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
+              <i data-lucide="edit-3" class="w-4 h-4"></i>
+            </button>
+            ${!isKader ? `
+            <button onclick="deleteIka('${a.id}')" title="Hapus Data" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  initLucide();
+}
+
+function handleSearchIka(val) {
+  searchIkaQuery = val;
+  renderIkaList();
+}
+
+function handleFilterIkaFakultas(val) {
+  filterIkaFakultas = val || 'all';
+  renderIkaList();
+}
+
+function openAddIkaModal() {
+  const form = document.getElementById('form-ika');
+  if (form) form.reset();
+
+  document.getElementById('modal-ika-title').textContent = 'Tambah Alumni (IKA PMII)';
+  document.getElementById('ika-id').value = '';
+  document.getElementById('ika-foto-url').value = '';
+  document.getElementById('ika-foto-preview').src = 'https://via.placeholder.com/120';
+  document.getElementById('ika-jabatan').value = 'Anggota IKA PMII';
+  populateIkaModalFakultasOptions();
+
+  const modal = document.getElementById('modal-ika');
+  if (modal) modal.classList.remove('hidden');
+  initLucide();
+}
+
+function openEditIkaModal(id) {
+  const a = (ikaList || []).find(item => item.id === id);
+  if (!a) return;
+
+  document.getElementById('modal-ika-title').textContent = 'Edit Data Alumni (IKA PMII)';
+  document.getElementById('ika-id').value = a.id;
+  document.getElementById('ika-foto-url').value = a.foto || '';
+  document.getElementById('ika-foto-preview').src = a.foto || 'https://via.placeholder.com/120';
+
+  document.getElementById('ika-nama').value = a.nama || '';
+  document.getElementById('ika-gender').value = a.gender || 'Laki-laki';
+  document.getElementById('ika-jabatan').value = a.jabatan || 'Anggota IKA PMII';
+  populateIkaModalFakultasOptions(a.fakultas || '', a.jurusan || '');
+  document.getElementById('ika-angkatan').value = a.angkatan || '';
+  document.getElementById('ika-tahun-lulus').value = a.tahunLulus || '';
+  document.getElementById('ika-profesi').value = a.profesi || '';
+  document.getElementById('ika-instansi').value = a.instansi || '';
+  document.getElementById('ika-kontak').value = a.whatsapp || a.kontak || '';
+  document.getElementById('ika-email').value = a.email || '';
+  document.getElementById('ika-alamat').value = a.alamat || '';
+
+  const modal = document.getElementById('modal-ika');
+  if (modal) modal.classList.remove('hidden');
+  initLucide();
+}
+
+function closeIkaModal() {
+  const modal = document.getElementById('modal-ika');
+  if (modal) modal.classList.add('hidden');
+}
+
+function handleIkaFotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const dataUrl = e.target.result;
+    document.getElementById('ika-foto-preview').src = dataUrl;
+    document.getElementById('ika-foto-url').value = dataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveIkaForm(event) {
+  event.preventDefault();
+
+  const id = document.getElementById('ika-id').value;
+  const isEdit = !!id;
+  const gender = document.getElementById('ika-gender').value || 'Laki-laki';
+  const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=faces';
+  const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=faces';
+
+  const data = {
+    id: id || `IKA-${Date.now().toString().slice(-6)}`,
+    nama: document.getElementById('ika-nama').value.trim(),
+    gender: gender,
+    jabatan: document.getElementById('ika-jabatan').value.trim() || 'Anggota IKA PMII',
+    fakultas: document.getElementById('ika-fakultas').value,
+    jurusan: document.getElementById('ika-jurusan').value,
+    angkatan: document.getElementById('ika-angkatan').value.trim(),
+    tahunLulus: document.getElementById('ika-tahun-lulus').value.trim(),
+    profesi: document.getElementById('ika-profesi').value.trim(),
+    instansi: document.getElementById('ika-instansi').value.trim(),
+    whatsapp: document.getElementById('ika-kontak').value.trim(),
+    kontak: document.getElementById('ika-kontak').value.trim(),
+    email: document.getElementById('ika-email').value.trim(),
+    alamat: document.getElementById('ika-alamat').value.trim(),
+    foto: document.getElementById('ika-foto-url').value || (gender === 'Perempuan' ? defaultFemale : defaultMale),
+    status: 'Aktif'
+  };
+
+  if (typeof executeNeonSql === 'function') {
+    try {
+      const q = `
+        INSERT INTO tb_ika (id, nama, gender, angkatan, tahun_lulus, fakultas, jurusan, profesi, instansi, jabatan_alumni, whatsapp, email, alamat, foto, status)
+        VALUES (${sqlEscape(data.id)}, ${sqlEscape(data.nama)}, ${sqlEscape(data.gender)}, ${sqlEscape(data.angkatan)}, ${sqlEscape(data.tahunLulus)}, ${sqlEscape(data.fakultas)}, ${sqlEscape(data.jurusan)}, ${sqlEscape(data.profesi)}, ${sqlEscape(data.instansi)}, ${sqlEscape(data.jabatan)}, ${sqlEscape(data.whatsapp)}, ${sqlEscape(data.email)}, ${sqlEscape(data.alamat)}, ${sqlEscape(data.foto)}, 'Aktif')
+        ON CONFLICT (id) DO UPDATE SET
+          nama = EXCLUDED.nama, gender = EXCLUDED.gender, angkatan = EXCLUDED.angkatan, tahun_lulus = EXCLUDED.tahun_lulus,
+          fakultas = EXCLUDED.fakultas, jurusan = EXCLUDED.jurusan, profesi = EXCLUDED.profesi, instansi = EXCLUDED.instansi,
+          jabatan_alumni = EXCLUDED.jabatan_alumni, whatsapp = EXCLUDED.whatsapp, email = EXCLUDED.email, alamat = EXCLUDED.alamat,
+          foto = EXCLUDED.foto, updated_at = CURRENT_TIMESTAMP;
+      `;
+      await executeNeonSql(q);
+    } catch (e) {
+      console.warn('[NEON] Direct upsert IKA gagal:', e.message);
+    }
+  }
+
+  if (isEdit) {
+    const idx = ikaList.findIndex(item => item.id === id);
+    if (idx !== -1) ikaList[idx] = data;
+    showToast('Data alumni IKA berhasil diperbarui!', 'success');
+  } else {
+    ikaList.unshift(data);
+    showToast('Alumni IKA baru berhasil ditambahkan!', 'success');
+  }
+
+  saveData();
+  closeIkaModal();
+  renderIkaSection();
+}
+
+function deleteIka(id) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Akun Kader tidak dapat menghapus data IKA.', 'warning');
+    return;
+  }
+
+  const a = (ikaList || []).find(item => item.id === id);
+  if (!a) return;
+
+  showConfirmModal({
+    title: 'Hapus Data Alumni (IKA PMII)',
+    message: `Apakah Anda yakin ingin menghapus data alumni: <strong>"${escapeHtml(a.nama)}"</strong>?<br><span class="text-rose-500 font-bold text-xs mt-1 block">Tindakan ini akan menghapus data alumni ini secara permanen dari Cloud Neon.</span>`,
+    confirmText: 'Ya, Hapus',
+    cancelText: 'Batal',
+    type: 'danger',
+    icon: 'trash-2',
+    onConfirm: async () => {
+      if (typeof executeNeonSql === 'function') {
+        try {
+          await executeNeonSql(`DELETE FROM tb_ika WHERE id = ${sqlEscape(id)};`);
+        } catch (e) {
+          console.warn('[NEON] Direct delete IKA gagal:', e.message);
+        }
+      }
+
+      ikaList = (ikaList || []).filter(item => item.id !== id);
+      saveData();
+      showToast('Data alumni IKA berhasil dihapus permanen.', 'info');
+      renderIkaSection();
+    }
+  });
+}
+
+function viewIkaDetail(id) {
+  const a = (ikaList || []).find(item => item.id === id);
+  if (!a) return;
+
+  currentIkaDetail = a;
+
+  document.getElementById('detail-ika-foto').src = a.foto || 'https://via.placeholder.com/120';
+  document.getElementById('detail-ika-nama').textContent = a.nama || '-';
+  document.getElementById('detail-ika-jabatan').textContent = a.jabatan || 'Anggota IKA PMII';
+  document.getElementById('detail-ika-profesi').textContent = a.profesi || '-';
+
+  document.getElementById('detail-ika-fakultas').textContent = `${a.fakultas || '-'} ${a.jurusan ? '• ' + a.jurusan : ''}`;
+  document.getElementById('detail-ika-angkatan').textContent = `${a.angkatan || '-'} ${a.tahunLulus ? '(Lulus ' + a.tahunLulus + ')' : ''}`;
+  document.getElementById('detail-ika-instansi').textContent = a.instansi || '-';
+  document.getElementById('detail-ika-kontak').textContent = a.whatsapp || a.kontak || '-';
+  document.getElementById('detail-ika-email').textContent = a.email || '-';
+  document.getElementById('detail-ika-alamat').textContent = a.alamat || '-';
+
+  const modal = document.getElementById('modal-detail-ika');
+  if (modal) modal.classList.remove('hidden');
+  initLucide();
+}
+
+function closeIkaDetailModal() {
+  const modal = document.getElementById('modal-detail-ika');
+  if (modal) modal.classList.add('hidden');
+}
+
+function editIkaFromDetail() {
+  if (!currentIkaDetail) return;
+  const id = currentIkaDetail.id;
+  closeIkaDetailModal();
+  openEditIkaModal(id);
+}
+
+// --- Excel: IKA (Template, Import, Export) ---
+function downloadIkaTemplate() {
+  if (typeof XLSX === 'undefined') {
+    showToast('Library Excel belum siap.', 'error');
+    return;
+  }
+
+  const sampleData = [
+    {
+      "Nama Lengkap & Gelar": "Ahmad Fauzan, S.Pd.I., M.Pd.",
+      "Jenis Kelamin": "Laki-laki",
+      "Jabatan di IKA": "Ketua IKA PMII",
+      "Fakultas Asal": "Fakultas Tarbiyah",
+      "Program Studi": "Pendidikan Agama Islam (PAI)",
+      "Angkatan": "2016",
+      "Tahun Lulus": "2020",
+      "Profesi": "Dosen / Pendidik",
+      "Instansi / Lembaga": "Institut Miftahul Ulum Tarate",
+      "No WhatsApp": "081234567890",
+      "Email": "fauzan.alumni@gmail.com",
+      "Alamat Domisili": "Tarate, Sumenep"
+    }
+  ];
+
+  const ws = XLSX.utils.json_to_sheet(sampleData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Template IKA Alumni");
+  XLSX.writeFile(wb, "Template_Import_IKA_PMII.xlsx");
+  showToast('Template Excel IKA Alumni berhasil diunduh!', 'success');
+}
+
+function handleImportIkaFile(event) {
+  if (isKaderUser()) {
+    showToast('Akses ditolak: Import massal hanya untuk Admin.', 'warning');
+    return;
+  }
+
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (typeof XLSX === 'undefined') {
+    showToast('Library Excel belum siap.', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(worksheet);
+
+      if (!rows || rows.length === 0) {
+        showToast('File Excel kosong atau format tidak sesuai.', 'warning');
+        return;
+      }
+
+      let countSuccess = 0;
+      rows.forEach((row, i) => {
+        const nama = row['Nama Lengkap & Gelar'] || row['Nama Lengkap'] || row['Nama'] || row['nama'];
+        if (!nama) return;
+
+        const newIka = {
+          id: `IKA-${Date.now().toString().slice(-5)}-${i}`,
+          nama: String(nama).trim(),
+          gender: String(row['Jenis Kelamin'] || row['Gender'] || 'Laki-laki').trim(),
+          jabatan: String(row['Jabatan di IKA'] || row['Jabatan'] || 'Anggota IKA PMII').trim(),
+          fakultas: String(row['Fakultas Asal'] || row['Fakultas'] || '').trim(),
+          jurusan: String(row['Program Studi'] || row['Jurusan'] || '').trim(),
+          angkatan: String(row['Angkatan'] || '').trim(),
+          tahunLulus: String(row['Tahun Lulus'] || '').trim(),
+          profesi: String(row['Profesi'] || '-').trim(),
+          instansi: String(row['Instansi / Lembaga'] || row['Instansi'] || '').trim(),
+          whatsapp: String(row['No WhatsApp'] || row['WhatsApp'] || row['Kontak'] || '').trim(),
+          kontak: String(row['No WhatsApp'] || row['WhatsApp'] || row['Kontak'] || '').trim(),
+          email: String(row['Email'] || row['email'] || '').trim(),
+          alamat: String(row['Alamat Domisili'] || row['Alamat'] || '').trim(),
+          foto: 'https://via.placeholder.com/120',
+          status: 'Aktif'
+        };
+
+        ikaList.push(newIka);
+        countSuccess++;
+      });
+
+      if (countSuccess > 0) {
+        saveData();
+        renderIkaSection();
+        showToast(`Berhasil mengimpor ${countSuccess} data alumni IKA!`, 'success');
+      } else {
+        showToast('Tidak ada data alumni yang valid untuk diimpor.', 'warning');
+      }
+    } catch (err) {
+      console.error('Import IKA error:', err);
+      showToast('Gagal memproses file Excel: ' + err.message, 'error');
+    }
+
+    event.target.value = '';
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function exportIkaExcel() {
+  if (typeof XLSX === 'undefined') {
+    showToast('Library Excel belum siap.', 'error');
+    return;
+  }
+
+  const exportRows = (ikaList || []).map((a, index) => ({
+    "No": index + 1,
+    "Nama Lengkap & Gelar": a.nama,
+    "Jenis Kelamin": a.gender || '-',
+    "Jabatan di IKA": a.jabatan || 'Anggota IKA PMII',
+    "Fakultas Asal": a.fakultas || '-',
+    "Program Studi": a.jurusan || '-',
+    "Angkatan": a.angkatan || '-',
+    "Tahun Lulus": a.tahunLulus || '-',
+    "Profesi": a.profesi || '-',
+    "Instansi / Lembaga": a.instansi || '-',
+    "No WhatsApp": a.whatsapp || a.kontak || '-',
+    "Email": a.email || '-',
+    "Alamat Domisili": a.alamat || '-'
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(exportRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Data IKA Alumni");
+  XLSX.writeFile(wb, `Data_IKA_Alumni_PMII_${(komisariat.nama || 'Komisariat').replace(/\s+/g, '_')}.xlsx`);
+  showToast('Data IKA Alumni berhasil diexport ke Excel!', 'success');
 }
 
 // ==========================================
@@ -10774,6 +11341,7 @@ function backupDatabase() {
     currentTahunKhidmat,
     kaders,
     mabinkom,
+    ikaList,
     pemasukan,
     pengeluaran,
     pengurus,
@@ -10804,6 +11372,7 @@ function restoreDatabase(event) {
       if (data.currentTahunKhidmat) currentTahunKhidmat = data.currentTahunKhidmat;
       if (Array.isArray(data.kaders)) kaders = data.kaders;
       if (Array.isArray(data.mabinkom)) mabinkom = data.mabinkom;
+      if (Array.isArray(data.ikaList)) ikaList = data.ikaList;
       if (Array.isArray(data.pemasukan)) pemasukan = data.pemasukan;
       if (Array.isArray(data.pengeluaran)) pengeluaran = data.pengeluaran;
       if (Array.isArray(data.pengurus)) pengurus = data.pengurus;
@@ -11040,14 +11609,15 @@ if (typeof window !== 'undefined') {
 }
 
 // ==========================================
-// MODUL: JOIN KADER (PENDAFTARAN MANDIRI KADER)
+// MODUL: JOIN ANGGOTA & ALUMNI (KADER / IKA / MABINKOM)
 // ==========================================
 let newlyJoinedKaderId = null;
+let lastJoinTargetType = 'kader';
 
 function initJoinKaderTab() {
+  const list = getFakultasProdiList();
   const selFakultas = document.getElementById('join-fakultas');
   if (selFakultas) {
-    const list = getFakultasProdiList();
     const currentVal = selFakultas.value;
     selFakultas.innerHTML = list.map(item => 
       `<option value="${escapeHtml(item.fakultas)}">${escapeHtml(item.fakultas)}</option>`
@@ -11059,10 +11629,100 @@ function initJoinKaderTab() {
     selFakultas.value = activeFak;
     handleJoinKaderFakultasChange(activeFak);
   }
+
+  const selIkaFak = document.getElementById('join-ika-fakultas');
+  if (selIkaFak) {
+    const currentIkaVal = selIkaFak.value;
+    selIkaFak.innerHTML = '<option value="">-- Pilih Fakultas Asal --</option>' +
+      list.map(item => `<option value="${escapeHtml(item.fakultas)}">${escapeHtml(item.fakultas)}</option>`).join('');
+    if (currentIkaVal && list.some(i => i.fakultas === currentIkaVal)) {
+      selIkaFak.value = currentIkaVal;
+    } else if (list[0]) {
+      selIkaFak.value = list[0].fakultas;
+    }
+    handleJoinIkaFakultasChange(selIkaFak.value);
+  }
+
   const selGender = document.getElementById('join-gender');
   if (selGender) {
     handleJoinKaderGenderChange(selGender.value || 'Laki-laki');
   }
+
+  const targetInput = document.getElementById('join-target-type');
+  switchJoinTargetType((targetInput && targetInput.value) || 'kader');
+  initLucide();
+}
+
+function switchJoinTargetType(type) {
+  const validTypes = ['kader', 'ika', 'mabinkom'];
+  const activeType = validTypes.includes(type) ? type : 'kader';
+
+  const hiddenInput = document.getElementById('join-target-type');
+  if (hiddenInput) hiddenInput.value = activeType;
+
+  // Update visual cards
+  const styles = {
+    kader: {
+      active: 'join-type-card p-3.5 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition cursor-pointer flex items-center gap-3 shadow-xs',
+      inactive: 'join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-blue-50/40 hover:border-blue-300 text-left transition cursor-pointer flex items-center gap-3'
+    },
+    ika: {
+      active: 'join-type-card p-3.5 rounded-2xl border-2 border-teal-600 bg-teal-50/70 text-left transition cursor-pointer flex items-center gap-3 shadow-xs',
+      inactive: 'join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-teal-50/40 hover:border-teal-300 text-left transition cursor-pointer flex items-center gap-3'
+    },
+    mabinkom: {
+      active: 'join-type-card p-3.5 rounded-2xl border-2 border-amber-500 bg-amber-50/70 text-left transition cursor-pointer flex items-center gap-3 shadow-xs',
+      inactive: 'join-type-card p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-amber-50/40 hover:border-amber-300 text-left transition cursor-pointer flex items-center gap-3'
+    }
+  };
+
+  validTypes.forEach(t => {
+    const btn = document.getElementById(`btn-join-type-${t}`);
+    if (btn) btn.className = (t === activeType) ? styles[t].active : styles[t].inactive;
+  });
+
+  // Toggle mode-specific sections
+  const secKader = document.getElementById('join-section-kader');
+  const secKaderisasi = document.getElementById('join-step-kaderisasi');
+  const secIka = document.getElementById('join-section-ika');
+  const secMabinkom = document.getElementById('join-section-mabinkom');
+
+  if (secKader) secKader.classList.toggle('hidden', activeType !== 'kader');
+  if (secKaderisasi) secKaderisasi.classList.toggle('hidden', activeType !== 'kader');
+  if (secIka) secIka.classList.toggle('hidden', activeType !== 'ika');
+  if (secMabinkom) secMabinkom.classList.toggle('hidden', activeType !== 'mabinkom');
+
+  document.querySelectorAll('.join-only-kader').forEach(el => {
+    el.classList.toggle('hidden', activeType !== 'kader');
+  });
+
+  // Update required attributes dynamically so hidden fields never block submit
+  const setReq = (id, req) => {
+    const el = document.getElementById(id);
+    if (el) el.required = !!req;
+  };
+  setReq('join-nim', activeType === 'kader');
+  setReq('join-angkatan', activeType === 'kader');
+  setReq('join-fakultas', activeType === 'kader');
+  setReq('join-jurusan', activeType === 'kader');
+  setReq('join-formal', activeType === 'kader');
+  setReq('join-ika-profesi', activeType === 'ika');
+  setReq('join-mbk-profesi', activeType === 'mabinkom');
+
+  // Update Header & Submit Button Copy
+  const badgeEl = document.getElementById('join-header-badge');
+  const submitLabelEl = document.getElementById('btn-submit-join-label');
+  if (activeType === 'kader') {
+    if (badgeEl) badgeEl.textContent = 'Registrasi Kader';
+    if (submitLabelEl) submitLabelEl.textContent = 'Kirim Formulir Pendaftaran Kader';
+  } else if (activeType === 'ika') {
+    if (badgeEl) badgeEl.textContent = 'Registrasi Alumni (IKA PMII)';
+    if (submitLabelEl) submitLabelEl.textContent = 'Simpan Data Alumni IKA';
+  } else if (activeType === 'mabinkom') {
+    if (badgeEl) badgeEl.textContent = 'Registrasi Dewan Pembina (Mabinkom)';
+    if (submitLabelEl) submitLabelEl.textContent = 'Simpan Data Mabinkom';
+  }
+
   initLucide();
 }
 
@@ -11074,6 +11734,17 @@ function handleJoinKaderFakultasChange(fakultas) {
   const found = list.find(item => item.fakultas === fakultas);
   const prodiList = found ? (found.prodi || []) : [];
   selJurusan.innerHTML = prodiList.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+}
+
+function handleJoinIkaFakultasChange(fakultas) {
+  const selJurusan = document.getElementById('join-ika-jurusan');
+  if (!selJurusan) return;
+
+  const list = getFakultasProdiList();
+  const found = list.find(item => item.fakultas === fakultas);
+  const prodiList = found ? (found.prodi || []) : [];
+  selJurusan.innerHTML = '<option value="">-- Pilih Program Studi --</option>' +
+    prodiList.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
 }
 
 function handleJoinKaderGenderChange(gender) {
@@ -11131,155 +11802,277 @@ function handleJoinKaderFotoUpload(event) {
 async function handleJoinKaderFormSubmit(event) {
   if (event) event.preventDefault();
 
+  const targetType = (document.getElementById('join-target-type')?.value || 'kader').toLowerCase();
   const btnSubmit = document.getElementById('btn-submit-joinkader');
   if (btnSubmit) {
     btnSubmit.disabled = true;
-    btnSubmit.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span><span>Menyimpan Pendaftaran...</span>';
+    btnSubmit.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span><span>Menyimpan ke Cloud...</span>';
   }
 
   try {
     const nama = (document.getElementById('join-nama')?.value || '').trim();
-    const panggilan = (document.getElementById('join-panggilan')?.value || '').trim();
     const gender = document.getElementById('join-gender')?.value || 'Laki-laki';
-    const nik = (document.getElementById('join-nik')?.value || '').trim();
-    const tempatLahir = (document.getElementById('join-tempat-lahir')?.value || '').trim();
-    const tanggalLahir = document.getElementById('join-tanggal-lahir')?.value || '';
     const alamat = (document.getElementById('join-alamat')?.value || '').trim();
-
-    const nim = (document.getElementById('join-nim')?.value || '').trim();
-    const angkatan = parseInt(document.getElementById('join-angkatan')?.value) || new Date().getFullYear();
-    const fakultas = document.getElementById('join-fakultas')?.value || 'Fakultas Tarbiyah';
-    const jurusan = document.getElementById('join-jurusan')?.value || 'Pendidikan Agama Islam (PAI)';
-
     const rawWa = (document.getElementById('join-whatsapp')?.value || '').trim();
     let whatsapp = rawWa.replace(/[^0-9]/g, '');
     if (whatsapp.startsWith('0')) whatsapp = '62' + whatsapp.slice(1);
     const email = (document.getElementById('join-email')?.value || '').trim();
 
-    const formal = document.getElementById('join-formal')?.value || 'MAPABA';
-    const jabatan = (document.getElementById('join-jabatan')?.value || '').trim() || 'Anggota Kader';
-    const tahunMapaba = (document.getElementById('join-tahun-mapaba')?.value || '').trim() || String(angkatan);
-    const penyMapaba = (document.getElementById('join-penyelenggara-mapaba')?.value || '').trim() || (komisariat.nama || 'PK PMII ISMU');
-    const kopri = (gender === 'Perempuan') ? (document.getElementById('join-kopri')?.value || '-') : '-';
-
-    // Foto default jika belum upload
     const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=faces';
     const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=faces';
     const foto = document.getElementById('join-foto-base64')?.value || (gender === 'Perempuan' ? defaultFemale : defaultMale);
 
-    const generatedId = `KD-${angkatan}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const generatedKta = `13.01.${angkatan}.${Math.floor(100 + Math.random() * 900)}`;
-
-    const existingIdx = kaders.findIndex(k => k.nim === nim);
-    let finalId = generatedId;
-    let finalKta = generatedKta;
-    if (existingIdx !== -1) {
-      finalId = kaders[existingIdx].id || generatedId;
-      finalKta = kaders[existingIdx].noKta || generatedKta;
-    }
-
-    const newKader = {
-      id: finalId,
-      noKta: finalKta,
-      nik: nik,
-      nim: nim,
-      nama: nama,
-      panggilan: panggilan || nama,
-      namaPanggilan: panggilan || nama,
-      gender: gender,
-      tempatLahir: tempatLahir,
-      tanggalLahir: tanggalLahir,
-      ttl: tempatLahir ? `${tempatLahir}, ${tanggalLahir || ''}` : (tanggalLahir || '-'),
-      fakultas: fakultas,
-      jurusan: jurusan,
-      angkatan: String(angkatan),
-      statusKuliah: 'Aktif',
-      statusKader: 'Aktif',
-      statusKeaktifan: 'Aktif',
-      whatsapp: whatsapp,
-      email: email,
-      alamat: alamat,
-      jabatan: jabatan,
-      foto: foto,
-      kaderisasi: {
-        formal: formal,
-        tahunMapaba: tahunMapaba,
-        penyelenggaraMapaba: penyMapaba,
-        tahunPkd: formal === 'PKD' ? String(angkatan) : '',
-        penyelenggaraPkd: formal === 'PKD' ? 'PC PMII Kab. Sumenep' : '',
-        kopri: kopri
-      }
-    };
-
-    // 1. Simpan langsung ke database Neon Cloud jika online
-    if (typeof executeNeonSql === 'function') {
-      try {
-        const sql = `
-          INSERT INTO tb_kader (
-            id, no_kta, nik, nim, nama, nama_panggilan, gender, tempat_lahir, tanggal_lahir,
-            fakultas, jurusan, angkatan, status_kuliah, alamat, whatsapp, email, foto,
-            status_kader, formal, tahun_mapaba, penyelenggara_mapaba, kopri
-          ) VALUES (
-            ${sqlEscape(newKader.id)}, ${sqlEscape(newKader.noKta)}, ${sqlEscape(newKader.nik)}, ${sqlEscape(newKader.nim)},
-            ${sqlEscape(newKader.nama)}, ${sqlEscape(newKader.namaPanggilan)}, ${sqlEscape(newKader.gender)},
-            ${sqlEscape(newKader.tempatLahir)}, ${newKader.tanggalLahir ? sqlEscape(newKader.tanggalLahir) : 'NULL'},
-            ${sqlEscape(newKader.fakultas)}, ${sqlEscape(newKader.jurusan)}, ${sqlEscape(String(newKader.angkatan))},
-            'Aktif', ${sqlEscape(newKader.alamat)}, ${sqlEscape(newKader.whatsapp)}, ${sqlEscape(newKader.email)},
-            ${sqlEscape(newKader.foto)}, 'Aktif', ${sqlEscape(newKader.kaderisasi.formal)},
-            ${sqlEscape(newKader.kaderisasi.tahunMapaba)}, ${sqlEscape(newKader.kaderisasi.penyelenggaraMapaba)},
-            ${sqlEscape(newKader.kaderisasi.kopri)}
-          ) ON CONFLICT (id) DO UPDATE SET
-            nama = EXCLUDED.nama,
-            nama_panggilan = EXCLUDED.nama_panggilan,
-            no_kta = EXCLUDED.no_kta,
-            nim = EXCLUDED.nim,
-            fakultas = EXCLUDED.fakultas,
-            jurusan = EXCLUDED.jurusan,
-            angkatan = EXCLUDED.angkatan,
-            whatsapp = EXCLUDED.whatsapp,
-            foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
-            updated_at = CURRENT_TIMESTAMP;
-        `;
-        await executeNeonSql(sql);
-      } catch (neonErr) {
-        console.warn('Gagal simpan langsung ke Neon Cloud:', neonErr);
-      }
-    }
-
-    // 2. Simpan ke array lokal kaders
-    if (existingIdx !== -1) {
-      kaders[existingIdx] = Object.assign(kaders[existingIdx], newKader);
-    } else {
-      kaders.unshift(newKader);
-    }
-    saveData();
-
-    newlyJoinedKaderId = newKader.id;
-
-    // 3. Update tabel data & UI
-    if (typeof renderKaderTable === 'function') renderKaderTable();
-    if (typeof renderMapabaTable === 'function') renderMapabaTable();
-    if (typeof renderPkdTable === 'function') renderPkdTable();
-    if (typeof renderDashboard === 'function') renderDashboard();
-
-    // 4. Tampilkan box sukses
     const successBox = document.getElementById('join-kader-success-box');
+    const successHeading = document.getElementById('join-success-heading');
+    const successMsg = document.getElementById('join-kader-success-msg');
+    const successLabelId = document.getElementById('join-success-label-id');
     const successKta = document.getElementById('join-kader-success-kta');
     const successNama = document.getElementById('join-kader-success-nama');
-    if (successKta) successKta.textContent = newKader.noKta;
-    if (successNama) successNama.textContent = `${newKader.nama} (NIM: ${newKader.nim})`;
+    const afterLabel = document.getElementById('btn-join-after-label');
+
+    lastJoinTargetType = targetType;
+
+    // --------------------------------------------------------
+    // MODE A: KADER
+    // --------------------------------------------------------
+    if (targetType === 'kader') {
+      const panggilan = (document.getElementById('join-panggilan')?.value || '').trim();
+      const nik = (document.getElementById('join-nik')?.value || '').trim();
+      const tempatLahir = (document.getElementById('join-tempat-lahir')?.value || '').trim();
+      const tanggalLahir = document.getElementById('join-tanggal-lahir')?.value || '';
+      const nim = (document.getElementById('join-nim')?.value || '').trim();
+      const angkatan = parseInt(document.getElementById('join-angkatan')?.value) || new Date().getFullYear();
+      const fakultas = document.getElementById('join-fakultas')?.value || 'Fakultas Tarbiyah';
+      const jurusan = document.getElementById('join-jurusan')?.value || 'Pendidikan Agama Islam (PAI)';
+
+      const formal = document.getElementById('join-formal')?.value || 'MAPABA';
+      const jabatan = (document.getElementById('join-jabatan')?.value || '').trim() || 'Anggota Kader';
+      const tahunMapaba = (document.getElementById('join-tahun-mapaba')?.value || '').trim() || String(angkatan);
+      const penyMapaba = (document.getElementById('join-penyelenggara-mapaba')?.value || '').trim() || (komisariat.nama || 'PK PMII ISMU');
+      const kopri = (gender === 'Perempuan') ? (document.getElementById('join-kopri')?.value || '-') : '-';
+
+      const generatedId = `KD-${angkatan}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const generatedKta = `13.01.${angkatan}.${Math.floor(100 + Math.random() * 900)}`;
+
+      const existingIdx = kaders.findIndex(k => k.nim === nim);
+      const finalId = existingIdx !== -1 ? (kaders[existingIdx].id || generatedId) : generatedId;
+      const finalKta = existingIdx !== -1 ? (kaders[existingIdx].noKta || generatedKta) : generatedKta;
+
+      const newKader = {
+        id: finalId,
+        noKta: finalKta,
+        nik: nik,
+        nim: nim,
+        nama: nama,
+        panggilan: panggilan || nama,
+        namaPanggilan: panggilan || nama,
+        gender: gender,
+        tempatLahir: tempatLahir,
+        tanggalLahir: tanggalLahir,
+        ttl: tempatLahir ? `${tempatLahir}, ${tanggalLahir || ''}` : (tanggalLahir || '-'),
+        fakultas: fakultas,
+        jurusan: jurusan,
+        angkatan: String(angkatan),
+        statusKuliah: 'Aktif',
+        statusKader: 'Aktif',
+        statusKeaktifan: 'Aktif',
+        whatsapp: whatsapp,
+        email: email,
+        alamat: alamat,
+        jabatan: jabatan,
+        foto: foto,
+        kaderisasi: {
+          formal: formal,
+          tahunMapaba: tahunMapaba,
+          penyelenggaraMapaba: penyMapaba,
+          tahunPkd: formal === 'PKD' ? String(angkatan) : '',
+          penyelenggaraPkd: formal === 'PKD' ? 'PC PMII Kab. Sumenep' : '',
+          kopri: kopri
+        }
+      };
+
+      if (typeof executeNeonSql === 'function') {
+        try {
+          const sql = `
+            INSERT INTO tb_kader (
+              id, no_kta, nik, nim, nama, nama_panggilan, gender, tempat_lahir, tanggal_lahir,
+              fakultas, jurusan, angkatan, status_kuliah, alamat, whatsapp, email, foto,
+              status_kader, formal, tahun_mapaba, penyelenggara_mapaba, kopri
+            ) VALUES (
+              ${sqlEscape(newKader.id)}, ${sqlEscape(newKader.noKta)}, ${sqlEscape(newKader.nik)}, ${sqlEscape(newKader.nim)},
+              ${sqlEscape(newKader.nama)}, ${sqlEscape(newKader.namaPanggilan)}, ${sqlEscape(newKader.gender)},
+              ${sqlEscape(newKader.tempatLahir)}, ${newKader.tanggalLahir ? sqlEscape(newKader.tanggalLahir) : 'NULL'},
+              ${sqlEscape(newKader.fakultas)}, ${sqlEscape(newKader.jurusan)}, ${sqlEscape(String(newKader.angkatan))},
+              'Aktif', ${sqlEscape(newKader.alamat)}, ${sqlEscape(newKader.whatsapp)}, ${sqlEscape(newKader.email)},
+              ${sqlEscape(newKader.foto)}, 'Aktif', ${sqlEscape(newKader.kaderisasi.formal)},
+              ${sqlEscape(newKader.kaderisasi.tahunMapaba)}, ${sqlEscape(newKader.kaderisasi.penyelenggaraMapaba)},
+              ${sqlEscape(newKader.kaderisasi.kopri)}
+            ) ON CONFLICT (id) DO UPDATE SET
+              nama = EXCLUDED.nama, nama_panggilan = EXCLUDED.nama_panggilan, no_kta = EXCLUDED.no_kta,
+              nim = EXCLUDED.nim, fakultas = EXCLUDED.fakultas, jurusan = EXCLUDED.jurusan,
+              angkatan = EXCLUDED.angkatan, whatsapp = EXCLUDED.whatsapp, foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
+              updated_at = CURRENT_TIMESTAMP;
+          `;
+          await executeNeonSql(sql);
+        } catch (neonErr) {
+          console.warn('Gagal simpan langsung kader ke Neon:', neonErr);
+        }
+      }
+
+      if (existingIdx !== -1) {
+        kaders[existingIdx] = Object.assign(kaders[existingIdx], newKader);
+      } else {
+        kaders.unshift(newKader);
+      }
+      saveData();
+      newlyJoinedKaderId = newKader.id;
+
+      if (typeof renderKaderTable === 'function') renderKaderTable();
+      if (typeof renderMapabaTable === 'function') renderMapabaTable();
+      if (typeof renderPkdTable === 'function') renderPkdTable();
+      if (typeof renderDashboard === 'function') renderDashboard();
+
+      if (successHeading) successHeading.textContent = 'Alhamdulillah, Pendaftaran Kader Berhasil!';
+      if (successMsg) successMsg.textContent = 'Data kader telah tersimpan permanen ke Cloud & sinkron semua perangkat.';
+      if (successLabelId) successLabelId.textContent = 'Nomor E-KTA Diterbitkan:';
+      if (successKta) successKta.textContent = newKader.noKta;
+      if (successNama) successNama.textContent = `${newKader.nama} (NIM: ${newKader.nim})`;
+      if (afterLabel) afterLabel.textContent = 'Lihat E-KTA Saya';
+
+      showToast(`Pendaftaran kader "${newKader.nama}" berhasil tersimpan & sinkron!`, 'success');
+
+    // --------------------------------------------------------
+    // MODE B: IKA (ALUMNI)
+    // --------------------------------------------------------
+    } else if (targetType === 'ika') {
+      const profesi = (document.getElementById('join-ika-profesi')?.value || '').trim();
+      const instansi = (document.getElementById('join-ika-instansi')?.value || '').trim();
+      const jabatan = (document.getElementById('join-ika-jabatan')?.value || '').trim() || 'Anggota IKA PMII';
+      const angkatan = (document.getElementById('join-ika-angkatan')?.value || '').trim();
+      const tahunLulus = (document.getElementById('join-ika-tahun-lulus')?.value || '').trim();
+      const fakultas = document.getElementById('join-ika-fakultas')?.value || '';
+      const jurusan = document.getElementById('join-ika-jurusan')?.value || '';
+
+      const newIka = {
+        id: `IKA-${Date.now().toString().slice(-6)}`,
+        nama: nama,
+        gender: gender,
+        angkatan: angkatan,
+        tahunLulus: tahunLulus,
+        fakultas: fakultas,
+        jurusan: jurusan,
+        profesi: profesi,
+        instansi: instansi,
+        jabatan: jabatan,
+        whatsapp: whatsapp,
+        kontak: whatsapp,
+        email: email,
+        alamat: alamat,
+        foto: foto,
+        status: 'Aktif'
+      };
+
+      if (typeof executeNeonSql === 'function') {
+        try {
+          const sqlIka = `
+            INSERT INTO tb_ika (
+              id, nama, gender, angkatan, tahun_lulus, fakultas, jurusan, profesi, instansi, jabatan_alumni, whatsapp, email, alamat, foto, status
+            ) VALUES (
+              ${sqlEscape(newIka.id)}, ${sqlEscape(newIka.nama)}, ${sqlEscape(newIka.gender)}, ${sqlEscape(newIka.angkatan)},
+              ${sqlEscape(newIka.tahunLulus)}, ${sqlEscape(newIka.fakultas)}, ${sqlEscape(newIka.jurusan)}, ${sqlEscape(newIka.profesi)},
+              ${sqlEscape(newIka.instansi)}, ${sqlEscape(newIka.jabatan)}, ${sqlEscape(newIka.whatsapp)}, ${sqlEscape(newIka.email)},
+              ${sqlEscape(newIka.alamat)}, ${sqlEscape(newIka.foto)}, 'Aktif'
+            ) ON CONFLICT (id) DO UPDATE SET
+              nama = EXCLUDED.nama, profesi = EXCLUDED.profesi, instansi = EXCLUDED.instansi,
+              whatsapp = EXCLUDED.whatsapp, updated_at = CURRENT_TIMESTAMP;
+          `;
+          await executeNeonSql(sqlIka);
+        } catch (neonErr) {
+          console.warn('Gagal simpan langsung IKA ke Neon:', neonErr);
+        }
+      }
+
+      ikaList.unshift(newIka);
+      saveData();
+      if (typeof renderIkaSection === 'function') renderIkaSection();
+
+      if (successHeading) successHeading.textContent = 'Alhamdulillah, Data Alumni IKA Berhasil Disimpan!';
+      if (successMsg) successMsg.textContent = 'Data alumni resmi masuk ke database IKA PMII ISMU & sinkron ke semua perangkat.';
+      if (successLabelId) successLabelId.textContent = 'ID Alumni IKA:';
+      if (successKta) successKta.textContent = newIka.id;
+      if (successNama) successNama.textContent = `${newIka.nama} (${newIka.profesi || 'Alumni'})`;
+      if (afterLabel) afterLabel.textContent = 'Lihat Data IKA';
+
+      showToast(`Data alumni IKA "${newIka.nama}" berhasil disimpan & sinkron!`, 'success');
+
+    // --------------------------------------------------------
+    // MODE C: MABINKOM
+    // --------------------------------------------------------
+    } else if (targetType === 'mabinkom') {
+      const jabatan = document.getElementById('join-mbk-jabatan')?.value || 'Anggota Pengarah';
+      const profesi = (document.getElementById('join-mbk-profesi')?.value || '').trim();
+      const instansi = (document.getElementById('join-mbk-instansi')?.value || '').trim();
+      const angkatan = (document.getElementById('join-mbk-angkatan')?.value || '').trim();
+
+      const newMbk = {
+        id: `MBK-${Date.now().toString().slice(-5)}`,
+        nama: nama,
+        jabatan: jabatan,
+        profesi: profesi,
+        instansi: instansi,
+        angkatan: angkatan,
+        whatsapp: whatsapp,
+        kontak: whatsapp,
+        email: email,
+        alamat: alamat,
+        foto: foto,
+        status: 'Aktif'
+      };
+
+      if (typeof executeNeonSql === 'function') {
+        try {
+          const sqlMbk = `
+            INSERT INTO tb_mabinkom (
+              id, nama, jabatan, profesi, instansi, angkatan, kontak, email, alamat, foto, status
+            ) VALUES (
+              ${sqlEscape(newMbk.id)}, ${sqlEscape(newMbk.nama)}, ${sqlEscape(newMbk.jabatan)}, ${sqlEscape(newMbk.profesi)},
+              ${sqlEscape(newMbk.instansi)}, ${sqlEscape(newMbk.angkatan)}, ${sqlEscape(newMbk.whatsapp)},
+              ${sqlEscape(newMbk.email)}, ${sqlEscape(newMbk.alamat)}, ${sqlEscape(newMbk.foto)}, 'Aktif'
+            ) ON CONFLICT (id) DO UPDATE SET
+              nama = EXCLUDED.nama, jabatan = EXCLUDED.jabatan, profesi = EXCLUDED.profesi,
+              instansi = EXCLUDED.instansi, angkatan = EXCLUDED.angkatan, kontak = EXCLUDED.kontak,
+              email = EXCLUDED.email, alamat = EXCLUDED.alamat, foto = EXCLUDED.foto;
+          `;
+          await executeNeonSql(sqlMbk);
+        } catch (neonErr) {
+          console.warn('Gagal simpan langsung Mabinkom ke Neon:', neonErr);
+        }
+      }
+
+      mabinkom.unshift(newMbk);
+      saveData();
+      if (typeof renderMabinkomSection === 'function') renderMabinkomSection();
+
+      if (successHeading) successHeading.textContent = 'Alhamdulillah, Data Mabinkom Berhasil Disimpan!';
+      if (successMsg) successMsg.textContent = 'Data Dewan Pembina masuk ke menu Data Mabinkom & tersinkron ke Cloud.';
+      if (successLabelId) successLabelId.textContent = 'ID Mabinkom:';
+      if (successKta) successKta.textContent = newMbk.id;
+      if (successNama) successNama.textContent = `${newMbk.nama} (${newMbk.jabatan})`;
+      if (afterLabel) afterLabel.textContent = 'Lihat Data Mabinkom';
+
+      showToast(`Data Mabinkom "${newMbk.nama}" berhasil disimpan & sinkron!`, 'success');
+    }
+
     if (successBox) {
       successBox.classList.remove('hidden');
       successBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    showToast(`Pendaftaran kader "${newKader.nama}" berhasil tersimpan!`, 'success');
-
-    // Reset input form
+    // Reset form & tetap pertahankan pilihan kategori
     const formEl = document.getElementById('form-join-kader');
     if (formEl) formEl.reset();
+    switchJoinTargetType(targetType);
 
-    // Reset preview foto
     const previewImg = document.getElementById('join-foto-preview');
     if (previewImg) previewImg.src = 'assets/logo-pmii.webp';
     const hiddenFoto = document.getElementById('join-foto-base64');
@@ -11288,9 +12081,19 @@ async function handleJoinKaderFormSubmit(event) {
   } finally {
     if (btnSubmit) {
       btnSubmit.disabled = false;
-      btnSubmit.innerHTML = '<i data-lucide="send" class="w-4 h-4 text-yellow-300"></i><span>Kirim Formulir Pendaftaran Kader</span>';
-      initLucide();
+      btnSubmit.innerHTML = '<i data-lucide="send" class="w-4 h-4 text-yellow-300"></i><span id="btn-submit-join-label">Kirim Formulir Pendaftaran</span>';
+      switchJoinTargetType(document.getElementById('join-target-type')?.value || 'kader');
     }
+  }
+}
+
+function viewAfterJoin() {
+  if (lastJoinTargetType === 'ika') {
+    switchTab('ika');
+  } else if (lastJoinTargetType === 'mabinkom') {
+    switchTab('mabinkom');
+  } else {
+    viewKtaAfterJoin();
   }
 }
 

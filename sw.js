@@ -1,9 +1,9 @@
 /**
  * Service Worker - Sistem Informasi & Pendataan Kader PK PMII ISMU
- * Versi 4.0: Fresh Neon Cloud Setup & Sistem Edit Mandiri Kader
+ * Versi 4.1: Menu IKA Alumni, Join 3 Kategori (Kader, IKA, Mabinkom) & Sync Aman
  */
 
-const CACHE_NAME = 'pmii-ismu-v4.0-neon-20261110';
+const CACHE_NAME = 'pmii-ismu-v4.1-ika-20261111';
 const STATIC_ASSETS = [
   './',
   './index.html',

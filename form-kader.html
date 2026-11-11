@@ -27,7 +27,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Data Awal & Konfigurasi Cloud -->
-  <script src="js/data.js?v=20261110_v4"></script>
+  <script src="js/data.js?v=20261111_v1"></script>
 
   <script>
     tailwind.config = {
@@ -114,30 +114,57 @@
     <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden">
       <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-xl pointer-events-none"></div>
       <div class="flex items-center gap-2 mb-2">
-        <span class="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-bold uppercase tracking-wider border border-blue-100">
+        <span id="pub-hero-badge" class="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-bold uppercase tracking-wider border border-blue-100">
           Database Kader Digital
         </span>
         <span class="text-xs text-slate-400">• Masa Khidmat 2026 - 2027</span>
       </div>
-      <h2 class="text-lg font-extrabold text-slate-900 leading-snug">
-        Formulir Pendataan & Registrasi Mandiri Kader
+      <h2 id="pub-hero-title" class="text-lg font-extrabold text-slate-900 leading-snug">
+        Formulir Pendataan & Join (Kader, IKA, Mabinkom)
       </h2>
       <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-        Selamat datang Sahabat/i! Silakan lengkapi biodata diri Anda secara valid untuk pendataan keanggotaan resmi 
-        <strong class="text-pmii-blue">PK PMII Institut Miftahul Ulum Tarate Sumenep</strong> dan penerbitan E-KTA digital.
+        Selamat datang Sahabat/i! Silakan pilih kategori pendaftaran di bawah (<strong>Kader Aktif</strong>, <strong>IKA Alumni</strong>, atau <strong>Dewan Mabinkom</strong>). Data langsung tersimpan permanen di Cloud <strong class="text-pmii-blue">PK PMII ISMU</strong>.
       </p>
 
       <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
         <span class="flex items-center gap-1">
           <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-          <span>Data Dijamin Aman & Rahasia</span>
+          <span>Tersinkron Otomatis ke Cloud</span>
         </span>
         <span class="text-slate-400">Estimasi: 2 Menit</span>
       </div>
     </div>
 
+    <!-- 3 Pilihan Kategori Pendataan -->
+    <div class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-2.5">
+      <p class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider">Pilih Kategori Pendaftaran (Join):</p>
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" id="pub-btn-type-kader" onclick="switchPublicJoinType('kader')"
+          class="p-2.5 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-center transition cursor-pointer">
+          <i data-lucide="users" class="w-5 h-5 text-blue-600 mx-auto mb-1"></i>
+          <span class="block text-xs font-black text-blue-950">KADER</span>
+          <span class="block text-[9px] text-slate-500 leading-tight mt-0.5">Anggota Aktif</span>
+        </button>
+
+        <button type="button" id="pub-btn-type-ika" onclick="switchPublicJoinType('ika')"
+          class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-teal-50 text-center transition cursor-pointer">
+          <i data-lucide="graduation-cap" class="w-5 h-5 text-teal-600 mx-auto mb-1"></i>
+          <span class="block text-xs font-black text-slate-800">IKA</span>
+          <span class="block text-[9px] text-slate-500 leading-tight mt-0.5">Alumni PMII</span>
+        </button>
+
+        <button type="button" id="pub-btn-type-mabinkom" onclick="switchPublicJoinType('mabinkom')"
+          class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-amber-50 text-center transition cursor-pointer">
+          <i data-lucide="award" class="w-5 h-5 text-amber-500 mx-auto mb-1"></i>
+          <span class="block text-xs font-black text-slate-800">MABINKOM</span>
+          <span class="block text-[9px] text-slate-500 leading-tight mt-0.5">Dewan Pembina</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Form Kontainer -->
     <form id="form-registrasi-kader" onsubmit="handleFormSubmit(event)" class="space-y-5">
+      <input type="hidden" id="pub-target-type" value="kader">
       
       <!-- STEP 1: Biodata Personal -->
       <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
@@ -147,7 +174,7 @@
           </div>
           <div>
             <h3 class="text-sm font-extrabold text-slate-800">Identitas Diri (Personal)</h3>
-            <p class="text-[11px] text-slate-400">Nama lengkap dan data kependudukan</p>
+            <p class="text-[11px] text-slate-400">Nama lengkap dan data pribadi</p>
           </div>
         </div>
 
@@ -155,7 +182,7 @@
           <!-- Nama Lengkap -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">
-              Nama Lengkap <span class="text-rose-500">*</span>
+              Nama Lengkap (& Gelar) <span class="text-rose-500">*</span>
             </label>
             <input type="text" id="kader-nama" required placeholder="Contoh: Sahabat M. Ilham Fathoni" 
                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
@@ -163,7 +190,7 @@
 
           <!-- Nama Panggilan & Gender -->
           <div class="grid grid-cols-2 gap-3">
-            <div>
+            <div class="pub-only-kader">
               <label class="block text-xs font-bold text-slate-700 mb-1">
                 Nama Panggilan
               </label>
@@ -171,20 +198,20 @@
                      class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
             </div>
 
-            <div>
+            <div id="pub-gender-wrap">
               <label class="block text-xs font-bold text-slate-700 mb-1">
-                Panggilan Kader <span class="text-rose-500">*</span>
+                Jenis Kelamin <span class="text-rose-500">*</span>
               </label>
               <select id="kader-gender" required onchange="handleGenderChange(this.value)"
                       class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-semibold">
-                <option value="Laki-laki">Sahabat (Putra / Laki-laki)</option>
-                <option value="Perempuan">Sahabati (Putri / KOPRI)</option>
+                <option value="Laki-laki">Laki-laki (Sahabat)</option>
+                <option value="Perempuan">Perempuan (Sahabati)</option>
               </select>
             </div>
           </div>
 
-          <!-- Tempat & Tanggal Lahir -->
-          <div class="grid grid-cols-2 gap-3">
+          <!-- Tempat & Tanggal Lahir (Kader Only) -->
+          <div class="grid grid-cols-2 gap-3 pub-only-kader">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">
                 Tempat Lahir
@@ -205,7 +232,7 @@
           <!-- Alamat Asal -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">
-              Alamat Domisili Asal
+              Alamat Domisili Saat Ini
             </label>
             <textarea id="kader-alamat" rows="2" placeholder="Contoh: Desa Tarate, Kec. Kota, Kab. Sumenep" 
                       class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"></textarea>
@@ -213,8 +240,8 @@
         </div>
       </div>
 
-      <!-- STEP 2: Data Akademik Kampus ISMU -->
-      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <!-- STEP 2A: Data Akademik Kampus ISMU (MODE: KADER) -->
+      <div id="pub-section-kader" class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
         <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
           <div class="w-7 h-7 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs">
             2
@@ -277,6 +304,113 @@
         </div>
       </div>
 
+      <!-- STEP 2B: Data Alumni IKA (MODE: IKA) -->
+      <div id="pub-section-ika" class="hidden bg-white rounded-3xl p-5 border border-teal-100 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-teal-100">
+          <div class="w-7 h-7 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-xs">
+            2
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Data Alumni & Kiprah Profesi (IKA)</h3>
+            <p class="text-[11px] text-slate-400">Riwayat alumni dan bidang pengabdian saat ini</p>
+          </div>
+        </div>
+
+        <div class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Profesi / Pekerjaan Saat Ini <span class="text-rose-500">*</span></label>
+            <input type="text" id="pub-ika-profesi" placeholder="Contoh: Guru, Dosen, Pengusaha, Advokat"
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Instansi / Lembaga / Kantor</label>
+            <input type="text" id="pub-ika-instansi" placeholder="Contoh: Kemenag Sumenep / Yayasan"
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Peran / Jabatan di IKA</label>
+            <input type="text" id="pub-ika-jabatan" value="Anggota IKA PMII" placeholder="Contoh: Anggota IKA PMII"
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition font-semibold">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Angkatan PMII</label>
+              <input type="text" id="pub-ika-angkatan" placeholder="Contoh: 2018"
+                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Lulus</label>
+              <input type="text" id="pub-ika-tahun-lulus" placeholder="Contoh: 2022"
+                     class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Fakultas Asal</label>
+            <select id="pub-ika-fakultas" onchange="handlePublicIkaFakultasChange(this.value)"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition font-semibold">
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Program Studi Asal</label>
+            <select id="pub-ika-jurusan"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-600 transition font-medium">
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2C: Data Mabinkom (MODE: MABINKOM) -->
+      <div id="pub-section-mabinkom" class="hidden bg-white rounded-3xl p-5 border border-amber-100 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-amber-100">
+          <div class="w-7 h-7 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs">
+            2
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-800">Data Dewan Pembina (Mabinkom)</h3>
+            <p class="text-[11px] text-slate-400">Jabatan pembina, profesi, dan instansi</p>
+          </div>
+        </div>
+
+        <div class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Jabatan di Mabinkom <span class="text-rose-500">*</span></label>
+            <select id="pub-mbk-jabatan"
+                    class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 transition font-semibold">
+              <option value="Ketua Dewan Mabinkom">Ketua Dewan Mabinkom</option>
+              <option value="Wakil Ketua Mabinkom">Wakil Ketua Mabinkom</option>
+              <option value="Sekretaris Mabinkom">Sekretaris Mabinkom</option>
+              <option value="Anggota Pengarah" selected>Anggota Pengarah</option>
+              <option value="Pembina Bidang Kaderisasi">Pembina Bidang Kaderisasi</option>
+              <option value="Pembina Bidang Keilmuan & Riset">Pembina Bidang Keilmuan & Riset</option>
+              <option value="Pembina Bidang Advokasi & Jaringan">Pembina Bidang Advokasi & Jaringan</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Profesi / Aktivitas Utama <span class="text-rose-500">*</span></label>
+            <input type="text" id="pub-mbk-profesi" placeholder="Contoh: Dosen, Advokat, Pengusaha"
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Instansi / Lembaga / Kantor</label>
+            <input type="text" id="pub-mbk-instansi" placeholder="Contoh: Institut Miftahul Ulum Tarate"
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Alumni Angkatan / Tahun Kaderisasi</label>
+            <input type="text" id="pub-mbk-angkatan" placeholder="Contoh: Angkatan 2008 / Mapaba 2008"
+                   class="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-none focus:border-amber-600 transition">
+          </div>
+        </div>
+      </div>
+
       <!-- STEP 3: Kontak WhatsApp & Komunikasi -->
       <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
         <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
@@ -317,7 +451,7 @@
       </div>
 
       <!-- STEP 4: Riwayat Kaderisasi PMII -->
-      <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+      <div id="pub-step-kaderisasi" class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
         <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
           <div class="w-7 h-7 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-xs">
             4
@@ -422,7 +556,7 @@
         <button type="submit" id="btn-submit-pendaftaran" 
                 class="w-full py-3.5 px-6 gradient-pmii text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-blue-900/25 hover:shadow-xl hover:opacity-95 transition flex items-center justify-center gap-2 active:scale-98">
           <i data-lucide="send" class="w-4 h-4 text-yellow-400"></i>
-          <span>Kirim Data Registrasi Kader</span>
+          <span id="pub-submit-label">Kirim Data Registrasi Kader</span>
         </button>
         <p class="text-center text-[11px] text-slate-400 mt-2.5">
           Dengan mengklik kirim, Anda menyetujui data Anda dicatat di database resmi PK PMII ISMU.
@@ -462,7 +596,7 @@
             <div class="w-5 h-5 rounded-md bg-white p-0.5 flex items-center justify-center shrink-0">
               <img src="assets/logo-pmii.webp" alt="Logo PMII" class="w-full h-full object-contain">
             </div>
-            <span class="text-[10px] font-black tracking-wider text-yellow-300 uppercase">KARTU TANDA ANGGOTA SEMENTARA</span>
+            <span id="sukses-card-header-label" class="text-[10px] font-black tracking-wider text-yellow-300 uppercase">KARTU TANDA ANGGOTA SEMENTARA</span>
           </div>
           <span class="text-[9px] bg-emerald-500/80 px-2 py-0.5 rounded font-bold">Terverifikasi</span>
         </div>
@@ -591,24 +725,110 @@
     }
 
     function initFakultasSelect() {
-      const selFak = document.getElementById('kader-fakultas');
-      if (!selFak) return;
-
       const map = getDynamicFakultasProdiMap();
       const keys = Object.keys(map);
       if (keys.length === 0) return;
 
-      const currentVal = selFak.value;
-      selFak.innerHTML = keys.map(k => `<option value="${k}" ${k === currentVal ? 'selected' : ''}>${k}</option>`).join('');
+      const selFak = document.getElementById('kader-fakultas');
+      if (selFak) {
+        const currentVal = selFak.value;
+        selFak.innerHTML = keys.map(k => `<option value="${k}" ${k === currentVal ? 'selected' : ''}>${k}</option>`).join('');
+        const activeFak = keys.includes(currentVal) ? currentVal : keys[0];
+        selFak.value = activeFak;
+        handleFakultasChange(activeFak);
+      }
 
-      const activeFak = keys.includes(currentVal) ? currentVal : keys[0];
-      selFak.value = activeFak;
-      handleFakultasChange(activeFak);
+      const selIkaFak = document.getElementById('pub-ika-fakultas');
+      if (selIkaFak) {
+        const currentIkaVal = selIkaFak.value;
+        selIkaFak.innerHTML = '<option value="">-- Pilih Fakultas Asal --</option>' +
+          keys.map(k => `<option value="${k}" ${k === currentIkaVal ? 'selected' : ''}>${k}</option>`).join('');
+        const activeIkaFak = keys.includes(currentIkaVal) ? currentIkaVal : keys[0];
+        selIkaFak.value = activeIkaFak;
+        handlePublicIkaFakultasChange(activeIkaFak);
+      }
+    }
+
+    function switchPublicJoinType(type) {
+      const validTypes = ['kader', 'ika', 'mabinkom'];
+      const activeType = validTypes.includes(type) ? type : 'kader';
+
+      const targetInput = document.getElementById('pub-target-type');
+      if (targetInput) targetInput.value = activeType;
+
+      const styles = {
+        kader: {
+          active: 'p-2.5 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-center transition cursor-pointer shadow-xs',
+          inactive: 'p-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-blue-50/40 text-center transition cursor-pointer'
+        },
+        ika: {
+          active: 'p-2.5 rounded-2xl border-2 border-teal-600 bg-teal-50/70 text-center transition cursor-pointer shadow-xs',
+          inactive: 'p-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-teal-50/40 text-center transition cursor-pointer'
+        },
+        mabinkom: {
+          active: 'p-2.5 rounded-2xl border-2 border-amber-500 bg-amber-50/70 text-center transition cursor-pointer shadow-xs',
+          inactive: 'p-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-amber-50/40 text-center transition cursor-pointer'
+        }
+      };
+
+      validTypes.forEach(t => {
+        const btn = document.getElementById(`pub-btn-type-${t}`);
+        if (btn) btn.className = (t === activeType) ? styles[t].active : styles[t].inactive;
+      });
+
+      const secKader = document.getElementById('pub-section-kader');
+      const secStep4 = document.getElementById('pub-step-kaderisasi');
+      const secIka = document.getElementById('pub-section-ika');
+      const secMabinkom = document.getElementById('pub-section-mabinkom');
+
+      if (secKader) secKader.classList.toggle('hidden', activeType !== 'kader');
+      if (secStep4) secStep4.classList.toggle('hidden', activeType !== 'kader');
+      if (secIka) secIka.classList.toggle('hidden', activeType !== 'ika');
+      if (secMabinkom) secMabinkom.classList.toggle('hidden', activeType !== 'mabinkom');
+
+      document.querySelectorAll('.pub-only-kader').forEach(el => {
+        el.classList.toggle('hidden', activeType !== 'kader');
+      });
+
+      const genderWrap = document.getElementById('pub-gender-wrap');
+      if (genderWrap) {
+        genderWrap.className = activeType === 'kader' ? '' : 'col-span-2';
+      }
+
+      const setReq = (id, req) => {
+        const el = document.getElementById(id);
+        if (el) el.required = !!req;
+      };
+      setReq('kader-nim', activeType === 'kader');
+      setReq('kader-fakultas', activeType === 'kader');
+      setReq('kader-jurusan', activeType === 'kader');
+      setReq('kader-angkatan', activeType === 'kader');
+      setReq('kader-formal', activeType === 'kader');
+      setReq('pub-ika-profesi', activeType === 'ika');
+      setReq('pub-mbk-profesi', activeType === 'mabinkom');
+
+      const badge = document.getElementById('pub-hero-badge');
+      const btnLabel = document.getElementById('pub-submit-label');
+      if (activeType === 'kader') {
+        if (badge) badge.textContent = 'Database Kader Digital';
+        if (btnLabel) btnLabel.textContent = 'Kirim Data Registrasi Kader';
+      } else if (activeType === 'ika') {
+        if (badge) badge.textContent = 'Database Alumni (IKA PMII)';
+        if (btnLabel) btnLabel.textContent = 'Simpan Data Alumni IKA';
+      } else {
+        if (badge) badge.textContent = 'Database Dewan Pembina (Mabinkom)';
+        if (btnLabel) btnLabel.textContent = 'Simpan Data Mabinkom';
+      }
+
+      if (window.lucide) lucide.createIcons();
     }
 
     // Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
       initFakultasSelect();
+      const params = new URLSearchParams(window.location.search);
+      const qType = (params.get('type') || 'kader').toLowerCase();
+      switchPublicJoinType(qType);
       if (window.lucide) {
         lucide.createIcons();
       }
@@ -684,6 +904,16 @@
       const map = getDynamicFakultasProdiMap();
       const prodiList = map[fakultas] || Object.values(map)[0] || [];
       selJurusan.innerHTML = prodiList.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    function handlePublicIkaFakultasChange(fakultas) {
+      const selJurusan = document.getElementById('pub-ika-jurusan');
+      if (!selJurusan) return;
+
+      const map = getDynamicFakultasProdiMap();
+      const prodiList = map[fakultas] || [];
+      selJurusan.innerHTML = '<option value="">-- Pilih Program Studi --</option>' +
+        prodiList.map(p => `<option value="${p}">${p}</option>`).join('');
     }
 
     // Handle Perubahan Gender (Tampilkan KOPRI jika perempuan)
@@ -763,10 +993,52 @@
       return num;
     }
 
+    async function executePublicNeonSql(sqlQuery) {
+      const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url)
+        ? DEFAULT_CLOUD_CONFIG.url
+        : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+      let hostDirect = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
+      if (connStrDirect) {
+        const m = connStrDirect.match(/@([^:\/?]+)/);
+        if (m && m[1]) hostDirect = m[1].replace('-pooler', '');
+      }
+
+      try {
+        const res = await fetch(`https://${hostDirect}/sql`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Neon-Connection-String': connStrDirect
+          },
+          body: JSON.stringify({ query: sqlQuery })
+        });
+        if (res.ok) return true;
+      } catch (e) {
+        console.warn('[NEON DIRECT] Fallback ke proxy:', e);
+      }
+
+      const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Neon-Connection-String': connStrDirect
+            },
+            body: JSON.stringify({ query: sqlQuery })
+          });
+          if (res.ok) return true;
+        } catch (e) {}
+      }
+      return false;
+    }
+
     // Handle Form Submit
     async function handleFormSubmit(e) {
       e.preventDefault();
 
+      const activeType = (document.getElementById('pub-target-type')?.value || 'kader').toLowerCase();
       const btnSubmit = document.getElementById('btn-submit-pendaftaran');
       if (btnSubmit) {
         btnSubmit.disabled = true;
@@ -775,184 +1047,218 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
           </svg>
-          <span>Menyimpan Data Kader...</span>
+          <span>Menyimpan Data ke Cloud...</span>
         `;
       }
 
+      const esc = (v) => v ? `'${String(v).replace(/'/g, "''")}'` : 'NULL';
+
       const nama = document.getElementById('kader-nama').value.trim();
-      const panggilan = document.getElementById('kader-panggilan').value.trim();
       const gender = document.getElementById('kader-gender').value;
-      const tempatLahir = document.getElementById('kader-tempat-lahir').value.trim();
-      const tanggalLahir = document.getElementById('kader-tanggal-lahir').value;
       const alamat = document.getElementById('kader-alamat').value.trim();
-
-      const nim = document.getElementById('kader-nim').value.trim();
-      const fakultas = document.getElementById('kader-fakultas').value;
-      const jurusan = document.getElementById('kader-jurusan').value;
-      const angkatan = document.getElementById('kader-angkatan').value;
-
       const rawWa = document.getElementById('kader-whatsapp').value.trim();
       const whatsapp = cleanPhoneNumber(rawWa);
       const email = document.getElementById('kader-email').value.trim();
 
-      const formal = document.getElementById('kader-formal').value;
-      const tahunMapaba = document.getElementById('kader-tahun-mapaba').value.trim();
-      const penyMapaba = document.getElementById('kader-penyelenggara-mapaba').value.trim();
-      const kopri = (gender === 'Perempuan') ? document.getElementById('kader-kopri').value : '-';
-
-      // Foto default jika belum upload
       const defaultMale = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=faces';
       const defaultFemale = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=faces';
       const foto = document.getElementById('kader-foto-base64').value || (gender === 'Perempuan' ? defaultFemale : defaultMale);
 
-      const generatedId = 'KD-' + angkatan + '-' + Math.floor(1000 + Math.random() * 9000);
-      const generatedKta = '13.01.' + angkatan + '.' + Math.floor(100 + Math.random() * 900);
-
-      const payload = {
-        id: generatedId,
-        noKta: generatedKta,
-        nama: nama,
-        namaPanggilan: panggilan,
-        gender: gender,
-        tempatLahir: tempatLahir,
-        tanggalLahir: tanggalLahir,
-        alamat: alamat,
-        nim: nim,
-        fakultas: fakultas,
-        jurusan: jurusan,
-        angkatan: angkatan,
-        statusKuliah: 'Aktif',
-        whatsapp: whatsapp,
-        email: email,
-        foto: foto,
-        statusKader: 'Aktif',
-        formal: formal,
-        tahunMapaba: tahunMapaba,
-        penyelenggaraMapaba: penyMapaba,
-        kopri: kopri,
-        kaderisasi: {
-          formal: formal,
-          tahunMapaba: tahunMapaba,
-          penyelenggaraMapaba: penyMapaba,
-          kopri: kopri
-        }
-      };
-
-      let successData = payload;
+      let successData = {};
       let isSavedOnline = false;
 
-      // 1. Coba kirim ke Backend API jika berjalan di server HTTP/HTTPS
-      if (window.location.protocol.startsWith('http')) {
-        try {
-          const res = await fetch('api/register_kader.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            const json = await res.json();
-            if (json.status === 'success' && json.data) {
-              successData = json.data;
-              isSavedOnline = true;
-            }
-          }
-        } catch (err) {
-          console.warn('[OFFLINE FALLBACK] Server API tidak terhubung, mencoba direct Cloud Neon:', err);
-        }
-      }
+      if (activeType === 'kader') {
+        const panggilan = document.getElementById('kader-panggilan').value.trim();
+        const tempatLahir = document.getElementById('kader-tempat-lahir').value.trim();
+        const tanggalLahir = document.getElementById('kader-tanggal-lahir').value;
+        const nim = document.getElementById('kader-nim').value.trim();
+        const fakultas = document.getElementById('kader-fakultas').value;
+        const jurusan = document.getElementById('kader-jurusan').value;
+        const angkatan = document.getElementById('kader-angkatan').value;
+        const formal = document.getElementById('kader-formal').value;
+        const tahunMapaba = document.getElementById('kader-tahun-mapaba').value.trim();
+        const penyMapaba = document.getElementById('kader-penyelenggara-mapaba').value.trim();
+        const kopri = (gender === 'Perempuan') ? document.getElementById('kader-kopri').value : '-';
 
-      // 1.b Jika API PHP offline / di Vercel, simpan langsung ke Neon Cloud Database
-      if (!isSavedOnline && typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
-        try {
+        const generatedId = 'KD-' + angkatan + '-' + Math.floor(1000 + Math.random() * 9000);
+        const generatedKta = '13.01.' + angkatan + '.' + Math.floor(100 + Math.random() * 900);
+
+        const payload = {
+          id: generatedId, noKta: generatedKta, nama, namaPanggilan: panggilan, gender,
+          tempatLahir, tanggalLahir, alamat, nim, fakultas, jurusan, angkatan,
+          statusKuliah: 'Aktif', whatsapp, email, foto, statusKader: 'Aktif',
+          formal, tahunMapaba, penyelenggaraMapaba: penyMapaba, kopri,
+          kaderisasi: { formal, tahunMapaba, penyelenggaraMapaba: penyMapaba, kopri }
+        };
+        successData = payload;
+
+        if (window.location.protocol.startsWith('http')) {
+          try {
+            const res = await fetch('api/register_kader.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+              const json = await res.json();
+              if (json.status === 'success' && json.data) {
+                successData = json.data;
+                isSavedOnline = true;
+              }
+            }
+          } catch (err) {}
+        }
+
+        if (!isSavedOnline) {
           const sql = `
             INSERT INTO tb_kader (
               id, nama, nama_panggilan, no_kta, nim, gender, tempat_lahir, tanggal_lahir,
               fakultas, jurusan, angkatan, status_kuliah, alamat, whatsapp, email, foto,
               status_kader, formal, tahun_mapaba, penyelenggara_mapaba, kopri
             ) VALUES (
-              '${payload.id}', '${payload.nama.replace(/'/g, "''")}', ${payload.namaPanggilan ? `'${payload.namaPanggilan.replace(/'/g, "''")}'` : 'NULL'},
-              '${payload.noKta}', '${payload.nim}', '${payload.gender}', ${payload.tempatLahir ? `'${payload.tempatLahir.replace(/'/g, "''")}'` : 'NULL'},
-              ${payload.tanggalLahir ? `'${payload.tanggalLahir}'` : 'NULL'}, '${payload.fakultas}', '${payload.jurusan}',
-              '${payload.angkatan}', '${payload.statusKuliah}', ${payload.alamat ? `'${payload.alamat.replace(/'/g, "''")}'` : 'NULL'},
-              ${payload.whatsapp ? `'${payload.whatsapp}'` : 'NULL'}, ${payload.email ? `'${payload.email}'` : 'NULL'},
-              ${payload.foto ? `'${payload.foto}'` : 'NULL'}, 'Aktif', '${payload.formal}', '${payload.tahunMapaba}',
-              '${payload.penyelenggaraMapaba}', '${payload.kopri}'
+              ${esc(payload.id)}, ${esc(payload.nama)}, ${esc(payload.namaPanggilan)},
+              ${esc(payload.noKta)}, ${esc(payload.nim)}, ${esc(payload.gender)}, ${esc(payload.tempatLahir)},
+              ${payload.tanggalLahir ? esc(payload.tanggalLahir) : 'NULL'}, ${esc(payload.fakultas)}, ${esc(payload.jurusan)},
+              ${esc(payload.angkatan)}, 'Aktif', ${esc(payload.alamat)},
+              ${esc(payload.whatsapp)}, ${esc(payload.email)},
+              ${esc(payload.foto)}, 'Aktif', ${esc(payload.formal)}, ${esc(payload.tahunMapaba)},
+              ${esc(payload.penyelenggaraMapaba)}, ${esc(payload.kopri)}
             ) ON CONFLICT (nim) DO UPDATE SET
               nama = EXCLUDED.nama,
               foto = COALESCE(EXCLUDED.foto, tb_kader.foto),
               updated_at = CURRENT_TIMESTAMP;
           `;
-          const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
-          let hostDirect = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
-          if (connStrDirect) {
-            const m = connStrDirect.match(/@([^:\/?]+)/);
-            if (m && m[1]) hostDirect = m[1].replace('-pooler', '');
-          }
-          const neonRes = await fetch(`https://${hostDirect}/sql`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Neon-Connection-String': connStrDirect
-            },
-            body: JSON.stringify({ query: sql })
-          });
-          if (neonRes.ok) {
-            isSavedOnline = true;
-            console.log('[NEON DIRECT] Berhasil simpan data kader langsung ke Neon Cloud!');
-          }
-        } catch (e) {
-          console.warn('[NEON DIRECT] Gagal simpan ke Neon:', e);
+          isSavedOnline = await executePublicNeonSql(sql);
         }
+
+        try {
+          const localKaders = JSON.parse(localStorage.getItem('pmii_kaders') || '[]');
+          const existingIdx = localKaders.findIndex(k => k.nim === nim || k.id === payload.id);
+          if (existingIdx >= 0) localKaders[existingIdx] = Object.assign(localKaders[existingIdx], payload);
+          else localKaders.unshift(payload);
+          localStorage.setItem('pmii_kaders', JSON.stringify(localKaders));
+        } catch (err) {}
+
+      } else if (activeType === 'ika') {
+        const profesi = document.getElementById('pub-ika-profesi').value.trim();
+        const instansi = document.getElementById('pub-ika-instansi').value.trim();
+        const jabatan = document.getElementById('pub-ika-jabatan').value.trim() || 'Anggota IKA PMII';
+        const angkatan = document.getElementById('pub-ika-angkatan').value.trim();
+        const tahunLulus = document.getElementById('pub-ika-tahun-lulus').value.trim();
+        const fakultas = document.getElementById('pub-ika-fakultas').value;
+        const jurusan = document.getElementById('pub-ika-jurusan').value;
+
+        const payloadIka = {
+          id: 'IKA-' + Date.now().toString().slice(-6),
+          nama, gender, angkatan, tahunLulus, fakultas, jurusan, profesi, instansi,
+          jabatan, whatsapp, kontak: whatsapp, email, alamat, foto, status: 'Aktif'
+        };
+        successData = payloadIka;
+
+        const sqlIka = `
+          INSERT INTO tb_ika (
+            id, nama, gender, angkatan, tahun_lulus, fakultas, jurusan, profesi, instansi, jabatan_alumni, whatsapp, email, alamat, foto, status
+          ) VALUES (
+            ${esc(payloadIka.id)}, ${esc(payloadIka.nama)}, ${esc(payloadIka.gender)}, ${esc(payloadIka.angkatan)},
+            ${esc(payloadIka.tahunLulus)}, ${esc(payloadIka.fakultas)}, ${esc(payloadIka.jurusan)}, ${esc(payloadIka.profesi)},
+            ${esc(payloadIka.instansi)}, ${esc(payloadIka.jabatan)}, ${esc(payloadIka.whatsapp)}, ${esc(payloadIka.email)},
+            ${esc(payloadIka.alamat)}, ${esc(payloadIka.foto)}, 'Aktif'
+          ) ON CONFLICT (id) DO UPDATE SET
+            nama = EXCLUDED.nama, profesi = EXCLUDED.profesi, instansi = EXCLUDED.instansi, updated_at = CURRENT_TIMESTAMP;
+        `;
+        isSavedOnline = await executePublicNeonSql(sqlIka);
+
+        try {
+          const localIka = JSON.parse(localStorage.getItem('pmii_ika') || '[]');
+          localIka.unshift(payloadIka);
+          localStorage.setItem('pmii_ika', JSON.stringify(localIka));
+        } catch (err) {}
+
+      } else if (activeType === 'mabinkom') {
+        const jabatan = document.getElementById('pub-mbk-jabatan').value;
+        const profesi = document.getElementById('pub-mbk-profesi').value.trim();
+        const instansi = document.getElementById('pub-mbk-instansi').value.trim();
+        const angkatan = document.getElementById('pub-mbk-angkatan').value.trim();
+
+        const payloadMbk = {
+          id: 'MBK-' + Date.now().toString().slice(-5),
+          nama, jabatan, profesi, instansi, angkatan, whatsapp, kontak: whatsapp, email, alamat, foto, status: 'Aktif'
+        };
+        successData = payloadMbk;
+
+        const sqlMbk = `
+          INSERT INTO tb_mabinkom (
+            id, nama, jabatan, profesi, instansi, angkatan, kontak, email, alamat, foto, status
+          ) VALUES (
+            ${esc(payloadMbk.id)}, ${esc(payloadMbk.nama)}, ${esc(payloadMbk.jabatan)}, ${esc(payloadMbk.profesi)},
+            ${esc(payloadMbk.instansi)}, ${esc(payloadMbk.angkatan)}, ${esc(payloadMbk.whatsapp)},
+            ${esc(payloadMbk.email)}, ${esc(payloadMbk.alamat)}, ${esc(payloadMbk.foto)}, 'Aktif'
+          ) ON CONFLICT (id) DO UPDATE SET
+            nama = EXCLUDED.nama, jabatan = EXCLUDED.jabatan, profesi = EXCLUDED.profesi, instansi = EXCLUDED.instansi;
+        `;
+        isSavedOnline = await executePublicNeonSql(sqlMbk);
+
+        try {
+          const localMbk = JSON.parse(localStorage.getItem('pmii_mabinkom') || '[]');
+          localMbk.unshift(payloadMbk);
+          localStorage.setItem('pmii_mabinkom', JSON.stringify(localMbk));
+        } catch (err) {}
       }
 
-      // 2. Simpan juga salinan ke localStorage browser agar sinkron jika dibuka di laptop/browser yang sama
-      try {
-        const localKaders = JSON.parse(localStorage.getItem('pmii_kaders') || '[]');
-        const existingIdx = localKaders.findIndex(k => k.nim === nim || k.id === payload.id);
-        if (existingIdx >= 0) {
-          localKaders[existingIdx] = Object.assign(localKaders[existingIdx], payload);
-        } else {
-          localKaders.unshift(payload);
-        }
-        localStorage.setItem('pmii_kaders', JSON.stringify(localKaders));
-      } catch (e) {
-        console.warn('Gagal menyimpan salinan offline localStorage:', e);
+      // Reset tombol dan tampilkan Modal Sukses
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = `<i data-lucide="send" class="w-4 h-4 text-yellow-400"></i><span id="pub-submit-label">Kirim Data</span>`;
+        switchPublicJoinType(activeType);
       }
 
-      // 3. Tampilkan Modal Sukses
-      showSuccessModal(successData, isSavedOnline);
+      showSuccessModal(successData, isSavedOnline, activeType);
     }
 
     // Tampilkan Modal Hasil Pendaftaran
-    function showSuccessModal(data, isOnline) {
+    function showSuccessModal(data, isOnline, type = 'kader') {
       const modal = document.getElementById('modal-sukses');
       if (!modal) return;
 
+      const headerLabel = document.getElementById('sukses-card-header-label');
       document.getElementById('sukses-card-nama').textContent = data.nama || '-';
-      document.getElementById('sukses-card-nim').textContent = 'NIM: ' + (data.nim || '-');
-      document.getElementById('sukses-card-prodi').textContent = (data.jurusan || '-') + ' • ' + (data.fakultas || '-');
-      document.getElementById('sukses-card-kaderisasi').textContent = `Status: ${data.formal || 'MAPABA'} (${data.angkatan || '2026'})`;
-      document.getElementById('sukses-card-kta').textContent = data.noKta || '13.01.2026.***';
+
+      if (type === 'ika') {
+        if (headerLabel) headerLabel.textContent = 'KARTU REGISTRASI ALUMNI (IKA PMII)';
+        document.getElementById('sukses-card-nim').textContent = 'IKA: ' + (data.jabatan || 'Alumni PMII');
+        document.getElementById('sukses-card-prodi').textContent = (data.profesi || '-') + (data.instansi ? ' • ' + data.instansi : '');
+        document.getElementById('sukses-card-kaderisasi').textContent = `Angkatan: ${data.angkatan || '-'} ${data.tahunLulus ? '• Lulus ' + data.tahunLulus : ''}`;
+        document.getElementById('sukses-card-kta').textContent = data.id || 'IKA-PMII';
+      } else if (type === 'mabinkom') {
+        if (headerLabel) headerLabel.textContent = 'KARTU REGISTRASI DEWAN MABINKOM';
+        document.getElementById('sukses-card-nim').textContent = data.jabatan || 'Dewan Pembina';
+        document.getElementById('sukses-card-prodi').textContent = (data.profesi || '-') + (data.instansi ? ' • ' + data.instansi : '');
+        document.getElementById('sukses-card-kaderisasi').textContent = `Alumni Angkatan: ${data.angkatan || '-'}`;
+        document.getElementById('sukses-card-kta').textContent = data.id || 'MBK-PMII';
+      } else {
+        if (headerLabel) headerLabel.textContent = 'KARTU TANDA ANGGOTA SEMENTARA';
+        document.getElementById('sukses-card-nim').textContent = 'NIM: ' + (data.nim || '-');
+        document.getElementById('sukses-card-prodi').textContent = (data.jurusan || '-') + ' • ' + (data.fakultas || '-');
+        document.getElementById('sukses-card-kaderisasi').textContent = `Status: ${data.formal || 'MAPABA'} (${data.angkatan || '2026'})`;
+        document.getElementById('sukses-card-kta').textContent = data.noKta || '13.01.2026.***';
+      }
 
       const cardFoto = document.getElementById('sukses-card-foto');
       if (cardFoto && data.foto) {
         cardFoto.src = data.foto;
       }
 
-      // Siapkan Link Konfirmasi WhatsApp ke Pengurus
       const btnWa = document.getElementById('btn-wa-konfirmasi');
       if (btnWa) {
-        const noWaPengurus = '6281234567801'; // Default no Sekum / Ketum
+        const noWaPengurus = '6281234567801';
+        const katLabel = type === 'ika' ? 'Alumni (IKA PMII)' : (type === 'mabinkom' ? 'Dewan Mabinkom' : 'Kader PMII');
         const pesan = encodeURIComponent(
           `Assalamu'alaikum Sahabat Pengurus PK PMII ISMU,\n\n` +
-          `Saya telah mengisi formulir registrasi kader mandiri:\n` +
+          `Saya telah mengisi formulir pendataan *${katLabel}*:\n` +
           `• Nama Lengkap: ${data.nama}\n` +
-          `• NIM: ${data.nim}\n` +
-          `• Fakultas / Prodi: ${data.fakultas} - ${data.jurusan}\n` +
-          `• Angkatan: ${data.angkatan}\n` +
-          `• No. WhatsApp: +${data.whatsapp || '-'}\n` +
-          `• Jenjang: ${data.formal || 'MAPABA'}\n\n` +
-          `Mohon untuk diverifikasi ke sistem pendataan kader. Terima kasih! Salam Pergerakan!`
+          (type === 'kader' ? `• NIM: ${data.nim}\n• Fakultas / Prodi: ${data.fakultas} - ${data.jurusan}\n` : `• Profesi / Instansi: ${data.profesi || '-'} (${data.instansi || '-'})\n`) +
+          `• No. WhatsApp: +${data.whatsapp || '-'}\n\n` +
+          `Mohon konfirmasinya. Terima kasih! Salam Pergerakan!`
         );
         btnWa.href = `https://wa.me/${noWaPengurus}?text=${pesan}`;
       }
