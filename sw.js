@@ -3,7 +3,7 @@
  * Versi 4.1: Menu IKA Alumni, Join 3 Kategori (Kader, IKA, Mabinkom) & Sync Aman
  */
 
-const CACHE_NAME = 'pmii-ismu-v4.5-manifest-20261111';
+const CACHE_NAME = 'pmii-ismu-v4.6-hemat-kuota-20261112';
 const STATIC_ASSETS = [
   './',
   './index.html',

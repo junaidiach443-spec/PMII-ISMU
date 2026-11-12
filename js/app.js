@@ -1144,12 +1144,40 @@ function testCloudConnectionUI() {
   testCloudConnection(false);
 }
 
+const CLOUD_SYNC_SIGNATURE_EXPR = `concat_ws('|',
+  (SELECT count(*) || ':' || COALESCE(max(updated_at)::text, '') || ':' || COALESCE(sum(length(COALESCE(foto,''))), 0) FROM tb_kader),
+  (SELECT count(*) || ':' || COALESCE(max(updated_at)::text, '') || ':' || COALESCE(sum(length(COALESCE(foto,''))), 0) FROM tb_ika),
+  (SELECT count(*) || ':' || COALESCE(sum(length(nama || COALESCE(jabatan,'') || COALESCE(foto,''))), 0) FROM tb_mabinkom),
+  (SELECT count(*) || ':' || COALESCE(sum(jumlah), 0) FROM tb_pemasukan),
+  (SELECT count(*) || ':' || COALESCE(sum(jumlah), 0) FROM tb_pengeluaran),
+  (SELECT count(*) || ':' || COALESCE(sum(jumlah), 0) FROM tb_anggaran_rab),
+  (SELECT count(*) || ':' || COALESCE(sum(length(nama || COALESCE(jabatan,''))), 0) FROM tb_struktur_pengurus),
+  (SELECT count(*) || ':' || COALESCE(sum(length(nama || COALESCE(periode,''))), 0) FROM tb_ketum_kom),
+  (SELECT count(*) FROM tb_rapat),
+  (SELECT count(*) FROM tb_presensi_rapat),
+  (SELECT COALESCE(updated_at::text, '') FROM tb_komisariat WHERE id = 1)
+)`;
+
+let lastCloudSignature = '';
+let lastCloudCheckAt = 0;
+let isCloudFetching = false;
+
+async function getCloudSyncSignature() {
+  const cfg = getCloudConfig();
+  if (!cfg || cfg.type !== 'neon') return null;
+  const res = await executeNeonSql(`SELECT ${CLOUD_SYNC_SIGNATURE_EXPR} AS sync_sig;`);
+  return (res && res[0] && res[0].sync_sig) ? String(res[0].sync_sig) : null;
+}
+
 async function fetchDataFromCloud(silent = false) {
   const cfg = getCloudConfig();
   if (!cfg) {
     if (!silent) showToast('Kredensial database cloud belum diatur.', 'warning');
     return false;
   }
+
+  if (isCloudFetching) return false;
+  isCloudFetching = true;
 
   if (!silent) showToast('Menghubungkan & menarik data terbaru dari Cloud (Neon)...', 'info');
 
@@ -1159,9 +1187,10 @@ async function fetchDataFromCloud(silent = false) {
       let agrRows = [], prdRows = [], strRows = [], ktmRows = [], rptRows = [], prsRows = [];
 
       try {
-        // High-speed single round-trip fetch
+        // High-speed single round-trip fetch (sekalian ambil sync_sig hemat bandwidth)
         const singleQuery = `
           SELECT 
+            (${CLOUD_SYNC_SIGNATURE_EXPR}) as sync_sig,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_komisariat LIMIT 1) t) as komisariat,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC) t) as kader,
             (SELECT json_agg(t) FROM (SELECT * FROM tb_mabinkom ORDER BY id ASC) t) as mabinkom,
@@ -1178,6 +1207,8 @@ async function fetchDataFromCloud(silent = false) {
         const res = await executeNeonSql(singleQuery);
         if (res && res[0]) {
           const b = res[0];
+          if (b.sync_sig) lastCloudSignature = String(b.sync_sig);
+          lastCloudCheckAt = Date.now();
           komRows = b.komisariat || [];
           kdrRows = b.kader || [];
           mbnRows = b.mabinkom || [];
@@ -1476,15 +1507,39 @@ async function fetchDataFromCloud(silent = false) {
     if (!silent) {
       showToast('Gagal menarik data dari Cloud: ' + err.message + '<br><span class="text-[11px] font-normal opacity-90 block mt-0.5">Data lokal Anda tetap aman & tidak terhapus.</span>', 'error');
     }
+  } finally {
+    isCloudFetching = false;
   }
   return false;
 }
 
 // ==========================================
-// AUTO-SYNC REAL-TIME BERKELANJUTAN
+// AUTO-SYNC REAL-TIME HEMAT BANDWIDTH (SIGNATURE CHECK)
 // ==========================================
 let autoSyncTimer = null;
 let lastDataFingerprint = '';
+
+async function checkAndFetchCloudIfChanged() {
+  if (document.hidden || isCloudFetching || !currentUser) return;
+  const now = Date.now();
+  if (now - lastCloudCheckAt < 30000) return; // Cooldown 30 detik agar focus + visibilitychange tidak dobel
+  lastCloudCheckAt = now;
+
+  const cfg = getCloudConfig();
+  if (!cfg) return;
+
+  if (cfg.type === 'neon') {
+    try {
+      const sig = await getCloudSyncSignature();
+      if (sig && lastCloudSignature && sig === lastCloudSignature) {
+        return; // Data di Cloud sama persis, hemat kuota: tidak perlu download ulang!
+      }
+    } catch (e) {
+      return;
+    }
+  }
+  await fetchDataFromCloud(true);
+}
 
 function startAutoSync() {
   if (autoSyncTimer) clearInterval(autoSyncTimer);
@@ -1494,26 +1549,21 @@ function startAutoSync() {
 
   const interval = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.autoSyncIntervalMs)
     ? DEFAULT_CLOUD_CONFIG.autoSyncIntervalMs
-    : 10000;
+    : 180000;
 
   autoSyncTimer = setInterval(async () => {
-    // Sinkron otomatis di latar belakang saat tab aktif
-    if (!document.hidden) {
-      await fetchDataFromCloud(true);
-    }
+    await checkAndFetchCloudIfChanged();
   }, interval);
 }
 
-// Sinkron otomatis seketika saat user kembali ke tab browser
+// Sinkron ringan dengan cooldown 30 detik saat kembali ke tab aplikasi
 window.addEventListener('focus', () => {
-  const cfg = getCloudConfig();
-  if (cfg) fetchDataFromCloud(true);
+  checkAndFetchCloudIfChanged();
 });
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
-    const cfg = getCloudConfig();
-    if (cfg) fetchDataFromCloud(true);
+    checkAndFetchCloudIfChanged();
   }
 });
 
@@ -1793,6 +1843,12 @@ async function syncToCloudServer(silent = true) {
       }
 
       await executeNeonBatch(neonQueries);
+
+      try {
+        const newSig = await getCloudSyncSignature();
+        if (newSig) lastCloudSignature = newSig;
+        lastCloudCheckAt = Date.now();
+      } catch (e) {}
 
       databaseMode = 'neon';
       updateDbStatusIndicator(true, { count: kaders.length, type: 'neon' });
@@ -3251,17 +3307,45 @@ function closeKaderModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+function compressImageFileToDataUrl(file, onReady, maxDim = 420, quality = 0.72) {
+  if (!file || typeof onReady !== 'function') return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const img = new Image();
+    img.onload = function () {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      if (width > height && width > maxDim) {
+        height = Math.round(height * (maxDim / width));
+        width = maxDim;
+      } else if (height >= width && height > maxDim) {
+        width = Math.round(width * (maxDim / height));
+        height = maxDim;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      onReady(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function () {
+      if (typeof showToast === 'function') {
+        showToast('Format file foto tidak didukung. Gunakan JPG/PNG/WebP.', 'warning');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function handleFotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const dataUrl = e.target.result;
+  compressImageFileToDataUrl(file, (dataUrl) => {
     document.getElementById('kader-foto-preview').src = dataUrl;
     document.getElementById('kader-foto-url').value = dataUrl;
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
 function saveKaderForm(event) {
@@ -4474,13 +4558,10 @@ function handleMabinkomFotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const dataUrl = e.target.result;
+  compressImageFileToDataUrl(file, (dataUrl) => {
     document.getElementById('mabinkom-foto-preview').src = dataUrl;
     document.getElementById('mabinkom-foto-url').value = dataUrl;
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
 function saveMabinkomForm(event) {
@@ -4937,13 +5018,10 @@ function handleIkaFotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const dataUrl = e.target.result;
+  compressImageFileToDataUrl(file, (dataUrl) => {
     document.getElementById('ika-foto-preview').src = dataUrl;
     document.getElementById('ika-foto-url').value = dataUrl;
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
 async function saveIkaForm(event) {
@@ -11820,42 +11898,12 @@ function handleJoinKaderFotoUpload(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const maxDim = 500;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > maxDim) {
-          height *= maxDim / width;
-          width = maxDim;
-        }
-      } else {
-        if (height > maxDim) {
-          width *= maxDim / height;
-          height = maxDim;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-      const previewImg = document.getElementById('join-foto-preview');
-      const hiddenInput = document.getElementById('join-foto-base64');
-
-      if (previewImg) previewImg.src = compressedBase64;
-      if (hiddenInput) hiddenInput.value = compressedBase64;
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+  compressImageFileToDataUrl(file, (compressedBase64) => {
+    const previewImg = document.getElementById('join-foto-preview');
+    const hiddenInput = document.getElementById('join-foto-base64');
+    if (previewImg) previewImg.src = compressedBase64;
+    if (hiddenInput) hiddenInput.value = compressedBase64;
+  });
 }
 
 async function handleJoinKaderFormSubmit(event) {

@@ -11,7 +11,7 @@
 const DEFAULT_CLOUD_CONFIG = {
   url: "postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   key: "npg_OzRkS4cao0gV",
-  autoSyncIntervalMs: 10000 // Interval sinkronisasi background jika cloud aktif (10 detik)
+  autoSyncIntervalMs: 180000 // Interval cek pembaruan cloud ringan di background (3 menit)
 };
 
 const defaultKomisariat = {

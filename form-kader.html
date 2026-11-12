@@ -953,9 +953,9 @@
       reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-          // Kompresi via Canvas (max width 600px untuk menghemat ukuran)
+          // Kompresi via Canvas (max width 420px agar hemat kuota cloud & tetap tajam)
           const canvas = document.createElement('canvas');
-          const maxDim = 600;
+          const maxDim = 420;
           let width = img.width;
           let height = img.height;
 
@@ -976,8 +976,8 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Ambil hasil base64 jpeg dengan quality 0.75
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+          // Ambil hasil base64 jpeg terkompresi (~15-35 KB)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.72);
 
           // Update preview
           const previewImg = document.getElementById('foto-preview-img');
