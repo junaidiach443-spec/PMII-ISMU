@@ -8343,7 +8343,107 @@ function renderBroadcastSection() {
   renderBroadcastPreview();
   renderBroadcastRecipientTable();
   updateBroadcastStats();
+  initBroadcastGatewayUI();
   initLucide();
+}
+
+let serverFonnteConfigured = false;
+let serverFonnteChecked = false;
+
+function getStoredFonnteToken() {
+  return (localStorage.getItem('pmii_fonnte_token') || '').trim();
+}
+
+function hasActiveFonnteGateway() {
+  return serverFonnteConfigured || !!getStoredFonnteToken();
+}
+
+function updateBroadcastGatewayBadgeUI() {
+  const badge = document.getElementById('bc-gateway-mode-badge');
+  if (!badge) return;
+  if (serverFonnteConfigured) {
+    badge.textContent = 'Auto-Send (Server Vercel)';
+    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+  } else if (getStoredFonnteToken()) {
+    badge.textContent = 'Auto-Send (Token Fonnte)';
+    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+  } else {
+    badge.textContent = 'Mode Gratis (Link WA)';
+    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200';
+  }
+}
+
+async function initBroadcastGatewayUI() {
+  const input = document.getElementById('bc-input-fonnte-token');
+  if (input) input.value = getStoredFonnteToken();
+  updateBroadcastGatewayBadgeUI();
+
+  if (!serverFonnteChecked && window.location.protocol.startsWith('http')) {
+    serverFonnteChecked = true;
+    const endpoints = ['/api/wa_send', '/api/wa_send.php', 'https://pmii-ismu.vercel.app/api/wa_send'];
+    for (const ep of endpoints) {
+      try {
+        const res = await fetch(ep, { method: 'GET' });
+        if (res.ok) {
+          const j = await res.json();
+          if (j && j.serverTokenConfigured) {
+            serverFonnteConfigured = true;
+            updateBroadcastGatewayBadgeUI();
+          }
+          break;
+        }
+      } catch (e) {}
+    }
+  }
+}
+
+function saveBroadcastFonnteToken() {
+  const input = document.getElementById('bc-input-fonnte-token');
+  const token = (input?.value || '').trim();
+  if (!token) {
+    clearBroadcastFonnteToken();
+    return;
+  }
+  localStorage.setItem('pmii_fonnte_token', token);
+  updateBroadcastGatewayBadgeUI();
+  showToast('Token Fonnte disimpan! Auto-Blast kini mengirim otomatis lewat Fonnte API.', 'success');
+}
+
+function clearBroadcastFonnteToken() {
+  localStorage.removeItem('pmii_fonnte_token');
+  const input = document.getElementById('bc-input-fonnte-token');
+  if (input) input.value = '';
+  updateBroadcastGatewayBadgeUI();
+  showToast('Kembali ke Mode Gratis (WhatsApp Link).', 'info');
+}
+
+async function sendViaFonnteGateway(targetNo, message) {
+  const token = getStoredFonnteToken();
+  const endpoints = ['/api/wa_send', '/api/wa_send.php', 'https://pmii-ismu.vercel.app/api/wa_send'];
+  let lastReason = 'Endpoint WA Gateway tidak terjangkau.';
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: targetNo, message, token })
+      });
+      if (res.status === 404) continue;
+      const json = await res.json();
+      if (res.ok && json && json.status === true) {
+        return { ok: true, data: json };
+      }
+      lastReason = json?.reason || json?.message || `HTTP ${res.status}`;
+      return { ok: false, reason: lastReason };
+    } catch (e) {
+      lastReason = e.message || lastReason;
+    }
+  }
+  return { ok: false, reason: lastReason };
+}
+
+function isBroadcastItemDone(r) {
+  return r && (r.status === 'sent' || r.status === 'opened');
 }
 
 /**
@@ -8793,9 +8893,15 @@ function renderBroadcastRecipientTable() {
     if (!r.isValid) {
       statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">No. WA Kosong</span>';
     } else if (r.status === 'sent') {
-      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 justify-center"><i data-lucide="check" class="w-3 h-3"></i><span>Terkirim</span></span>';
+      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 justify-center"><i data-lucide="check-check" class="w-3 h-3"></i><span>Terkirim (Auto)</span></span>';
+    } else if (r.status === 'opened') {
+      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 flex items-center gap-1 justify-center" title="Chat WA dibuka, pastikan klik tombol Kirim di WhatsApp"><i data-lucide="external-link" class="w-3 h-3"></i><span>Chat Dibuka</span></span>';
+    } else if (r.status === 'blocked') {
+      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1 justify-center" title="Tab WhatsApp diblokir oleh browser"><i data-lucide="shield-alert" class="w-3 h-3"></i><span>Pop-up Diblokir</span></span>';
+    } else if (r.status === 'failed') {
+      statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1 justify-center" title="${escapeHtml(r.errorReason || 'Gagal mengirim pesan')}"><i data-lucide="x-circle" class="w-3 h-3"></i><span>Gagal Kirim</span></span>`;
     } else if (r.status === 'sending') {
-      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse flex items-center gap-1 justify-center"><span>Membuka...</span></span>';
+      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse flex items-center gap-1 justify-center"><span>Mengirim...</span></span>';
     } else {
       statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Antrean</span>';
     }
@@ -8902,7 +9008,7 @@ function updateBroadcastStats() {
   const valid = broadcastState.recipients.filter(r => r.isValid).length;
   const invalid = total - valid;
   const selectedValid = broadcastState.recipients.filter(r => r.isValid && r.isSelected);
-  const sent = selectedValid.filter(r => r.status === 'sent').length;
+  const sent = selectedValid.filter(r => isBroadcastItemDone(r)).length;
   const totalToSend = selectedValid.length;
   const remaining = totalToSend - sent;
   const pct = totalToSend > 0 ? Math.round((sent / totalToSend) * 100) : 0;
@@ -8925,9 +9031,9 @@ function updateBroadcastStats() {
 }
 
 /**
- * Kirim pesan WhatsApp individual (1-klik per orang)
+ * Kirim pesan WhatsApp individual (1-klik per orang, mendukung Hybrid Fonnte / WA Link)
  */
-function sendIndividualBroadcast(recipientId) {
+async function sendIndividualBroadcast(recipientId) {
   const recipient = broadcastState.recipients.find(r => r.id === recipientId);
   if (!recipient || !recipient.isValid) {
     showToast('Nomor WhatsApp penerima tidak valid atau kosong.', 'error');
@@ -8935,21 +9041,44 @@ function sendIndividualBroadcast(recipientId) {
   }
 
   const message = generateBroadcastMessage(recipient);
+
+  if (hasActiveFonnteGateway()) {
+    recipient.status = 'sending';
+    recipient.errorReason = '';
+    renderBroadcastRecipientTable();
+    const res = await sendViaFonnteGateway(recipient.cleanNoHp, message);
+    if (res.ok) {
+      recipient.status = 'sent';
+      showToast(`Pesan terkirim otomatis ke ${recipient.nama}!`, 'success');
+    } else {
+      recipient.status = 'failed';
+      recipient.errorReason = res.reason || 'Gagal mengirim';
+      showToast(`Gagal kirim ke ${recipient.nama}: ${recipient.errorReason}`, 'error');
+    }
+    renderBroadcastRecipientTable();
+    updateBroadcastStats();
+    return;
+  }
+
   const waUrl = `https://api.whatsapp.com/send?phone=${recipient.cleanNoHp}&text=${encodeURIComponent(message)}`;
+  const win = window.open(waUrl, '_blank');
 
-  // Buka WhatsApp di jendela/tab baru
-  window.open(waUrl, '_blank');
+  if (!win || win.closed || typeof win.closed === 'undefined') {
+    recipient.status = 'blocked';
+    renderBroadcastRecipientTable();
+    updateBroadcastStats();
+    showToast(`Pop-up diblokir browser untuk ${recipient.nama}. Izinkan pop-up lalu klik Kirim WA lagi.`, 'warning');
+    return;
+  }
 
-  // Tandai sudah terkirim / dibuka
-  recipient.status = 'sent';
+  recipient.status = 'opened';
   renderBroadcastRecipientTable();
   updateBroadcastStats();
-
-  showToast(`Chat WhatsApp dibuka untuk ${recipient.nama}!`, 'success');
+  showToast(`Chat WhatsApp dibuka untuk ${recipient.nama} — silakan klik tombol Kirim di WA.`, 'info');
 }
 
 /**
- * Auto-Runner: Mengirim ke antrean secara otomatis berurutan dengan jeda aman
+ * Auto-Runner: Mengirim ke antrean secara berurutan (Fonnte Auto-Send atau Link WA)
  */
 function startAutoBroadcastRunner() {
   const runner = broadcastState.runner;
@@ -8957,11 +9086,10 @@ function startAutoBroadcastRunner() {
   const delaySelect = document.getElementById('bc-delay-seconds');
   runner.delaySeconds = parseInt(delaySelect?.value || '4', 10);
 
-  // Ambil penerima yang terpilih dan belum terkirim
-  const pending = broadcastState.recipients.filter(r => r.isValid && r.isSelected && r.status !== 'sent');
+  const pending = broadcastState.recipients.filter(r => r.isValid && r.isSelected && !isBroadcastItemDone(r));
 
   if (pending.length === 0) {
-    showToast('Seluruh penerima terpilih sudah terkirim atau tidak ada nomor valid yang dipilih.', 'info');
+    showToast('Seluruh penerima terpilih sudah diproses atau tidak ada nomor valid yang dipilih.', 'info');
     return;
   }
 
@@ -8969,53 +9097,75 @@ function startAutoBroadcastRunner() {
   runner.isPaused = false;
   updateRunnerUI('running');
 
-  showToast(`Memulai Auto-Blast WhatsApp (${pending.length} antrean, jeda ${runner.delaySeconds} detik)...`, 'info');
+  const modeLabel = hasActiveFonnteGateway() ? 'Fonnte Auto-Send' : 'Mode Gratis (Buka Chat WA)';
+  showToast(`Memulai antrean ${modeLabel} (${pending.length} target, jeda ${runner.delaySeconds} detik)...`, 'info');
 
   processNextInBroadcastQueue();
 }
 
-function processNextInBroadcastQueue() {
+async function processNextInBroadcastQueue() {
   const runner = broadcastState.runner;
   if (!runner.isRunning || runner.isPaused) return;
 
-  // Cari item berikutnya yang siap kirim
-  const nextItem = broadcastState.recipients.find(r => r.isValid && r.isSelected && r.status !== 'sent');
+  const nextItem = broadcastState.recipients.find(r => r.isValid && r.isSelected && !isBroadcastItemDone(r) && r.status !== 'failed');
 
   if (!nextItem) {
-    // Selesai seluruh antrean!
+    const useGateway = hasActiveFonnteGateway();
     stopAutoBroadcastRunner();
-    showToast('Alhamdulillah! Seluruh antrean undangan WhatsApp selesai dikirim!', 'success');
+    showToast(
+      useGateway
+        ? 'Alhamdulillah! Seluruh antrean undangan WhatsApp selesai dikirim otomatis!'
+        : 'Antrean selesai: chat WhatsApp sudah dibuka (pastikan menekan Kirim/Send di WhatsApp).',
+      'success'
+    );
     return;
   }
 
-  // Tandai sedang dibuka
   nextItem.status = 'sending';
+  nextItem.errorReason = '';
   renderBroadcastRecipientTable();
   updateBroadcastStats();
 
   const runnerStatusEl = document.getElementById('bc-stat-runner-status');
-  if (runnerStatusEl) {
-    runnerStatusEl.textContent = `Membuka chat: ${nextItem.nama}...`;
+  const message = generateBroadcastMessage(nextItem);
+
+  if (hasActiveFonnteGateway()) {
+    if (runnerStatusEl) runnerStatusEl.textContent = `Mengirim via Fonnte: ${nextItem.nama}...`;
+    const res = await sendViaFonnteGateway(nextItem.cleanNoHp, message);
+    if (!runner.isRunning || runner.isPaused) return;
+
+    if (res.ok) {
+      nextItem.status = 'sent';
+    } else {
+      nextItem.status = 'failed';
+      nextItem.errorReason = res.reason || 'Gagal kirim';
+      showToast(`Gagal kirim ke ${nextItem.nama}: ${nextItem.errorReason}`, 'error');
+    }
+  } else {
+    if (runnerStatusEl) runnerStatusEl.textContent = `Membuka chat: ${nextItem.nama}...`;
+    const waUrl = `https://api.whatsapp.com/send?phone=${nextItem.cleanNoHp}&text=${encodeURIComponent(message)}`;
+    const win = window.open(waUrl, '_blank');
+
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+      nextItem.status = 'blocked';
+      pauseAutoBroadcastRunner(true);
+      renderBroadcastRecipientTable();
+      updateBroadcastStats();
+      showToast(`Pop-up diblokir browser pada ${nextItem.nama}! Izinkan "Always allow pop-ups" di browser atau klik tombol "Kirim WA" satu per satu.`, 'warning');
+      return;
+    }
+    nextItem.status = 'opened';
   }
 
-  const message = generateBroadcastMessage(nextItem);
-  const waUrl = `https://api.whatsapp.com/send?phone=${nextItem.cleanNoHp}&text=${encodeURIComponent(message)}`;
-
-  // Buka WhatsApp Web / App
-  window.open(waUrl, '_blank');
-
-  // Setelah jendela dibuka, ubah status ke 'sent'
-  nextItem.status = 'sent';
   renderBroadcastRecipientTable();
   updateBroadcastStats();
 
-  // Jadwalkan item berikutnya setelah jeda detik
   runner.timerId = setTimeout(() => {
     processNextInBroadcastQueue();
   }, runner.delaySeconds * 1000);
 }
 
-function pauseAutoBroadcastRunner() {
+function pauseAutoBroadcastRunner(silent = false) {
   const runner = broadcastState.runner;
   if (!runner.isRunning) return;
 
@@ -9023,7 +9173,7 @@ function pauseAutoBroadcastRunner() {
   if (runner.timerId) clearTimeout(runner.timerId);
 
   updateRunnerUI('paused');
-  showToast('Pengiriman otomatis dijeda.', 'info');
+  if (!silent) showToast('Pengiriman otomatis dijeda.', 'info');
 }
 
 function stopAutoBroadcastRunner() {
@@ -9170,7 +9320,7 @@ function copyAllBroadcastNumbers() {
 /**
  * Uji kirim ke nomor penguji / nomor sendiri
  */
-function testSendToSelf() {
+async function testSendToSelf() {
   const defaultNo = broadcastState.ketumWa || '081234567801';
   const sampleMsg = generateBroadcastMessage({
     nama: 'Sahabat Pengurus (Uji Coba)',
@@ -9187,9 +9337,24 @@ function testSendToSelf() {
     return;
   }
 
+  if (hasActiveFonnteGateway()) {
+    showToast(`Mengirim uji coba otomatis via Fonnte ke ${cleanNo}...`, 'info');
+    const res = await sendViaFonnteGateway(cleanNo, sampleMsg);
+    if (res.ok) {
+      showToast(`Pesan uji coba berhasil terkirim otomatis ke ${cleanNo}!`, 'success');
+    } else {
+      showToast(`Gagal kirim uji coba Fonnte: ${res.reason}`, 'error');
+    }
+    return;
+  }
+
   const waUrl = `https://api.whatsapp.com/send?phone=${cleanNo}&text=${encodeURIComponent(sampleMsg)}`;
-  window.open(waUrl, '_blank');
-  showToast(`Membuka WhatsApp untuk nomor uji coba (${cleanNo})...`, 'info');
+  const win = window.open(waUrl, '_blank');
+  if (!win || win.closed || typeof win.closed === 'undefined') {
+    showToast('Pop-up diblokir browser. Izinkan pop-up agar WhatsApp uji coba bisa terbuka.', 'warning');
+    return;
+  }
+  showToast(`Chat WhatsApp uji coba dibuka (${cleanNo}) — klik tombol Kirim di WA.`, 'info');
 }
 
 /**

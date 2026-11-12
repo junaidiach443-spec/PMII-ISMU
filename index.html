@@ -2600,11 +2600,11 @@
 
               <!-- 4. Mesin Auto-Runner & Kontrol Pengiriman -->
               <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs space-y-4">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2">
                   <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
                     <span
                       class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center text-xs font-bold">4</span>
-                    <span>Pengiriman Otomatis (Auto-Blast)</span>
+                    <span>Pengiriman Otomatis (Hybrid)</span>
                   </h3>
                   <span id="bc-runner-badge"
                     class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
@@ -2612,11 +2612,41 @@
                   </span>
                 </div>
 
+                <!-- Mode Gateway WhatsApp (Gratis vs Fonnte Auto-Send) -->
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-bold text-slate-700">Mode Pengiriman</span>
+                    <span id="bc-gateway-mode-badge"
+                      class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                      Mode Gratis (Link WA)
+                    </span>
+                  </div>
+                  <div class="space-y-1.5">
+                    <label for="bc-input-fonnte-token" class="block text-[10px] font-semibold text-slate-600">
+                      Token Fonnte (Opsional — untuk Auto-Send langsung di background)
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                      <input type="password" id="bc-input-fonnte-token" autocomplete="off"
+                        placeholder="Kosongkan untuk tetap gratis via WhatsApp..."
+                        class="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-[11px] font-mono focus:outline-none focus:border-emerald-500">
+                      <button type="button" onclick="saveBroadcastFonnteToken()"
+                        class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition cursor-pointer shrink-0">
+                        Simpan
+                      </button>
+                      <button type="button" onclick="clearBroadcastFonnteToken()"
+                        class="px-2 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-300 transition cursor-pointer shrink-0"
+                        title="Kembali ke Mode Gratis">
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Delay Interval Setting -->
                 <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
                   <div>
                     <p class="text-xs font-bold text-slate-700">Jeda Antar Pesan</p>
-                    <p class="text-[10px] text-slate-500">Mencegah pop-up browser terblokir</p>
+                    <p class="text-[10px] text-slate-500">Mencegah blokir spam / pop-up</p>
                   </div>
                   <select id="bc-delay-seconds"
                     class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none">
@@ -2650,13 +2680,11 @@
                 </div>
 
                 <!-- Tips & Notes -->
-                <div
+                <div id="bc-gateway-tips-box"
                   class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed flex items-start gap-2">
                   <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
                   <div>
-                    <strong class="font-bold">Tips Browser:</strong> Saat pertama kali menekan Mulai, jika browser
-                    menampilkan peringatan <em>"Pop-up blocked"</em> di address bar atas, klik dan pilih <strong>"Always
-                      allow pop-ups"</strong> agar antrean WA bisa terbuka lancar.
+                    <strong class="font-bold">Info Pengiriman:</strong> Pada <strong>Mode Gratis</strong>, browser membuka ruang chat WhatsApp dengan teks terisi — Anda tetap perlu menekan tombol <strong>Kirim (Send)</strong> di WhatsApp (dan izinkan <em>Always allow pop-ups</em> bila ingin membuka banyak antrean). Jika ingin terkirim otomatis penuh tanpa membuka WA, masukkan <strong>Token Fonnte</strong> di atas.
                   </div>
                 </div>
               </div>
@@ -7306,7 +7334,7 @@
 
   <!-- App Logic & Scripts -->
   <script src="js/data.js?v=20261112_v3"></script>
-  <script src="js/app.js?v=20261112_v3"></script>
+  <script src="js/app.js?v=20261112_v4"></script>
 
   <!-- Service Worker Registration for PWA & Offline Support -->
   <script>
