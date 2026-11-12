@@ -31,7 +31,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Data Awal & Konfigurasi Cloud Database -->
-  <script src="js/data.js?v=20261111_v2"></script>
+  <script src="js/data.js?v=20261112_v3"></script>
 
   <script>
     tailwind.config = {
@@ -931,33 +931,33 @@
         if (localIka) portalIka = JSON.parse(localIka);
       } catch (e) {}
 
-      // 2. Tarik langsung dari Neon Cloud (single round-trip query)
-      if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
-        try {
-          const singleQuery = `
-            SELECT
-              (SELECT json_agg(t) FROM (SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC) t) as kader,
-              (SELECT json_agg(t) FROM (SELECT * FROM tb_mabinkom ORDER BY id ASC) t) as mabinkom,
-              (SELECT json_agg(t) FROM (SELECT * FROM tb_ika ORDER BY angkatan DESC, nama ASC) t) as ika,
-              (SELECT json_agg(t) FROM (SELECT * FROM tb_komisariat LIMIT 1) t) as komisariat;
-          `;
+      // 2. Tarik dari Neon Cloud via Proxy Server Aman /api/neon (single round-trip query)
+      try {
+        const singleQuery = `
+          SELECT
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_kader ORDER BY angkatan DESC, nama ASC) t) as kader,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_mabinkom ORDER BY id ASC) t) as mabinkom,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_ika ORDER BY angkatan DESC, nama ASC) t) as ika,
+            (SELECT json_agg(t) FROM (SELECT * FROM tb_komisariat LIMIT 1) t) as komisariat;
+        `;
 
-          const connStrDirect = DEFAULT_CLOUD_CONFIG.url;
-          let hostDirect = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
-          if (connStrDirect) {
-            const m = connStrDirect.match(/@([^:\/?]+)/);
-            if (m && m[1]) hostDirect = m[1].replace('-pooler', '');
-          }
-          const res = await fetch(`https://${hostDirect}/sql`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Neon-Connection-String': connStrDirect
-            },
-            body: JSON.stringify({ query: singleQuery })
-          });
+        const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
+        let res = null;
+        for (const ep of endpoints) {
+          try {
+            const candidate = await fetch(ep, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: singleQuery })
+            });
+            if (candidate.ok) {
+              res = candidate;
+              break;
+            }
+          } catch (err) {}
+        }
 
-          if (res.ok) {
+        if (res && res.ok) {
             const json = await res.json();
             if (json && json.rows && json.rows[0]) {
               const b = json.rows[0];
@@ -1031,7 +1031,6 @@
         } catch (e) {
           console.warn('[PORTAL] Gagal fetch cloud:', e);
         }
-      }
 
       // Fallback jika kosong gunakan default
       if (!portalKaders || portalKaders.length === 0) {
@@ -1613,17 +1612,7 @@
         return `'${String(v).replace(/'/g, "''")}'`;
       };
 
-      // 1. Update Neon Cloud Database
-      const connStr = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) 
-        ? DEFAULT_CLOUD_CONFIG.url 
-        : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
-      
-      let cleanHost = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
-      if (connStr) {
-        const m = connStr.match(/@([^:\/?]+)/);
-        if (m && m[1]) cleanHost = m[1].replace('-pooler', '');
-      }
-
+      // 1. Update Neon Cloud Database via Proxy Server Aman (/api/neon)
       const updateQuery = `
         UPDATE tb_kader SET
           nama = ${escapeSql(nama)},
@@ -1650,41 +1639,22 @@
       `;
 
       let cloudSuccess = false;
-      try {
-        // Direct query ke Neon
-        const res = await fetch(`https://${cleanHost}/sql`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Neon-Connection-String': connStr
-          },
-          body: JSON.stringify({ query: updateQuery })
-        });
-        if (res.ok) {
-          cloudSuccess = true;
-        }
-      } catch (err) {
-        console.warn('Direct Neon query update error, trying proxy:', err);
-      }
-
-      if (!cloudSuccess) {
-        const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
-        for (const ep of endpoints) {
-          try {
-            const res = await fetch(ep, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Neon-Connection-String': connStr
-              },
-              body: JSON.stringify({ query: updateQuery })
-            });
-            if (res.ok) {
+      const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: updateQuery })
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (!json.error && !json.code) {
               cloudSuccess = true;
               break;
             }
-          } catch (e) {}
-        }
+          }
+        } catch (e) {}
       }
 
       // 2. Update In-Memory Object & LocalStorage

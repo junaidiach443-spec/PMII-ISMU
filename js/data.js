@@ -4,13 +4,14 @@
  */
 
 /**
- * ⚡ KONFIGURASI DATABASE CLOUD (OPSIONAL)
- * Kredensial database cloud yang aman disimpan di backend (api/config.local.php atau .env).
- * Jika pengurus ingin mengatur koneksi direct browser secara mandiri, gunakan menu Pengaturan Sistem di dalam aplikasi.
+ * ⚡ KONFIGURASI DATABASE CLOUD (AMAN VIA PROXY SERVER /api/neon)
+ * Kredensial database disimpan aman di Environment Variable Vercel (DATABASE_URL) atau api/config.local.php (gitignored).
+ * JANGAN menaruh password database secara langsung di file frontend publik!
  */
 const DEFAULT_CLOUD_CONFIG = {
-  url: "postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
-  key: "npg_OzRkS4cao0gV",
+  mode: "proxy",
+  url: "",
+  key: "",
   autoSyncIntervalMs: 180000 // Interval cek pembaruan cloud ringan di background (3 menit)
 };
 

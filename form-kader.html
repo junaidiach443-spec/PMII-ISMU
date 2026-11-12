@@ -27,7 +27,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Data Awal & Konfigurasi Cloud -->
-  <script src="js/data.js?v=20261111_v2"></script>
+  <script src="js/data.js?v=20261112_v3"></script>
 
   <script>
     tailwind.config = {
@@ -855,40 +855,6 @@
     });
 
     async function fetchLatestFakultasProdiFromServer() {
-      // 1. Coba koneksi langsung ke Neon Cloud (High Performance & Zero Proxy Latency)
-      const connStr = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
-      let cleanHost = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
-      if (connStr) {
-        const m = connStr.match(/@([^:\/?]+)/);
-        if (m && m[1]) cleanHost = m[1].replace('-pooler', '');
-      }
-      const directNeonUrl = `https://${cleanHost}/sql`;
-      try {
-        const res = await fetch(directNeonUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Neon-Connection-String': connStr
-          },
-          body: JSON.stringify({ query: 'SELECT fakultas_prodi FROM tb_komisariat WHERE id = 1;' })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const raw = data.rows && data.rows[0] ? data.rows[0].fakultas_prodi : null;
-          if (raw) {
-            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              localStorage.setItem('pmii_fakultas_prodi', JSON.stringify(parsed));
-              initFakultasSelect();
-              return;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('[FORM-KADER] Direct Neon query fallback:', e);
-      }
-
-      // 2. Fallback ke endpoint proxy jika direct query gagal
       const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
       for (const ep of endpoints) {
         try {
@@ -1011,43 +977,12 @@
     }
 
     async function executePublicNeonQuery(sqlQuery) {
-      const connStrDirect = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url)
-        ? DEFAULT_CLOUD_CONFIG.url
-        : 'postgresql://neondb_owner:npg_OzRkS4cao0gV@ep-gentle-truth-bdh8gtax-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
-      let hostDirect = 'ep-gentle-truth-bdh8gtax.c-8.us-east-2.aws.neon.tech';
-      if (connStrDirect) {
-        const m = connStrDirect.match(/@([^:\/?]+)/);
-        if (m && m[1]) hostDirect = m[1].replace('-pooler', '');
-      }
-
-      try {
-        const res = await fetch(`https://${hostDirect}/sql`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Neon-Connection-String': connStrDirect
-          },
-          body: JSON.stringify({ query: sqlQuery })
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (!json.error && !json.code) {
-            return { ok: true, rows: json.rows || [] };
-          }
-        }
-      } catch (e) {
-        console.warn('[NEON DIRECT] Fallback ke proxy:', e);
-      }
-
       const endpoints = ['/api/neon', '/api/neon.php', 'https://pmii-ismu.vercel.app/api/neon'];
       for (const ep of endpoints) {
         try {
           const res = await fetch(ep, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Neon-Connection-String': connStrDirect
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: sqlQuery })
           });
           if (res.ok) {

@@ -879,23 +879,49 @@ function saveData() {
 // CLOUD DATABASE INTEGRATION (NEON POSTGRESQL & SUPABASE)
 // ==========================================
 
+function isLegacyExposedCloudConfig(url, key) {
+  const u = String(url || '');
+  const k = String(key || '');
+  if (!u && !k) return false;
+  const legacyHosts = ['ep-xxx', 'xyzcompany', 'ep-cool-fog', 'ep-nameless-salad-betekr6e', 'ep-hidden-cell-betxyhtd', 'ep-wandering-wave'];
+  if (legacyHosts.some(h => u.includes(h))) return true;
+  if (!localStorage.getItem('pmii_cloud_proxy_migrated_v2') && u.includes('ep-gentle-truth-bdh8gtax')) {
+    return true;
+  }
+  return false;
+}
+
 function getCloudConfig() {
   let url = (localStorage.getItem('pmii_cloud_db_url') || '').trim();
   let key = (localStorage.getItem('pmii_cloud_db_key') || '').trim();
 
-  // Gunakan DEFAULT_CLOUD_CONFIG dari data.js hanya jika url di localStorage belum diisi atau placeholder dummy / URL kadaluarsa
-  if (!url || url.includes('ep-xxx') || url.includes('xyzcompany') || url.includes('ep-cool-fog') || url.includes('ep-nameless-salad-betekr6e') || url.includes('npg_nTzvpcJeB07A') || url.includes('ep-hidden-cell-betxyhtd') || url.includes('npg_mGjhwyJfM02X') || url.includes('ep-wandering-wave') || url.includes('npg_XSdn0aN4xFLi')) {
-    if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) {
-      url = DEFAULT_CLOUD_CONFIG.url.trim();
-      key = (DEFAULT_CLOUD_CONFIG.key || '').trim();
-      try {
-        localStorage.setItem('pmii_cloud_db_url', url);
-        localStorage.setItem('pmii_cloud_db_key', key);
-      } catch (e) {}
-    }
+  // Bersihkan kredensial lama yang pernah tersimpan di localStorage agar memakai proxy server aman
+  if (isLegacyExposedCloudConfig(url, key)) {
+    url = '';
+    key = '';
+    try {
+      localStorage.removeItem('pmii_cloud_db_url');
+      localStorage.removeItem('pmii_cloud_db_key');
+      localStorage.setItem('pmii_cloud_proxy_migrated_v2', '1');
+    } catch (e) {}
   }
 
-  if (!url && !key) return null;
+  if (!url && !key) {
+    if (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.mode === 'proxy') {
+      return {
+        type: 'neon',
+        mode: 'proxy',
+        host: 'Vercel Server Proxy (/api/neon)',
+        cleanHost: 'server-proxy',
+        user: 'server-env',
+        password: '',
+        database: 'neondb',
+        connectionString: '',
+        sqlEndpoint: '/api/neon'
+      };
+    }
+    return null;
+  }
 
   // Supabase detection
   if (url.includes('supabase.co')) {
@@ -11374,12 +11400,11 @@ function loadPengaturanForm() {
   // Cloud Database Credentials
   const elCloudUrl = document.getElementById('cloud-db-url');
   const elCloudKey = document.getElementById('cloud-db-key');
-  const defaultUrl = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.url) ? DEFAULT_CLOUD_CONFIG.url : '';
-  const defaultKey = (typeof DEFAULT_CLOUD_CONFIG !== 'undefined' && DEFAULT_CLOUD_CONFIG.key) ? DEFAULT_CLOUD_CONFIG.key : '';
   const savedUrl = localStorage.getItem('pmii_cloud_db_url') || '';
   const savedKey = localStorage.getItem('pmii_cloud_db_key') || '';
-  const finalUrl = (!savedUrl || savedUrl.includes('xyzcompany') || savedUrl.includes('ep-xxx') || savedUrl.includes('ep-cool-fog') || savedUrl.includes('ep-nameless-salad-betekr6e') || savedUrl.includes('ep-hidden-cell-betxyhtd') || savedUrl.includes('npg_nTzvpcJeB07A') || savedUrl.includes('npg_mGjhwyJfM02X') || savedUrl.includes('ep-wandering-wave') || savedUrl.includes('npg_XSdn0aN4xFLi')) ? defaultUrl : savedUrl;
-  const finalKey = (!savedKey || savedKey.includes('eyJhbG') || savedKey === 'npg_nTzvpcJeB07A' || savedKey === 'npg_mGjhwyJfM02X' || savedKey === 'npg_XSdn0aN4xFLi') ? defaultKey : savedKey;
+  const legacyInvalid = isLegacyExposedCloudConfig(savedUrl, savedKey);
+  const finalUrl = legacyInvalid ? '' : savedUrl;
+  const finalKey = (legacyInvalid || savedKey.includes('eyJhbG')) ? '' : savedKey;
   if (elCloudUrl) elCloudUrl.value = finalUrl;
   if (elCloudKey) elCloudKey.value = finalKey;
 
@@ -11395,14 +11420,16 @@ async function saveCloudDbConfig() {
   const key = (document.getElementById('cloud-db-key')?.value || '').trim();
 
   if (!url && !key) {
-    showToast('Silakan masukkan Host / Connection String Neon terlebih dahulu.', 'warning');
-    return;
+    localStorage.removeItem('pmii_cloud_db_url');
+    localStorage.removeItem('pmii_cloud_db_key');
+    localStorage.setItem('pmii_cloud_proxy_migrated_v2', '1');
+    showToast('Mengaktifkan Mode Proxy Aman Server (/api/neon) & menguji koneksi...', 'info');
+  } else {
+    localStorage.setItem('pmii_cloud_db_url', url);
+    localStorage.setItem('pmii_cloud_db_key', key);
+    localStorage.setItem('pmii_cloud_proxy_migrated_v2', '1');
+    showToast('Menyimpan konfigurasi & menguji koneksi ke Neon Cloud...', 'info');
   }
-
-  localStorage.setItem('pmii_cloud_db_url', url);
-  localStorage.setItem('pmii_cloud_db_key', key);
-
-  showToast('Menyimpan konfigurasi & menguji koneksi ke Neon Cloud...', 'info');
 
   const ok = await testCloudConnection(false);
   if (ok) {
