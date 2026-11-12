@@ -3702,28 +3702,49 @@ function exportKaderExcel() {
     return;
   }
 
-  const exportRows = kaders.map((k, index) => ({
-    "No": index + 1,
-    "No KTA": k.noKta || '-',
-    "Nama Lengkap": k.nama,
-    "NIM": k.nim || '-',
-    "Jenis Kelamin": k.gender,
-    "Fakultas": k.fakultas || '-',
-    "Jurusan": k.jurusan || '-',
-    "Angkatan": k.angkatan || '-',
-    "Jenjang Formal": k.kaderisasi?.formal || 'MAPABA',
-    "KOPRI": k.kaderisasi?.kopri || '-',
-    "No WhatsApp": k.whatsapp || '-',
-    "Email": k.email || '-',
-    "Jabatan": k.jabatan || 'Anggota',
-    "Alamat Domisili": k.alamat || '-'
-  }));
+  if (!kaders || kaders.length === 0) {
+    showToast('Belum ada data kader untuk di-download.', 'warning');
+    return;
+  }
+
+  const exportRows = kaders.map((k, index) => {
+    const ttlText = k.ttl || ((k.tempatLahir ? k.tempatLahir + ', ' : '') + (k.tanggalLahir || '')) || '-';
+    return {
+      "No": index + 1,
+      "No KTA": k.noKta || '-',
+      "NIK": k.nik || '-',
+      "Nama Lengkap": k.nama || '-',
+      "Nama Panggilan": k.namaPanggilan || k.panggilan || '-',
+      "NIM": k.nim || '-',
+      "Jenis Kelamin": k.gender || '-',
+      "Tempat / Tanggal Lahir": ttlText,
+      "Fakultas": k.fakultas || '-',
+      "Program Studi / Jurusan": k.jurusan || '-',
+      "Angkatan": k.angkatan || '-',
+      "Status Kuliah": k.statusKuliah || 'Aktif',
+      "Status Kader": k.statusKader || k.statusKeaktifan || 'Aktif',
+      "Jenjang Formal": k.kaderisasi?.formal || 'MAPABA',
+      "Tahun MAPABA": k.kaderisasi?.tahunMapaba || '-',
+      "Penyelenggara MAPABA": k.kaderisasi?.penyelenggaraMapaba || '-',
+      "KOPRI": k.kaderisasi?.kopri || '-',
+      "No WhatsApp": k.whatsapp || '-',
+      "Email": k.email || '-',
+      "Jabatan": k.jabatan || 'Anggota',
+      "Alamat Domisili": k.alamat || '-'
+    };
+  });
 
   const ws = XLSX.utils.json_to_sheet(exportRows);
+  ws['!cols'] = [
+    { wch: 5 }, { wch: 18 }, { wch: 18 }, { wch: 26 }, { wch: 16 },
+    { wch: 16 }, { wch: 14 }, { wch: 24 }, { wch: 24 }, { wch: 28 },
+    { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 15 }, { wch: 14 },
+    { wch: 22 }, { wch: 12 }, { wch: 16 }, { wch: 24 }, { wch: 18 }, { wch: 32 }
+  ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Data Kader");
   XLSX.writeFile(wb, `Data_Kader_PMII_${(komisariat.nama || 'Komisariat').replace(/\s+/g, '_')}.xlsx`);
-  showToast('Data kader berhasil diexport ke Excel!', 'success');
+  showToast(`Berhasil mendownload ${exportRows.length} data kader ke Excel!`, 'success');
 }
 
 // ==========================================
